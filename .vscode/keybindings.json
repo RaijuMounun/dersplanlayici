@@ -1,0 +1,14 @@
+[
+    {
+        "key": "f5",
+        "command": "flutter.run"
+    },
+    {
+        "key": "ctrl+f5",
+        "command": "flutter.hotReload"
+    },
+    {
+        "key": "ctrl+shift+f5",
+        "command": "flutter.hotRestart"
+    }
+] 
