@@ -21,10 +21,7 @@ class _AddLessonPageState extends State<AddLessonPage> {
   final _topicController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay.now().replacing(
-    hour: TimeOfDay.now().hour + 1,
-    minute: TimeOfDay.now().minute,
-  );
+  late TimeOfDay _endTime;
   final _notesController = TextEditingController();
   bool _isLoading = false;
   bool _isLoadingStudents = true;
@@ -34,6 +31,13 @@ class _AddLessonPageState extends State<AddLessonPage> {
   @override
   void initState() {
     super.initState();
+    // Başlangıç saatine bir saat ekleyerek bitiş saatini ayarla
+    final now = TimeOfDay.now();
+    _endTime = TimeOfDay(
+      hour: (now.hour + 1) % 24, // 24 saati geçerse başa dön
+      minute: now.minute,
+    );
+
     // Provider erişimini build sonrasına ertele
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadStudents();
@@ -123,8 +127,10 @@ class _AddLessonPageState extends State<AddLessonPage> {
                                 if (_endTime.hour < _startTime.hour ||
                                     (_endTime.hour == _startTime.hour &&
                                         _endTime.minute < _startTime.minute)) {
-                                  _endTime = _startTime.replacing(
-                                    hour: _startTime.hour + 1,
+                                  _endTime = TimeOfDay(
+                                    hour:
+                                        (_startTime.hour + 1) %
+                                        24, // 24 saati geçerse başa dön
                                     minute: _startTime.minute,
                                   );
                                 }
