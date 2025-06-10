@@ -9,6 +9,7 @@ import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/features/students/presentation/widgets/student_list_item.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
+import 'package:ders_planlayici/features/settings/presentation/providers/app_settings_provider.dart';
 
 class StudentListPage extends StatefulWidget {
   const StudentListPage({super.key});
@@ -580,6 +581,18 @@ class _StudentListPageState extends State<StudentListPage> {
   }
 
   void _showDeleteConfirmation(Student student) {
+    final settingsProvider = Provider.of<AppSettingsProvider>(
+      context,
+      listen: false,
+    );
+
+    // Ayarlar kontrolü - eğer onay istenmiyor ise doğrudan sil
+    if (!settingsProvider.confirmBeforeDelete) {
+      _deleteStudent(student.id);
+      return;
+    }
+
+    // Onay isteniyorsa dialog göster
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -629,6 +642,18 @@ class _StudentListPageState extends State<StudentListPage> {
   }
 
   void _showBulkDeleteConfirmation() {
+    final settingsProvider = Provider.of<AppSettingsProvider>(
+      context,
+      listen: false,
+    );
+
+    // Ayarlar kontrolü - eğer onay istenmiyor ise doğrudan sil
+    if (!settingsProvider.confirmBeforeDelete) {
+      _deleteBulkStudents();
+      return;
+    }
+
+    // Onay isteniyorsa dialog göster
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
