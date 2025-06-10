@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ders_planlayici/features/settings/presentation/pages/database_management_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -6,9 +7,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ayarlar'),
-      ),
+      appBar: AppBar(title: const Text('Ayarlar')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -57,6 +56,24 @@ class SettingsPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _buildSection(
+            title: 'Veri Yönetimi',
+            children: [
+              ListTile(
+                title: const Text('Veritabanı Yönetimi'),
+                subtitle: const Text('Yedekleme, geri yükleme ve sıfırlama'),
+                trailing: const Icon(Icons.storage),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const DatabaseManagementPage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildSection(
             title: 'Uygulama Hakkında',
             children: [
               ListTile(
@@ -71,7 +88,10 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSection({required String title, required List<Widget> children}) {
+  Widget _buildSection({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -79,18 +99,11 @@ class SettingsPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-        Card(
-          child: Column(
-            children: children,
-          ),
-        ),
+        Card(child: Column(children: children)),
       ],
     );
   }
-} 
+}
