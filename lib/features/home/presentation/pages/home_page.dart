@@ -6,6 +6,7 @@ import 'package:ders_planlayici/features/lessons/presentation/pages/lessons_page
 import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_page.dart';
 import 'package:ders_planlayici/core/widgets/app_bottom_navigation.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 
 /// Ana sayfa widget'ı. Bottom navigation bar ile farklı sayfalara geçiş sağlar.
 class HomePage extends StatefulWidget {
@@ -111,6 +112,13 @@ class _HomePageState extends State<HomePage> {
               // TODO: Ödeme arama işlevselliği
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.dashboard),
+            tooltip: 'Ücret Yönetimi',
+            onPressed: () {
+              context.push('/fee-management');
+            },
+          ),
         ];
       case 4: // Ayarlar
         return null;
@@ -125,7 +133,7 @@ class _HomePageState extends State<HomePage> {
       case 0: // Takvim
         return FloatingActionButton(
           onPressed: () {
-            // TODO: Ders ekleme sayfasına yönlendir
+            context.push('/new-lesson');
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add),
@@ -133,7 +141,7 @@ class _HomePageState extends State<HomePage> {
       case 1: // Dersler
         return FloatingActionButton(
           onPressed: () {
-            // TODO: Ders ekleme sayfasına yönlendir
+            context.push('/new-lesson');
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add),
@@ -141,7 +149,7 @@ class _HomePageState extends State<HomePage> {
       case 2: // Öğrenciler
         return FloatingActionButton(
           onPressed: () {
-            // TODO: Öğrenci ekleme sayfasına yönlendir
+            context.push('/add-student');
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.person_add),
@@ -149,7 +157,7 @@ class _HomePageState extends State<HomePage> {
       case 3: // Ödemeler
         return FloatingActionButton(
           onPressed: () {
-            // TODO: Ödeme ekleme sayfasına yönlendir
+            context.push('/add-payment');
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add),
