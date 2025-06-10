@@ -6,8 +6,12 @@ import 'package:ders_planlayici/core/widgets/app_card.dart';
 import 'package:ders_planlayici/core/widgets/app_text_field.dart';
 import 'package:ders_planlayici/core/widgets/app_calendar.dart';
 import 'package:ders_planlayici/core/widgets/app_bottom_navigation.dart';
+import 'package:ders_planlayici/core/widgets/app_date_time_picker.dart';
+import 'package:ders_planlayici/core/widgets/app_recurring_picker.dart';
+import 'package:ders_planlayici/core/widgets/app_student_picker.dart';
 import 'package:ders_planlayici/features/students/presentation/widgets/student_card.dart';
 import 'package:ders_planlayici/features/lessons/presentation/widgets/lesson_list_item.dart';
+import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
 /// Widget'ları göstermek için örnek sayfa.
 class WidgetShowcasePage extends StatefulWidget {
@@ -35,6 +39,15 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
 
             _buildSectionTitle('Metin Alanları'),
             _buildTextFieldsSection(),
+
+            _buildSectionTitle('Tarih ve Saat Seçici'),
+            _buildDateTimePickerSection(),
+
+            _buildSectionTitle('Tekrar Seçici'),
+            _buildRecurringPickerSection(),
+
+            _buildSectionTitle('Öğrenci Seçici'),
+            _buildStudentPickerSection(),
 
             _buildSectionTitle('Kartlar'),
             _buildCardsSection(),
@@ -141,6 +154,108 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
           label: 'Çok Satırlı',
           hint: 'Bir şeyler yazın...',
           maxLines: 3,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateTimePickerSection() {
+    return Column(
+      children: [
+        AppDateTimePicker(
+          initialDateTime: _selectedDate,
+          onDateTimeChanged: (date) {
+            setState(() {
+              _selectedDate = date;
+            });
+          },
+          label: 'Ders Tarihi ve Saati',
+          required: true,
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        AppDateTimePicker(
+          initialDateTime: DateTime.now().add(const Duration(days: 7)),
+          dateHint: 'İleri tarih seçin',
+          timeHint: 'Saat seçin',
+          enabled: false,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecurringPickerSection() {
+    return Column(
+      children: [
+        AppRecurringPicker(
+          initialValue: const RecurringInfo(
+            type: RecurringType.weekly,
+            weekdays: [1, 3, 5],
+          ),
+          onChanged: (recurringInfo) {
+            // Handle recurring info change
+          },
+          label: 'Ders Tekrarı',
+          required: true,
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        AppRecurringPicker(
+          initialValue: const RecurringInfo(
+            type: RecurringType.monthly,
+            dayOfMonth: 15,
+          ),
+          label: 'Aylık Tekrar',
+          enabled: false,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStudentPickerSection() {
+    // Örnek öğrenci listesi
+    final demoStudents = [
+      Student(
+        id: '1',
+        name: 'Ahmet Yılmaz',
+        grade: '10. Sınıf',
+        phone: '0532 123 4567',
+        email: 'ahmet@example.com',
+      ),
+      Student(
+        id: '2',
+        name: 'Ayşe Demir',
+        grade: '11. Sınıf',
+        phone: '0533 765 4321',
+      ),
+      Student(
+        id: '3',
+        name: 'Mehmet Kaya',
+        grade: '9. Sınıf',
+        parentName: 'Ali Kaya',
+      ),
+    ];
+
+    return Column(
+      children: [
+        AppStudentPicker(
+          students: demoStudents,
+          onStudentSelected: (studentId) {
+            // Handle student selection
+          },
+          label: 'Öğrenci',
+          required: true,
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        AppStudentPicker(
+          students: demoStudents,
+          initialSelectedId: '2',
+          onStudentSelected: (studentId) {
+            // Handle student selection
+          },
+          label: 'Seçili Öğrenci',
+          showAddButton: true,
+          onAddPressed: () {
+            // Handle add button press
+          },
         ),
       ],
     );

@@ -28,6 +28,9 @@ class AppColors {
   static const Color backgroundDark = Color(0xFF121212);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF1E1E1E);
+  static const Color disabledBackground = Color(
+    0xFFF0F0F0,
+  ); // Devre dışı bırakılmış bileşenler için arka plan
 
   // Durum renkleri
   static const Color success = Color(0xFF4CAF50);
