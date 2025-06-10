@@ -18,7 +18,7 @@ class StudentCard extends StatelessWidget {
   final Color? avatarBackgroundColor;
 
   const StudentCard({
-    Key? key,
+    super.key,
     required this.studentName,
     this.studentGrade,
     this.phoneNumber,
@@ -30,7 +30,7 @@ class StudentCard extends StatelessWidget {
     this.onDeletePressed,
     this.avatarUrl,
     this.avatarBackgroundColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -15,7 +15,7 @@ class AppListItem extends StatelessWidget {
   final EdgeInsetsGeometry? contentPadding;
 
   const AppListItem({
-    Key? key,
+    super.key,
     required this.title,
     this.subtitle,
     this.leading,
@@ -25,7 +25,7 @@ class AppListItem extends StatelessWidget {
     this.hasBorder = true,
     this.hasRoundedCorners = true,
     this.contentPadding,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

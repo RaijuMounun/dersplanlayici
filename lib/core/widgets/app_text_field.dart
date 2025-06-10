@@ -41,7 +41,7 @@ class AppTextField extends StatelessWidget {
   final bool showCursor;
 
   const AppTextField({
-    Key? key,
+    super.key,
     this.label,
     this.hint,
     this.initialValue,
@@ -76,7 +76,7 @@ class AppTextField extends StatelessWidget {
     this.errorStyle,
     this.textAlign = TextAlign.start,
     this.showCursor = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

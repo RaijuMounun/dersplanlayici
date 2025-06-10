@@ -51,7 +51,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Implement theme
 - [✓] Create reusable widgets (takvim, ders listesi, öğrenci kartı, vb.)
 - [✓] Design and implement bottom navigation
-- [ ] Create basic layout for all screens
+- [✓] Create basic layout for all screens
 - [ ] Implement responsive design
 - [ ] Create custom widgets
 - [ ] Design and implement forms (ders ekleme, öğrenci ekleme, vb.)

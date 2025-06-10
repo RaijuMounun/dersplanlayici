@@ -20,7 +20,7 @@ class AppButton extends StatelessWidget {
   final EdgeInsets? padding;
 
   const AppButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
     this.type = AppButtonType.primary,
@@ -30,7 +30,7 @@ class AppButton extends StatelessWidget {
     this.fullWidth = false,
     this.width,
     this.padding,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

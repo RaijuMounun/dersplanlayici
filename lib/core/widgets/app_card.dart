@@ -16,7 +16,7 @@ class AppCard extends StatelessWidget {
   final List<BoxShadow>? boxShadow;
 
   const AppCard({
-    Key? key,
+    super.key,
     required this.child,
     this.backgroundColor,
     this.elevation,
@@ -27,7 +27,7 @@ class AppCard extends StatelessWidget {
     this.borderSide,
     this.hasShadow = true,
     this.boxShadow,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
