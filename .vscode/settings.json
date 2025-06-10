@@ -1,0 +1,46 @@
+{
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.rulers": [
+        80
+    ],
+    "editor.selectionHighlight": false,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.suggestSelection": "first",
+    "editor.tabCompletion": "onlySnippets",
+    "editor.wordBasedSuggestions": "off",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.freezed.dart": false,
+        "**/*.g.dart": false
+    },
+    "dart.debugExternalPackageLibraries": false,
+    "dart.debugSdkLibraries": false,
+    "dart.renameFilesWithClasses": "prompt",
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "*.dart": "${capture}.freezed.dart, ${capture}.g.dart"
+    },
+    "[dart]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.selectionHighlight": false,
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "editor.suggestSelection": "first",
+        "editor.tabCompletion": "onlySnippets",
+        "editor.wordBasedSuggestions": "off"
+    },
+    "dart.lineLength": 80,
+    "dart.flutterSdkPath": ".fvm/flutter_sdk",
+    "search.exclude": {
+        "**/.fvm": true,
+        "**/*.freezed.dart": true,
+        "**/*.g.dart": true
+    },
+    "dart.warnWhenEditingFilesOutsideWorkspace": false,
+    "java.configuration.updateBuildConfiguration": "interactive"
+}
