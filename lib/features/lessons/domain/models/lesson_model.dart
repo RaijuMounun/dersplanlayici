@@ -21,6 +21,7 @@ class Lesson {
   final LessonStatus status;
   final String? notes;
   final String? recurringPatternId;
+  final double fee;
 
   Lesson({
     String? id,
@@ -34,6 +35,7 @@ class Lesson {
     this.status = LessonStatus.scheduled,
     this.notes,
     this.recurringPatternId,
+    this.fee = 0,
   }) : id = id ?? const Uuid().v4();
 
   /// Map objesinden Lesson nesnesine dönüştürür.
@@ -53,6 +55,7 @@ class Lesson {
       ),
       notes: map['notes'] as String?,
       recurringPatternId: map['recurringPatternId'] as String?,
+      fee: (map['fee'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -70,6 +73,7 @@ class Lesson {
       'status': status.toString().split('.').last,
       'notes': notes,
       'recurringPatternId': recurringPatternId,
+      'fee': fee,
     };
   }
 
@@ -86,6 +90,7 @@ class Lesson {
     LessonStatus? status,
     String? notes,
     String? recurringPatternId,
+    double? fee,
   }) {
     return Lesson(
       id: id ?? this.id,
@@ -99,6 +104,7 @@ class Lesson {
       status: status ?? this.status,
       notes: notes ?? this.notes,
       recurringPatternId: recurringPatternId ?? this.recurringPatternId,
+      fee: fee ?? this.fee,
     );
   }
 

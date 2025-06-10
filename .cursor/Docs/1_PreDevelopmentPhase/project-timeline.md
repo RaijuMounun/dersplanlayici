@@ -54,7 +54,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Create basic layout for all screens
 - [✓] Implement responsive design
 - [✓] Create custom widgets
-- [ ] Design and implement forms (ders ekleme, öğrenci ekleme, vb.)
+- [✓] Design and implement forms (ders ekleme, öğrenci ekleme, vb.)
 
 #### Hafta 5: Takvim ve Dersler
 - [ ] Implement calendar view

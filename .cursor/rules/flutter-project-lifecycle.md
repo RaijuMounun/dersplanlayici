@@ -37,7 +37,7 @@ Bu dosya, özel ders veren öğretmenler için geliştirilecek ders planlama uyg
 - [✓] Implement responsive design
 - [✓] Create custom widgets
 - [✓] Design and implement bottom navigation bar
-- [ ] Design and implement forms (ders ekleme, öğrenci ekleme, vb.)
+- [✓] Design and implement forms (ders ekleme, öğrenci ekleme, vb.)
 
 ### Feature Implementation
 - [ ] Implement takvim görünümü ve ders listesi

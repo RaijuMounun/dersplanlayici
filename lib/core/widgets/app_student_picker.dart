@@ -154,11 +154,12 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
               children: [
                 Expanded(
                   child: Text(
-                    selectedStudent != null && selectedStudent.id != 0
+                    selectedStudent != null && selectedStudent.id != "0"
                         ? selectedStudent.name
                         : widget.hint,
                     style: TextStyle(
-                      color: selectedStudent != null && selectedStudent.id != 0
+                      color:
+                          selectedStudent != null && selectedStudent.id != "0"
                           ? Theme.of(context).textTheme.bodyLarge?.color
                           : AppColors.textHint,
                     ),
@@ -166,7 +167,7 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
                   ),
                 ),
                 if (selectedStudent != null &&
-                    selectedStudent.id != 0 &&
+                    selectedStudent.id != "0" &&
                     widget.enabled)
                   InkWell(
                     onTap: () {
@@ -274,7 +275,7 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
                                   subtitle: Text(student.grade),
                                   selected: isSelected,
                                   selectedTileColor: AppColors.primary
-                                      .withOpacity(0.1),
+                                      .withAlpha(25),
                                   onTap: () {
                                     Navigator.of(context).pop();
                                     setState(() {
