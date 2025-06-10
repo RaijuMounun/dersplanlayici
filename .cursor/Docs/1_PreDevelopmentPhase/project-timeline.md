@@ -69,7 +69,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Implement student detail view
 - [✓] Create add/edit student form
 - [✓] Implement student search
-- [ ] Develop student deletion with confirmation
+- [✓] Develop student deletion with confirmation
 - [ ] Implement student-lesson relationships
 
 #### Hafta 7: Ücret Takibi ve İşlevsellik Tamamlama

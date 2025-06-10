@@ -5,6 +5,7 @@ import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:ders_planlayici/features/settings/presentation/providers/theme_provider.dart';
+import 'package:ders_planlayici/features/settings/presentation/providers/app_settings_provider.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -54,6 +55,11 @@ class SettingsPage extends StatelessWidget {
               },
             ),
           ],
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        _buildSection(
+          title: 'Öğrenci Ayarları',
+          children: [_buildConfirmDeleteSetting(context)],
         ),
         const SizedBox(height: AppDimensions.spacing16),
         _buildSection(
@@ -120,6 +126,34 @@ class SettingsPage extends StatelessWidget {
               DropdownMenuItem(value: ThemeMode.dark, child: Text('Koyu')),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildConfirmDeleteSetting(BuildContext context) {
+    return Consumer<AppSettingsProvider>(
+      builder: (context, settingsProvider, child) {
+        if (settingsProvider.isLoading) {
+          return const ListTile(
+            leading: Icon(Icons.delete_outline),
+            title: Text('Silme Onayı'),
+            trailing: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
+        return SwitchListTile(
+          secondary: Icon(Icons.delete_outline, color: AppColors.primary),
+          title: const Text('Silme Onayı'),
+          subtitle: const Text('Öğrencileri silmeden önce onay iste'),
+          value: settingsProvider.confirmBeforeDelete,
+          onChanged: (bool value) {
+            settingsProvider.updateConfirmBeforeDelete(value);
+          },
         );
       },
     );

@@ -5,6 +5,8 @@ import '../features/students/presentation/providers/student_provider.dart';
 import '../features/lessons/presentation/providers/lesson_provider.dart';
 import '../features/fees/presentation/providers/fee_provider.dart';
 import '../features/settings/presentation/providers/theme_provider.dart';
+import '../features/settings/presentation/providers/app_settings_provider.dart';
+import '../features/settings/data/repositories/app_settings_repository.dart';
 import '../services/database/database_service.dart';
 import '../core/data/database_helper.dart';
 import '../core/constants/app_constants.dart';
@@ -19,6 +21,11 @@ class DersPlanlamaApp extends StatelessWidget {
     final databaseHelper = DatabaseHelper();
     final databaseService = DatabaseService(databaseHelper);
 
+    // Settings repository oluştur
+    final appSettingsRepository = AppSettingsRepository(
+      databaseHelper: databaseHelper,
+    );
+
     return MultiProvider(
       providers: [
         // Database servisi provider
@@ -26,6 +33,11 @@ class DersPlanlamaApp extends StatelessWidget {
 
         // Theme provider
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
+
+        // Settings provider
+        ChangeNotifierProvider(
+          create: (context) => AppSettingsProvider(appSettingsRepository),
+        ),
 
         // Feature providers
         ChangeNotifierProvider(
