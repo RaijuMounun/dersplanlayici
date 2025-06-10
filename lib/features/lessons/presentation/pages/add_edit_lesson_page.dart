@@ -10,10 +10,10 @@ import 'package:ders_planlayici/core/widgets/app_text_field.dart';
 import 'package:ders_planlayici/core/widgets/app_date_time_picker.dart';
 import 'package:ders_planlayici/core/widgets/app_recurring_picker.dart';
 import 'package:ders_planlayici/core/widgets/app_student_picker.dart';
+import 'package:ders_planlayici/core/error/app_exception.dart';
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
-import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
 class AddEditLessonPage extends StatefulWidget {
   final String? lessonId;
@@ -38,6 +38,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   double _fee = 0;
   RecurringInfo _recurringInfo = const RecurringInfo(type: RecurringType.none);
   LessonStatus _status = LessonStatus.scheduled;
+  int _recurringOccurrences = 10; // Tekrar sayısı
 
   bool _isEditMode = false;
   bool _isLoading = false;
@@ -125,6 +126,12 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
       appBar: AppBar(
         title: Text(_isEditMode ? 'Dersi Düzenle' : 'Yeni Ders Ekle'),
         actions: [
+          if (_isEditMode && _isRecurring())
+            IconButton(
+              icon: const Icon(Icons.repeat),
+              tooltip: 'Tekrarlanan Ders Serisi',
+              onPressed: _showRecurringLessonOptions,
+            ),
           if (_isEditMode)
             IconButton(
               icon: const Icon(Icons.delete),
@@ -217,7 +224,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
                   ],
                 ),
                 const SizedBox(height: AppDimensions.spacing16),
-                _buildRecurringField(),
+                _buildRecurringPicker(),
                 const SizedBox(height: AppDimensions.spacing16),
                 _buildNotesField(),
                 const SizedBox(height: AppDimensions.spacing24),
@@ -262,7 +269,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
                   ],
                 ),
                 const SizedBox(height: AppDimensions.spacing16),
-                _buildRecurringField(),
+                _buildRecurringPicker(),
                 const SizedBox(height: AppDimensions.spacing16),
                 _buildNotesField(),
                 const SizedBox(height: AppDimensions.spacing24),
@@ -288,7 +295,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
       const SizedBox(height: AppDimensions.spacing16),
       _buildStatusField(),
       const SizedBox(height: AppDimensions.spacing16),
-      _buildRecurringField(),
+      _buildRecurringPicker(),
       const SizedBox(height: AppDimensions.spacing16),
       _buildNotesField(),
       const SizedBox(height: AppDimensions.spacing24),
@@ -420,17 +427,183 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
     );
   }
 
-  // Tekrarlama alanı
-  Widget _buildRecurringField() {
-    return AppRecurringPicker(
-      label: 'Ders Tekrarı',
-      initialValue: _recurringInfo,
-      onChanged: (recurringInfo) {
-        setState(() {
-          _recurringInfo = recurringInfo;
-        });
-      },
+  /// Tekrarlanan ders özelliklerine göre tekrar seçimini yapılandırır.
+  Widget _buildRecurringPicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppRecurringPicker(
+          label: 'Tekrarlama',
+          initialValue: _recurringInfo,
+          onChanged: (value) {
+            setState(() {
+              _recurringInfo = value;
+            });
+          },
+        ),
+
+        // Tekrarlama sayısı seçimi
+        if (_recurringInfo.type != RecurringType.none) ...[
+          const SizedBox(height: AppDimensions.spacing16),
+          Row(
+            children: [
+              const Text('Tekrar Sayısı:'),
+              const SizedBox(width: AppDimensions.spacing8),
+              Expanded(
+                child: Slider(
+                  value: _recurringOccurrences.toDouble(),
+                  min: 1,
+                  max: 52, // Maksimum bir yıl (52 hafta)
+                  divisions: 51,
+                  label: _recurringOccurrences.toString(),
+                  onChanged: (value) {
+                    setState(() {
+                      _recurringOccurrences = value.toInt();
+                    });
+                  },
+                ),
+              ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  '$_recurringOccurrences',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          Text(
+            _getOccurrencesText(),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
     );
+  }
+
+  /// Tekrar sayısına göre açıklama metni oluşturur
+  String _getOccurrencesText() {
+    return 'Seçilen tarihten itibaren $_recurringOccurrences adet ders oluşturulacak';
+  }
+
+  /// Ders tekrarlanan bir ders mi kontrol eder
+  bool _isRecurring() {
+    return _recurringInfo.type != RecurringType.none;
+  }
+
+  /// Tekrarlanan ders serisi seçeneklerini gösterir
+  void _showRecurringLessonOptions() {
+    if (!_isEditMode || !_isRecurring()) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tekrarlanan Ders Serisi'),
+        content: const Text(
+          'Bu ders bir tekrarlanan ders serisinin parçasıdır. '
+          'Yapacağınız değişiklikler yalnızca bu dersi mi, '
+          'yoksa tüm seriyi mi etkileyecek?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showDeleteRecurringSeriesDialog();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Tüm Seriyi Sil'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tekrarlanan ders serisini silme onayı diyaloğunu gösterir
+  void _showDeleteRecurringSeriesDialog() {
+    final lesson = context.read<LessonProvider>().getLessonById(
+      widget.lessonId!,
+    );
+    if (lesson == null || lesson.recurringPatternId == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tüm Seriyi Sil'),
+        content: const Text(
+          'Tekrarlanan derslerin tamamını silmek istediğinizden emin misiniz? '
+          'Bu işlem geri alınamaz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteRecurringSeries(lesson.recurringPatternId!);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Tüm Seriyi Sil'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tekrarlanan ders serisini siler
+  Future<void> _deleteRecurringSeries(String patternId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final result = await context
+          .read<LessonProvider>()
+          .deleteRecurringLessons(patternId);
+
+      if (!mounted) return;
+
+      final successCount = result['success'] ?? 0;
+      final errorCount = result['error'] ?? 0;
+
+      String message = '$successCount ders başarıyla silindi';
+      if (errorCount > 0) {
+        message += ', $errorCount ders silinemedi';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: errorCount > 0
+              ? AppColors.warning
+              : AppColors.success,
+        ),
+      );
+
+      Navigator.of(context).pop(); // Form sayfasını kapat
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Seri silinirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   // Notlar alanı
@@ -447,43 +620,62 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   Widget _buildSubmitButton() {
     return AppButton(
       text: _isEditMode ? 'Güncelle' : 'Kaydet',
-      onPressed: _saveLesson,
+      onPressed: _saveForm,
       icon: Icons.save,
       isLoading: _isLoading,
     );
   }
 
-  // Dersi kaydet
-  Future<void> _saveLesson() async {
-    if (_formKey.currentState?.validate() != true) {
+  /// Formu kaydeder
+  Future<void> _saveForm() async {
+    // Form geçerliliğini kontrol et
+    if (!_formKey.currentState!.validate()) {
+      // Hatalı alanlar zaten form tarafından gösterilecek
       return;
     }
 
-    if (_selectedStudentId == null || _selectedStudentId!.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Lütfen bir öğrenci seçin')));
+    // Öğrenci seçili mi kontrol et
+    if (_selectedStudentId == null) {
+      setState(() {
+        _errorMessage = 'Lütfen bir öğrenci seçin';
+      });
       return;
     }
 
+    // Form kaydediliyor
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
-      final lessonProvider = context.read<LessonProvider>();
+      // Seçilen öğrenci bilgilerini al
       final studentProvider = context.read<StudentProvider>();
+      final student = studentProvider.getStudentById(_selectedStudentId!);
 
-      // Başlangıç ve bitiş saatlerini hesapla
-      final startTime = DateFormat('HH:mm').format(_lessonDate);
-      final endTime = DateFormat(
-        'HH:mm',
-      ).format(_lessonDate.add(const Duration(hours: 1)));
+      if (student == null) {
+        throw const AppException(message: 'Seçilen öğrenci bulunamadı');
+      }
 
-      // Öğrenci adını bul
-      final student = studentProvider.students.firstWhere(
-        (s) => s.id == _selectedStudentId,
-        orElse: () => Student(id: '0', name: 'Bilinmeyen Öğrenci', grade: ''),
+      // Saat formatlarını düzenle
+      final startTime = DateFormat('HH:mm').format(
+        DateTime(
+          _lessonDate.year,
+          _lessonDate.month,
+          _lessonDate.day,
+          _lessonDate.hour,
+          _lessonDate.minute,
+        ),
+      );
+
+      final endTime = DateFormat('HH:mm').format(
+        DateTime(
+          _lessonDate.year,
+          _lessonDate.month,
+          _lessonDate.day,
+          _lessonDate.hour + 1,
+          _lessonDate.minute,
+        ),
       );
 
       final lesson = Lesson(
@@ -497,27 +689,48 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         status: _status,
         fee: _fee,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-        recurringPatternId: _recurringInfo.type != RecurringType.none
-            ? 'recurrence-${DateTime.now().millisecondsSinceEpoch}'
-            : null,
       );
 
-      if (_isEditMode) {
-        await lessonProvider.updateLesson(lesson);
-      } else {
-        await lessonProvider.addLesson(lesson);
-      }
+      final lessonProvider = context.read<LessonProvider>();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditMode ? 'Ders güncellendi' : 'Yeni ders eklendi',
-            ),
-            backgroundColor: AppColors.success,
-          ),
+      if (_isRecurring()) {
+        // Tekrarlanan ders serisi oluştur
+        await lessonProvider.createRecurringLessons(
+          baseLesson: lesson,
+          recurringInfo: _recurringInfo,
+          occurrences: _recurringOccurrences,
         );
-        context.pop();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Tekrarlanan ders serisi oluşturuldu: ${_recurringOccurrences + 1} ders',
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          context.pop();
+        }
+      } else {
+        // Tekrarlanmayan tek ders
+        if (_isEditMode) {
+          await lessonProvider.updateLesson(lesson);
+        } else {
+          await lessonProvider.addLesson(lesson);
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _isEditMode ? 'Ders güncellendi' : 'Yeni ders eklendi',
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          context.pop();
+        }
       }
     } catch (e) {
       if (mounted) {

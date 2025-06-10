@@ -62,7 +62,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Implement lesson detail screen
 - [✓] Create add/edit lesson form
 - [✓] Implement lesson delete functionality
-- [ ] Develop recurring lesson logic
+- [✓] Develop recurring lesson logic
 
 #### Hafta 6: Öğrenci Yönetimi
 - [ ] Create student list screen

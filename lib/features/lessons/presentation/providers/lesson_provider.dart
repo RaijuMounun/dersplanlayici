@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../../domain/models/lesson_model.dart';
+import '../../domain/models/recurring_pattern_model.dart';
+import '../../domain/services/recurring_lesson_service.dart';
+import '../../../../core/widgets/app_recurring_picker.dart' as ui;
 import '../../../../services/database/database_service.dart';
 import '../../../../core/error/app_exception.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +10,8 @@ import 'package:intl/intl.dart';
 /// Ders verilerini yöneten Provider sınıfı.
 class LessonProvider extends ChangeNotifier {
   final DatabaseService _databaseService;
+  final RecurringLessonService _recurringLessonService =
+      RecurringLessonService();
 
   List<Lesson> _lessons = [];
   bool _isLoading = false;
@@ -260,6 +265,157 @@ class LessonProvider extends ChangeNotifier {
     }
 
     return {'success': successCount, 'error': errorCount};
+  }
+
+  /// Tekrarlanan derslerin tümünü siler.
+  ///
+  /// [recurringPatternId] - Silinecek tekrarlanan derslerin pattern ID'si
+  Future<Map<String, int>> deleteRecurringLessons(
+    String recurringPatternId,
+  ) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      // Tekrarlanan dersleri bul
+      final db = await _databaseService.query(
+        table: 'lessons',
+        where: 'recurringPatternId = ?',
+        whereArgs: [recurringPatternId],
+      );
+
+      final lessonIds = db.map((e) => e['id'] as String).toList();
+
+      // Tüm dersleri sil
+      final result = await deleteLessons(lessonIds);
+
+      // Tekrarlama desenini sil
+      await _databaseService.delete(
+        table: 'recurring_patterns',
+        where: 'id = ?',
+        whereArgs: [recurringPatternId],
+      );
+
+      return result;
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+      return {'success': 0, 'error': 0};
+    } catch (e) {
+      _error = DatabaseException(
+        message:
+            'Tekrarlanan dersler silinirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+      return {'success': 0, 'error': 0};
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Tekrarlanan ders serisi oluşturur.
+  ///
+  /// [baseLesson] - Temel ders bilgilerini içeren ders nesnesi
+  /// [recurringInfo] - Tekrarlama bilgilerini içeren RecurringInfo nesnesi
+  /// [occurrences] - Oluşturulacak ders sayısı (mevcut ders dahil değil)
+  Future<void> createRecurringLessons({
+    required Lesson baseLesson,
+    required ui.RecurringInfo recurringInfo,
+    required int occurrences,
+  }) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      if (recurringInfo.type == ui.RecurringType.none) {
+        // Tekrarlanmayan ders
+        await addLesson(baseLesson);
+        return;
+      }
+
+      // RecurringPattern oluştur
+      final pattern = _recurringLessonService.convertToRecurringPattern(
+        recurringInfo: recurringInfo,
+        startDate: baseLesson.date,
+      );
+
+      // Deseni veritabanına kaydet
+      await _databaseService.insert(
+        table: 'recurring_patterns',
+        data: pattern.toMap(),
+      );
+
+      // İlk dersi oluştur ve ID'yi ata
+      final firstLesson = baseLesson.copyWith(recurringPatternId: pattern.id);
+      await addLesson(firstLesson);
+
+      // Tekrarlanan dersleri oluştur
+      final lessons = _recurringLessonService.generateRecurringLessons(
+        baseLesson: firstLesson,
+        pattern: pattern,
+        occurrences: occurrences,
+      );
+
+      // Ders çakışma kontrolü
+      for (var lesson in lessons) {
+        final hasConflict = await _databaseService.checkLessonConflict(
+          date: lesson.date,
+          startTime: lesson.startTime,
+          endTime: lesson.endTime,
+        );
+
+        if (hasConflict) {
+          throw LessonConflictException(
+            message:
+                'Çakışma: ${lesson.date} tarihinde ${lesson.startTime} saatinde başka bir ders var.',
+          );
+        }
+      }
+
+      // Tüm dersleri kaydet
+      for (var lesson in lessons) {
+        await _databaseService.insertLesson(lesson.toMap());
+      }
+
+      await loadLessons();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } catch (e) {
+      _error = DatabaseException(
+        message:
+            'Tekrarlanan dersler oluşturulurken hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Tekrarlanan ders desenini getirir.
+  Future<RecurringPattern?> getRecurringPattern(String patternId) async {
+    try {
+      final data = await _databaseService.query(
+        table: 'recurring_patterns',
+        where: 'id = ?',
+        whereArgs: [patternId],
+      );
+
+      if (data.isNotEmpty) {
+        return RecurringPattern.fromMap(data.first);
+      }
+      return null;
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _error = DatabaseException(
+        message: 'Tekrarlama deseni alınırken hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+      return null;
+    }
   }
 
   /// ID'ye göre ders arar.
