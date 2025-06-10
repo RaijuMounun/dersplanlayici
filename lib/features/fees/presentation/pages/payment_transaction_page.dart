@@ -94,12 +94,12 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Veriler yüklenirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Veriler yüklenirken hata oluştu: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
       }
     } finally {
       if (mounted) {
@@ -134,12 +134,12 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
     final amount = double.tryParse(_amountController.text) ?? 0;
     if (amount <= 0) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Lütfen geçerli bir tutar girin'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lütfen geçerli bir tutar girin'),
+          backgroundColor: AppColors.error,
+        ),
+      );
       }
       return;
     }

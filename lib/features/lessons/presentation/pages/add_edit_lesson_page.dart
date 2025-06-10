@@ -101,7 +101,8 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
 
           // Eğer tekrarlanan bir dersse
           if (lesson.recurringPatternId != null) {
-            // TODO: Tekrarlama bilgisini getir
+            // Tekrarlama bilgisini getir
+            _loadRecurringPattern(lesson.recurringPatternId!);
           }
         } else {
           _errorMessage = 'Ders bulunamadı';
@@ -812,6 +813,56 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  // Tekrarlama deseni bilgilerini yükler
+  Future<void> _loadRecurringPattern(String patternId) async {
+    try {
+      final lessonProvider = Provider.of<LessonProvider>(
+        context,
+        listen: false,
+      );
+
+      final pattern = await lessonProvider.getRecurringPattern(patternId);
+
+      if (pattern != null) {
+        // RecurringPattern modelinden RecurringInfo modeline dönüştürme
+        // İki farklı RecurringType enum'u var:
+        // 1) core/widgets/app_recurring_picker.dart içindeki
+        // 2) features/lessons/domain/models/recurring_pattern_model.dart içindeki
+
+        // core/widgets/app_recurring_picker.dart içindeki RecurringType'a dönüştürme
+        RecurringType pickerType = RecurringType.weekly; // Varsayılan değer
+
+        // Tip değerini string karşılaştırması ile bulalım
+        final patternTypeName = pattern.type.toString().split('.').last;
+
+        if (patternTypeName == 'weekly') {
+          pickerType = pattern.interval == 2
+              ? RecurringType.biweekly
+              : RecurringType.weekly;
+        } else if (patternTypeName == 'monthly') {
+          pickerType = RecurringType.monthly;
+        }
+
+        setState(() {
+          _recurringInfo = RecurringInfo(
+            type: pickerType,
+            interval: pattern.interval,
+            weekdays: pattern.daysOfWeek,
+            dayOfMonth: pattern.dayOfMonth,
+            endDate: pattern.endDate != null
+                ? DateTime.parse(pattern.endDate!)
+                : null,
+          );
+          _recurringOccurrences = 5; // Varsayılan değer, backend'den gelmiyorsa
+        });
+      }
+    } catch (e) {
+      // Hata durumunda sessiz bir şekilde devam et
+      // ve en azından temel ders bilgilerini göster
+      debugPrint('Tekrarlama bilgisi yüklenemedi: $e');
     }
   }
 }

@@ -70,13 +70,15 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Takvim arama işlevselliği
+              // Takvim sayfasında arama diyaloğunu göster
+              _showSearchDialog(context, 'Takvimde Ara');
             },
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
-              // TODO: Takvim filtreleme işlevselliği
+              // Takvim filtreleme diyaloğunu göster
+              _showFilterDialog(context, 'Takvim Filtreleri');
             },
           ),
         ];
@@ -85,13 +87,15 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Dersler arama işlevselliği
+              // Dersler sayfasında arama diyaloğunu göster
+              _showSearchDialog(context, 'Derslerde Ara');
             },
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
-              // TODO: Dersler filtreleme işlevselliği
+              // Dersler filtreleme diyaloğunu göster
+              _showFilterDialog(context, 'Ders Filtreleri');
             },
           ),
         ];
@@ -100,7 +104,8 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Öğrenci arama işlevselliği
+              // Öğrenci arama diyaloğunu göster
+              _showSearchDialog(context, 'Öğrencilerde Ara');
             },
           ),
         ];
@@ -109,7 +114,8 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Ödeme arama işlevselliği
+              // Ödeme arama diyaloğunu göster
+              _showSearchDialog(context, 'Ödemelerde Ara');
             },
           ),
           IconButton(
@@ -125,6 +131,214 @@ class _HomePageState extends State<HomePage> {
       default:
         return null;
     }
+  }
+
+  // Arama diyaloğunu gösterir
+  void _showSearchDialog(BuildContext context, String title) {
+    final TextEditingController searchController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: searchController,
+          decoration: const InputDecoration(
+            hintText: 'Ara...',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          onSubmitted: (value) {
+            Navigator.pop(context, value);
+            _performSearch(value);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, searchController.text);
+              _performSearch(searchController.text);
+            },
+            child: const Text('Ara'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Filtreleme diyaloğunu gösterir
+  void _showFilterDialog(BuildContext context, String title) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: _buildFilterOptions(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _applyFilters();
+            },
+            child: const Text('Uygula'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Filtreleme seçeneklerini oluşturur
+  Widget _buildFilterOptions() {
+    // Seçili sayfaya göre filtreleme seçeneklerini göster
+    switch (_selectedIndex) {
+      case 0: // Takvim
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Takvim için filtreleme seçenekleri
+            _buildFilterCheckbox('Tamamlanan Dersler', true),
+            _buildFilterCheckbox('Planlanan Dersler', true),
+            _buildFilterCheckbox('İptal Edilen Dersler', false),
+            const Divider(),
+            _buildDateRangeSelector(),
+          ],
+        );
+      case 1: // Dersler
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Dersler için filtreleme seçenekleri
+            _buildFilterCheckbox('Tamamlanan', true),
+            _buildFilterCheckbox('Planlanan', true),
+            _buildFilterCheckbox('İptal Edilen', false),
+            const Divider(),
+            _buildFilterCheckbox('Bugün', false),
+            _buildFilterCheckbox('Bu Hafta', true),
+            _buildFilterCheckbox('Bu Ay', true),
+          ],
+        );
+      default:
+        return const Text('Bu sayfa için filtreleme seçeneği bulunmuyor.');
+    }
+  }
+
+  // Filtreleme için checkbox oluşturur
+  Widget _buildFilterCheckbox(String label, bool initialValue) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        bool isChecked = initialValue;
+        return CheckboxListTile(
+          title: Text(label),
+          value: isChecked,
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                isChecked = value;
+              });
+            }
+          },
+        );
+      },
+    );
+  }
+
+  // Tarih aralığı seçici
+  Widget _buildDateRangeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            'Tarih Aralığı',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton.icon(
+                icon: const Icon(Icons.calendar_today),
+                label: const Text('Başlangıç'),
+                onPressed: () {
+                  // Tarih seçimi
+                  showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                },
+              ),
+            ),
+            Expanded(
+              child: TextButton.icon(
+                icon: const Icon(Icons.calendar_today),
+                label: const Text('Bitiş'),
+                onPressed: () {
+                  // Tarih seçimi
+                  showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Arama işlemini gerçekleştirir
+  void _performSearch(String query) {
+    if (query.isEmpty) return;
+
+    // Şu an için sadece snackbar gösteriyoruz,
+    // gerçek implementasyon ilgili provider'lara bağlanmalıdır
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('"$query" araması yapılıyor...'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    // Gerçek implementasyon örnek:
+    // switch (_selectedIndex) {
+    //   case 0: // Takvim
+    //     Provider.of<CalendarProvider>(context, listen: false).search(query);
+    //     break;
+    //   case 1: // Dersler
+    //     Provider.of<LessonProvider>(context, listen: false).search(query);
+    //     break;
+    //   ...
+    // }
+  }
+
+  // Filtreleri uygular
+  void _applyFilters() {
+    // Şu an için sadece snackbar gösteriyoruz
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Filtreler uygulanıyor...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // Gerçek implementasyon buraya gelecek
   }
 
   Widget? _buildFloatingActionButton() {
