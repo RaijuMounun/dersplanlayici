@@ -11,7 +11,7 @@ import 'package:ders_planlayici/features/lessons/presentation/widgets/lesson_lis
 
 /// Widget'ları göstermek için örnek sayfa.
 class WidgetShowcasePage extends StatefulWidget {
-  const WidgetShowcasePage({Key? key}) : super(key: key);
+  const WidgetShowcasePage({super.key});
 
   @override
   State<WidgetShowcasePage> createState() => _WidgetShowcasePageState();

@@ -15,7 +15,7 @@ class AppBottomNavigation extends StatelessWidget {
   final bool showLabels;
 
   const AppBottomNavigation({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
     required this.items,
@@ -25,7 +25,7 @@ class AppBottomNavigation extends StatelessWidget {
     this.unselectedItemColor,
     this.iconSize = 24,
     this.showLabels = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

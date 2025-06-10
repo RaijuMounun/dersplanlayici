@@ -16,7 +16,7 @@ class AppCalendar extends StatelessWidget {
   final Color? eventIndicatorColor;
 
   const AppCalendar({
-    Key? key,
+    super.key,
     required this.initialDate,
     this.firstDate,
     this.lastDate,
@@ -27,7 +27,7 @@ class AppCalendar extends StatelessWidget {
     this.selectedDateColor,
     this.todayColor,
     this.eventIndicatorColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

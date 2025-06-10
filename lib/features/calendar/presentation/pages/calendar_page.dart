@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ders_planlayici/features/lessons/presentation/widgets/lesson_card.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
+import 'package:ders_planlayici/core/widgets/app_calendar.dart';
+import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -14,9 +15,7 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  CalendarFormat _calendarFormat = CalendarFormat.week;
-  DateTime _focusedDay = DateTime.now();
-  DateTime _selectedDay = DateTime.now();
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -29,103 +28,67 @@ class _CalendarPageState extends State<CalendarPage> {
           listen: false,
         );
         lessonProvider.loadLessons();
-        lessonProvider.setSelectedDate(_selectedDay);
+        lessonProvider.setSelectedDate(_selectedDate);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ders Takvimi'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.today),
-            onPressed: () {
-              setState(() {
-                _focusedDay = DateTime.now();
-                _selectedDay = DateTime.now();
-              });
-              Provider.of<LessonProvider>(
-                context,
-                listen: false,
-              ).setSelectedDate(_selectedDay);
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Takvim görünümü
-          _buildCalendarView(),
+    return Column(
+      children: [
+        // Takvim görünümü
+        _buildCalendarView(),
 
-          // Günlük ders listesi
-          Expanded(child: _buildDailyLessonsList()),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final lessonProvider = Provider.of<LessonProvider>(
-            context,
-            listen: false,
-          );
-
-          // Go Router ile navigasyon
-          await context.push('/add-lesson');
-
-          if (mounted) {
-            lessonProvider.loadLessons();
-            final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDay);
-            lessonProvider.loadLessonsByDate(dateStr);
-          }
-        },
-        child: const Icon(Icons.add),
-      ),
+        // Günlük ders listesi
+        Expanded(child: _buildDailyLessonsList()),
+      ],
     );
   }
 
   Widget _buildCalendarView() {
-    return TableCalendar(
-      firstDay: DateTime.utc(2020, 1, 1),
-      lastDay: DateTime.utc(2030, 12, 31),
-      focusedDay: _focusedDay,
-      calendarFormat: _calendarFormat,
-      selectedDayPredicate: (day) {
-        return isSameDay(_selectedDay, day);
+    return Consumer<LessonProvider>(
+      builder: (context, lessonProvider, child) {
+        final events = _buildEventsMap(lessonProvider);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing8),
+          child: AppCalendar(
+            initialDate: _selectedDate,
+            events: events,
+            onDateSelected: (date) {
+              setState(() {
+                _selectedDate = date;
+              });
+              lessonProvider.setSelectedDate(_selectedDate);
+            },
+          ),
+        );
       },
-      onDaySelected: (selectedDay, focusedDay) {
-        setState(() {
-          _selectedDay = selectedDay;
-          _focusedDay = focusedDay;
-        });
-        Provider.of<LessonProvider>(
-          context,
-          listen: false,
-        ).setSelectedDate(selectedDay);
-      },
-      onFormatChanged: (format) {
-        setState(() {
-          _calendarFormat = format;
-        });
-      },
-      onPageChanged: (focusedDay) {
-        _focusedDay = focusedDay;
-      },
-      calendarStyle: CalendarStyle(
-        todayDecoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withAlpha(128),
-          shape: BoxShape.circle,
-        ),
-        selectedDecoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
-          shape: BoxShape.circle,
-        ),
-      ),
-      headerStyle: const HeaderStyle(
-        formatButtonVisible: true,
-        titleCentered: true,
-      ),
+    );
+  }
+
+  Map<DateTime, List<dynamic>> _buildEventsMap(LessonProvider lessonProvider) {
+    final Map<DateTime, List<dynamic>> eventsMap = {};
+
+    for (final lesson in lessonProvider.lessons) {
+      final date = _parseDate(lesson.date);
+      if (eventsMap.containsKey(date)) {
+        eventsMap[date]!.add(lesson.subject);
+      } else {
+        eventsMap[date] = [lesson.subject];
+      }
+    }
+
+    return eventsMap;
+  }
+
+  DateTime _parseDate(String date) {
+    final components = date.split('-');
+    return DateTime(
+      int.parse(components[0]), // yıl
+      int.parse(components[1]), // ay
+      int.parse(components[2]), // gün
     );
   }
 
@@ -142,13 +105,11 @@ class _CalendarPageState extends State<CalendarPage> {
         }
 
         if (lessonProvider.dailyLessons.isEmpty) {
-          return const Center(
-            child: Text('Bu gün için planlanmış ders bulunmamaktadır.'),
-          );
+          return _buildEmptyState();
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
           itemCount: lessonProvider.dailyLessons.length,
           itemBuilder: (context, index) {
             final lesson = lessonProvider.dailyLessons[index];
@@ -157,10 +118,52 @@ class _CalendarPageState extends State<CalendarPage> {
               subject: lesson.subject,
               startTime: lesson.startTime,
               endTime: lesson.endTime,
+              onTap: () async {
+                // TODO: Ders detay sayfasına yönlendir
+              },
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final dateStr = DateFormat('dd MMMM yyyy').format(_selectedDate);
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.event_available,
+            size: 64,
+            color: Colors.grey.withAlpha(128),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          Text(
+            '$dateStr tarihinde ders bulunmuyor',
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: AppDimensions.spacing24),
+          ElevatedButton.icon(
+            onPressed: () async {
+              // Ders ekleme sayfasına yönlendir
+              await context.push('/add-lesson');
+
+              if (mounted) {
+                final lessonProvider = Provider.of<LessonProvider>(
+                  context,
+                  listen: false,
+                );
+                lessonProvider.loadLessons();
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Ders Ekle'),
+          ),
+        ],
+      ),
     );
   }
 }

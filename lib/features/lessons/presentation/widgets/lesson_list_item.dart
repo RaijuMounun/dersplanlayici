@@ -19,7 +19,7 @@ class LessonListItem extends StatelessWidget {
   final VoidCallback? onMarkCompleted;
 
   const LessonListItem({
-    Key? key,
+    super.key,
     required this.lessonTitle,
     this.studentName,
     this.startTime,
@@ -31,7 +31,7 @@ class LessonListItem extends StatelessWidget {
     this.onEditPressed,
     this.onDeletePressed,
     this.onMarkCompleted,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
