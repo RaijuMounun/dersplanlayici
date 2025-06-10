@@ -225,6 +225,43 @@ class LessonProvider extends ChangeNotifier {
     }
   }
 
+  /// Birden fazla dersi siler.
+  ///
+  /// [ids] - Silinecek derslerin id listesi
+  /// Başarılı ve başarısız silme sayılarını içeren bir Map döndürür.
+  Future<Map<String, int>> deleteLessons(List<String> ids) async {
+    _setLoading(true);
+    _error = null;
+
+    int successCount = 0;
+    int errorCount = 0;
+
+    try {
+      for (var id in ids) {
+        try {
+          await _databaseService.deleteLesson(id);
+          successCount++;
+        } catch (e) {
+          errorCount++;
+        }
+      }
+
+      await loadLessons();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } catch (e) {
+      _error = DatabaseException(
+        message: 'Dersler silinirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+
+    return {'success': successCount, 'error': errorCount};
+  }
+
   /// ID'ye göre ders arar.
   Lesson? getLessonById(String id) {
     try {

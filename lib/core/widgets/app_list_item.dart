@@ -13,6 +13,7 @@ class AppListItem extends StatelessWidget {
   final bool hasBorder;
   final bool hasRoundedCorners;
   final EdgeInsetsGeometry? contentPadding;
+  final Color? backgroundColor;
 
   const AppListItem({
     super.key,
@@ -25,6 +26,7 @@ class AppListItem extends StatelessWidget {
     this.hasBorder = true,
     this.hasRoundedCorners = true,
     this.contentPadding,
+    this.backgroundColor,
   });
 
   @override
@@ -46,9 +48,9 @@ class AppListItem extends StatelessWidget {
         ? Border.all(color: AppColors.border, width: 1)
         : null;
 
-    final backgroundColor = selected
-        ? AppColors.primary.withAlpha(20)
-        : theme.cardColor;
+    final itemBackgroundColor =
+        backgroundColor ??
+        (selected ? AppColors.primary.withAlpha(20) : theme.cardColor);
 
     return Card(
       margin: const EdgeInsets.symmetric(
@@ -65,7 +67,7 @@ class AppListItem extends StatelessWidget {
         borderRadius: borderRadius,
         child: Ink(
           decoration: BoxDecoration(
-            color: backgroundColor,
+            color: itemBackgroundColor,
             borderRadius: borderRadius,
             border: border,
           ),

@@ -13,6 +13,7 @@ class LessonListItem extends StatelessWidget {
   final bool isCompleted;
   final double? fee;
   final bool isRecurring;
+  final bool isSelected;
   final VoidCallback? onTap;
   final VoidCallback? onEditPressed;
   final VoidCallback? onDeletePressed;
@@ -27,6 +28,7 @@ class LessonListItem extends StatelessWidget {
     this.isCompleted = false,
     this.fee,
     this.isRecurring = false,
+    this.isSelected = false,
     this.onTap,
     this.onEditPressed,
     this.onDeletePressed,
@@ -94,14 +96,21 @@ class LessonListItem extends StatelessWidget {
       subtitle: studentName != null
           ? '$studentName\n$dateText $timeText'
           : '$dateText $timeText',
-      leading: leadingIcon,
+      leading: isSelected
+          ? const Icon(Icons.check_circle, color: AppColors.primary)
+          : leadingIcon,
       trailing: _buildTrailing(statusColor),
       onTap: onTap,
-      selected: isCompleted,
+      selected: isSelected || isCompleted,
+      backgroundColor: isSelected ? AppColors.primary.withAlpha(40) : null,
     );
   }
 
   Widget _buildTrailing(Color statusColor) {
+    if (isSelected) {
+      return const SizedBox.shrink(); // Seçim modunda trailing gösterme
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -141,7 +150,7 @@ class LessonListItem extends StatelessWidget {
             }
           },
           itemBuilder: (context) => [
-            if (!isCompleted)
+            if (!isCompleted && onMarkCompleted != null)
               const PopupMenuItem(
                 value: 'complete',
                 child: Row(
@@ -152,26 +161,28 @@ class LessonListItem extends StatelessWidget {
                   ],
                 ),
               ),
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit),
-                  SizedBox(width: AppDimensions.spacing8),
-                  Text('Düzenle'),
-                ],
+            if (onEditPressed != null)
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit),
+                    SizedBox(width: AppDimensions.spacing8),
+                    Text('Düzenle'),
+                  ],
+                ),
               ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete),
-                  SizedBox(width: AppDimensions.spacing8),
-                  Text('Sil'),
-                ],
+            if (onDeletePressed != null)
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete),
+                    SizedBox(width: AppDimensions.spacing8),
+                    Text('Sil'),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ],
