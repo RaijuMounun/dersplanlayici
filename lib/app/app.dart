@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
-import '../features/home/presentation/pages/home_page.dart';
 import '../features/students/presentation/providers/student_provider.dart';
 import '../features/lessons/presentation/providers/lesson_provider.dart';
 import '../features/fees/presentation/providers/fee_provider.dart';
 import '../services/database/database_service.dart';
 import '../core/data/database_helper.dart';
 import '../core/constants/app_constants.dart';
+import '../core/navigation/app_router.dart';
 
 class DersPlanlamaApp extends StatelessWidget {
   const DersPlanlamaApp({super.key});
@@ -34,13 +34,13 @@ class DersPlanlamaApp extends StatelessWidget {
           create: (context) => FeeProvider(databaseService),
         ),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: const HomePage(),
+        routerConfig: AppRouter.router,
       ),
     );
   }
