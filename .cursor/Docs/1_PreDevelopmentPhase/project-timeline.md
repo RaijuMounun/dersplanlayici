@@ -38,7 +38,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 ### Aşama 2: Development Phase (5 Hafta)
 
 #### Hafta 3: Temel Mimari ve Veritabanı
-- [ ] Set up project architecture
+- [✓] Set up project architecture
 - [ ] Implement state management (Provider)
 - [ ] Create navigation system
 - [ ] Set up local storage (SQLite)

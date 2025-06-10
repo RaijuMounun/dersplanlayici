@@ -15,15 +15,15 @@ Bu dosya, özel ders veren öğretmenler için geliştirilecek ders planlama uyg
 ### Project Setup
 - [✓] Choose Flutter version
 - [✓] Set up version control (GitHub)
-- [ ] Configure project settings
+- [✓] Configure project settings
 - [✓] Set up folder structure (features-based or layered architecture)
 - [✓] Install necessary packages (table_calendar, sqflite, path_provider, vb.)
-- [ ] Configure build settings
-- [ ] Set up development environment
+- [✓] Configure build settings
+- [✓] Set up development environment
 
 ## 2. Development Phase
 ### Core Architecture
-- [ ] Set up project architecture
+- [✓] Set up project architecture
 - [ ] Implement state management
 - [ ] Create navigation system (sekme tabanlı navigasyon)
 - [ ] Set up local storage (SQLite veya Hive)
