@@ -57,7 +57,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Design and implement forms (ders ekleme, öğrenci ekleme, vb.)
 
 #### Hafta 5: Takvim ve Dersler
-- [ ] Implement calendar view
+- [✓] Implement calendar view
 - [ ] Create lesson list view
 - [ ] Implement lesson detail screen
 - [ ] Create add/edit lesson form
@@ -121,8 +121,8 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 | Tarih | Kilometre Taşı | Durum |
 |-------|----------------|-------|
 | Hafta 2 Sonu | Temel proje yapısı kurulmuş | Tamamlandı |
-| Hafta 4 Sonu | Temel UI ve navigasyon tamamlanmış | Başlanmadı |
-| Hafta 7 Sonu | Tüm temel özellikler implement edilmiş | Başlanmadı |
+| Hafta 4 Sonu | Temel UI ve navigasyon tamamlanmış | Tamamlandı |
+| Hafta 7 Sonu | Tüm temel özellikler implement edilmiş | Devam Ediyor |
 | Hafta 8 Sonu | Test edilmiş ve hataları giderilmiş | Başlanmadı |
 | Hafta 9 Sonu | UI/UX iyileştirmeleri tamamlanmış | Başlanmadı |
 | Hafta 10 Sonu | Uygulama yayınlanmaya hazır | Başlanmadı |
