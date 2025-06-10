@@ -6,6 +6,8 @@ import 'package:ders_planlayici/features/students/presentation/providers/student
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
+import 'package:ders_planlayici/core/utils/responsive_utils.dart';
+import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 
 class StudentsPage extends StatefulWidget {
   const StudentsPage({super.key});
@@ -47,50 +49,78 @@ class _StudentsPageState extends State<StudentsPage> {
           return _buildEmptyState();
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppDimensions.spacing16),
-          itemCount: studentProvider.students.length,
-          itemBuilder: (context, index) {
-            final Student student = studentProvider.students[index];
-            return StudentCard(
-              studentName: student.name,
-              studentGrade: student.grade,
-              phoneNumber: student.phone,
-              email: student.email,
-              onTap: () async {
-                final studentProvider = Provider.of<StudentProvider>(
-                  context,
-                  listen: false,
-                );
-
-                // Go Router ile navigasyon
-                await context.push('/student/${student.id}');
-
-                if (mounted) {
-                  studentProvider.loadStudents();
-                }
-              },
-              onEditPressed: () async {
-                // Öğrenciyi bu scope'ta alıyoruz, böylece async gap sonrası tekrar context'e erişmek zorunda kalmıyoruz
-                final provider = Provider.of<StudentProvider>(
-                  context,
-                  listen: false,
-                );
-
-                // Öğrenci düzenleme sayfasına yönlendir
-                await context.push('/student/${student.id}/edit');
-
-                if (mounted) {
-                  provider.loadStudents();
-                }
-              },
-              onDeletePressed: () {
-                // Öğrenci silme işlemi
-                _showDeleteConfirmation(context, student);
-              },
-            );
-          },
+        // Responsive layout kullanarak ekran boyutuna göre farklı görünüm göster
+        return ResponsiveLayout(
+          mobile: _buildListView(studentProvider.students),
+          tablet: _buildGridView(studentProvider.students, 2),
+          desktop: _buildGridView(studentProvider.students, 3),
         );
+      },
+    );
+  }
+
+  // Liste görünümü (mobil)
+  Widget _buildListView(List<Student> students) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      itemCount: students.length,
+      itemBuilder: (context, index) {
+        return _buildStudentCard(students[index]);
+      },
+    );
+  }
+
+  // Grid görünümü (tablet ve desktop)
+  Widget _buildGridView(List<Student> students, int crossAxisCount) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: AppDimensions.spacing12,
+        mainAxisSpacing: AppDimensions.spacing12,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: students.length,
+      itemBuilder: (context, index) {
+        return _buildStudentCard(students[index]);
+      },
+    );
+  }
+
+  // Öğrenci kartı
+  Widget _buildStudentCard(Student student) {
+    return StudentCard(
+      studentName: student.name,
+      studentGrade: student.grade,
+      phoneNumber: student.phone,
+      email: student.email,
+      onTap: () async {
+        final studentProvider = Provider.of<StudentProvider>(
+          context,
+          listen: false,
+        );
+
+        // Go Router ile navigasyon
+        await context.push('/student/${student.id}');
+
+        if (mounted) {
+          studentProvider.loadStudents();
+        }
+      },
+      onEditPressed: () async {
+        // Öğrenciyi bu scope'ta alıyoruz, böylece async gap sonrası tekrar context'e erişmek zorunda kalmıyoruz
+        final provider = Provider.of<StudentProvider>(context, listen: false);
+
+        // Öğrenci düzenleme sayfasına yönlendir
+        await context.push('/student/${student.id}/edit');
+
+        if (mounted) {
+          provider.loadStudents();
+        }
+      },
+      onDeletePressed: () {
+        // Öğrenci silme işlemi
+        _showDeleteConfirmation(context, student);
       },
     );
   }
@@ -102,13 +132,21 @@ class _StudentsPageState extends State<StudentsPage> {
         children: [
           Icon(
             Icons.people,
-            size: 64,
+            size: ResponsiveUtils.deviceValue(
+              context: context,
+              mobile: 64.0,
+              tablet: 80.0,
+              desktop: 96.0,
+            ),
             color: AppColors.textSecondary.withAlpha(128),
           ),
           const SizedBox(height: AppDimensions.spacing16),
           Text(
             'Henüz öğrenci bulunmamaktadır',
-            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: AppDimensions.spacing24),
           ElevatedButton.icon(
@@ -131,12 +169,23 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   void _showDeleteConfirmation(BuildContext context, Student student) {
+    // Dialog boyutunu responsive yap
+    final dialogWidth = ResponsiveUtils.deviceValue(
+      context: context,
+      mobile: 320.0,
+      tablet: 400.0,
+      desktop: 480.0,
+    );
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Öğrenci Sil'),
-        content: Text(
-          '${student.name} isimli öğrenciyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+        content: SizedBox(
+          width: dialogWidth,
+          child: Text(
+            '${student.name} isimli öğrenciyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+          ),
         ),
         actions: [
           TextButton(

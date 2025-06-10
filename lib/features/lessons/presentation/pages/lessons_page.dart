@@ -5,6 +5,8 @@ import 'package:ders_planlayici/features/lessons/presentation/widgets/lesson_lis
 import 'package:provider/provider.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
+import 'package:ders_planlayici/core/utils/responsive_utils.dart';
+import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 import 'package:intl/intl.dart';
 
 /// Dersler listesini gösteren ana sayfa.
@@ -40,19 +42,37 @@ class _LessonsPageState extends State<LessonsPage>
 
   @override
   Widget build(BuildContext context) {
+    // Tab bar'ın boyutunu ekran genişliğine göre ayarla
+    final tabHeight = ResponsiveUtils.deviceValue<double>(
+      context: context,
+      mobile: 48.0,
+      tablet: 56.0,
+      desktop: 64.0,
+    );
+
     return Column(
       children: [
-        // Tab Bar
-        TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: 'Gelecek'),
-            Tab(text: 'Tamamlanan'),
-            Tab(text: 'Tümü'),
-          ],
+        // Tab Bar - responsive boyutlar ile
+        SizedBox(
+          height: tabHeight,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.primary,
+            labelStyle: TextStyle(
+              fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelStyle: TextStyle(
+              fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
+            ),
+            tabs: const [
+              Tab(text: 'Gelecek'),
+              Tab(text: 'Tamamlanan'),
+              Tab(text: 'Tümü'),
+            ],
+          ),
         ),
 
         // Tab İçerikleri
@@ -86,38 +106,79 @@ class _LessonsPageState extends State<LessonsPage>
           return _buildEmptyState(filterType);
         }
 
-        // Ders listesini göster
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppDimensions.spacing8),
-          itemCount: lessons.length,
-          itemBuilder: (context, index) {
-            final lesson = lessons[index];
-
-            // Lesson modeli kullanarak lesson_list_item'ı oluştur
-            return LessonListItem(
-              lessonTitle: lesson.subject,
-              studentName: lesson.studentName,
-              startTime: _parseDateTime(lesson.date, lesson.startTime),
-              endTime: _parseDateTime(lesson.date, lesson.endTime),
-              isCompleted: lesson.status == LessonStatus.completed,
-              fee:
-                  0.0, // Burada fee bilgisi modelde yok, varsayılan değer kullanıyoruz
-              isRecurring: lesson.recurringPatternId != null,
-              onTap: () {
-                // TODO: Ders detay sayfasına yönlendir
-              },
-              onEditPressed: () {
-                // TODO: Ders düzenleme sayfasına yönlendir
-              },
-              onDeletePressed: () {
-                // TODO: Ders silme işlevi
-              },
-              onMarkCompleted: () {
-                // TODO: Dersi tamamlandı olarak işaretle
-              },
-            );
-          },
+        // Ders listesini göster - responsive layout kullan
+        return ResponsiveLayout(
+          mobile: _buildMobileList(lessons),
+          tablet: _buildTabletList(lessons),
+          desktop: _buildDesktopList(lessons),
         );
+      },
+    );
+  }
+
+  // Mobil cihazlar için liste görünümü
+  Widget _buildMobileList(List<Lesson> lessons) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppDimensions.spacing8),
+      itemCount: lessons.length,
+      itemBuilder: (context, index) {
+        return _buildLessonItem(lessons[index]);
+      },
+    );
+  }
+
+  // Tablet cihazlar için liste görünümü - daha büyük paddingler
+  Widget _buildTabletList(List<Lesson> lessons) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      itemCount: lessons.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing8),
+          child: _buildLessonItem(lessons[index]),
+        );
+      },
+    );
+  }
+
+  // Desktop cihazlar için liste görünümü - çift sütunlu
+  Widget _buildDesktopList(List<Lesson> lessons) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 3.0,
+        crossAxisSpacing: AppDimensions.spacing16,
+        mainAxisSpacing: AppDimensions.spacing16,
+      ),
+      itemCount: lessons.length,
+      itemBuilder: (context, index) {
+        return _buildLessonItem(lessons[index]);
+      },
+    );
+  }
+
+  // Ders liste öğesi
+  Widget _buildLessonItem(Lesson lesson) {
+    return LessonListItem(
+      lessonTitle: lesson.subject,
+      studentName: lesson.studentName,
+      startTime: _parseDateTime(lesson.date, lesson.startTime),
+      endTime: _parseDateTime(lesson.date, lesson.endTime),
+      isCompleted: lesson.status == LessonStatus.completed,
+      fee: 0.0, // Burada fee bilgisi modelde yok, varsayılan değer kullanıyoruz
+      isRecurring: lesson.recurringPatternId != null,
+      onTap: () {
+        // TODO: Ders detay sayfasına yönlendir
+      },
+      onEditPressed: () {
+        // TODO: Ders düzenleme sayfasına yönlendir
+      },
+      onDeletePressed: () {
+        // TODO: Ders silme işlevi
+      },
+      onMarkCompleted: () {
+        // TODO: Dersi tamamlandı olarak işaretle
       },
     );
   }
@@ -145,19 +206,45 @@ class _LessonsPageState extends State<LessonsPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppColors.textSecondary.withAlpha(128)),
+          Icon(
+            icon,
+            size: ResponsiveUtils.deviceValue(
+              context: context,
+              mobile: 64.0,
+              tablet: 80.0,
+              desktop: 96.0,
+            ),
+            color: AppColors.textSecondary.withAlpha(128),
+          ),
           const SizedBox(height: AppDimensions.spacing16),
           Text(
             message,
-            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: AppDimensions.spacing24),
-          ElevatedButton.icon(
-            onPressed: () {
-              // TODO: Ders ekleme sayfasına yönlendir
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Ders Ekle'),
+          SizedBox(
+            width: ResponsiveUtils.deviceValue(
+              context: context,
+              mobile: 160.0,
+              tablet: 200.0,
+              desktop: 220.0,
+            ),
+            height: ResponsiveUtils.deviceValue(
+              context: context,
+              mobile: 40.0,
+              tablet: 48.0,
+              desktop: 56.0,
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                // TODO: Ders ekleme sayfasına yönlendir
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Ders Ekle'),
+            ),
           ),
         ],
       ),
