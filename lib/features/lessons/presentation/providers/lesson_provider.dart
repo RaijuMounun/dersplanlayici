@@ -1,121 +1,252 @@
 import 'package:flutter/foundation.dart';
-import 'package:ders_planlayici/features/lessons/data/repositories/lesson_repository.dart';
-import 'package:ders_planlayici/features/lessons/domain/models/lesson.dart';
+import '../../domain/models/lesson_model.dart';
+import '../../../../services/database/database_service.dart';
+import '../../../../core/error/app_exception.dart';
+import 'package:intl/intl.dart';
 
-class LessonProvider with ChangeNotifier {
-  final LessonRepository _repository = LessonRepository();
+/// Ders verilerini yöneten Provider sınıfı.
+class LessonProvider extends ChangeNotifier {
+  final DatabaseService _databaseService;
+
   List<Lesson> _lessons = [];
-  List<Lesson> _dailyLessons = [];
-  DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
-  String _error = '';
+  AppException? _error;
+  DateTime _selectedDate = DateTime.now();
 
+  /// Ders listesini döndürür.
   List<Lesson> get lessons => _lessons;
-  List<Lesson> get dailyLessons => _dailyLessons;
-  DateTime get selectedDate => _selectedDate;
-  bool get isLoading => _isLoading;
-  String get error => _error;
 
+  /// Seçili tarihteki dersleri döndürür.
+  List<Lesson> get dailyLessons {
+    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    return _lessons.where((lesson) => lesson.date == dateStr).toList();
+  }
+
+  /// Yükleme durumunu döndürür.
+  bool get isLoading => _isLoading;
+
+  /// Hata durumunu döndürür.
+  AppException? get error => _error;
+
+  /// Seçili tarihi döndürür.
+  DateTime get selectedDate => _selectedDate;
+
+  LessonProvider(this._databaseService);
+
+  /// Seçili tarihi ayarlar ve o tarihteki dersleri yükler.
   void setSelectedDate(DateTime date) {
     _selectedDate = date;
-    loadLessonsByDate(date);
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    loadLessonsByDate(dateStr);
+    notifyListeners();
   }
 
+  /// Tüm dersleri veritabanından yükler.
   Future<void> loadLessons() async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+    _setLoading(true);
+    _error = null;
 
     try {
-      _lessons = await _repository.getAllLessons();
+      final lessonsData = await _databaseService.getLessons();
+      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
     } catch (e) {
-      _error = 'Dersler yüklenirken bir hata oluştu: $e';
+      _error = DatabaseException(
+        message: 'Dersler yüklenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
     }
   }
 
-  Future<void> loadLessonsByDate(DateTime date) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+  /// Tarih aralığına göre dersleri yükler.
+  Future<void> loadLessonsByDateRange(String startDate, String endDate) async {
+    _setLoading(true);
+    _error = null;
 
     try {
-      _dailyLessons = await _repository.getLessonsByDate(date);
+      final lessonsData = await _databaseService.getLessonsByDateRange(
+        startDate,
+        endDate,
+      );
+      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
     } catch (e) {
-      _error = 'Günlük dersler yüklenirken bir hata oluştu: $e';
+      _error = DatabaseException(
+        message:
+            'Tarih aralığındaki dersler yüklenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
     }
   }
 
-  Future<List<Lesson>> getLessonsByStudent(String studentId) async {
+  /// Belirli bir tarihe göre dersleri yükler.
+  Future<void> loadLessonsByDate(String date) async {
+    _setLoading(true);
+    _error = null;
+
     try {
-      return await _repository.getLessonsByStudent(studentId);
-    } catch (e) {
-      _error = 'Öğrenci dersleri yüklenirken bir hata oluştu: $e';
+      final lessonsData = await _databaseService.getLessonsByDate(date);
+      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
       notifyListeners();
-      return [];
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } catch (e) {
+      _error = DatabaseException(
+        message:
+            'Belirli tarihteki dersler yüklenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
     }
   }
 
+  /// Öğrenciye göre dersleri yükler.
+  Future<void> loadLessonsByStudent(String studentId) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      final lessonsData = await _databaseService.getLessonsByStudent(studentId);
+      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } catch (e) {
+      _error = DatabaseException(
+        message:
+            'Öğrenciye ait dersler yüklenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Ders ekler.
   Future<void> addLesson(Lesson lesson) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+    _setLoading(true);
+    _error = null;
 
     try {
-      await _repository.addLesson(lesson);
+      // Ders çakışması kontrolü
+      final hasConflict = await _databaseService.checkLessonConflict(
+        date: lesson.date,
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
+      );
+
+      if (hasConflict) {
+        throw const LessonConflictException(
+          message: 'Bu saatlerde başka bir ders zaten planlanmış.',
+        );
+      }
+
+      await _databaseService.insertLesson(lesson.toMap());
       await loadLessons();
-      await loadLessonsByDate(_selectedDate);
-    } catch (e) {
-      _error = 'Ders eklenirken bir hata oluştu: $e';
-      _isLoading = false;
+    } on AppException catch (e) {
+      _error = e;
       notifyListeners();
+    } catch (e) {
+      _error = DatabaseException(
+        message: 'Ders eklenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
     }
   }
 
+  /// Ders günceller.
   Future<void> updateLesson(Lesson lesson) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+    _setLoading(true);
+    _error = null;
 
     try {
-      await _repository.updateLesson(lesson);
+      // Ders çakışması kontrolü (kendi dışındaki derslerle)
+      final hasConflict = await _databaseService.checkLessonConflict(
+        date: lesson.date,
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
+        lessonId: lesson.id,
+      );
+
+      if (hasConflict) {
+        throw const LessonConflictException(
+          message: 'Bu saatlerde başka bir ders zaten planlanmış.',
+        );
+      }
+
+      await _databaseService.updateLesson(lesson.toMap());
       await loadLessons();
-      await loadLessonsByDate(_selectedDate);
-    } catch (e) {
-      _error = 'Ders güncellenirken bir hata oluştu: $e';
-      _isLoading = false;
+    } on AppException catch (e) {
+      _error = e;
       notifyListeners();
+    } catch (e) {
+      _error = DatabaseException(
+        message: 'Ders güncellenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
     }
   }
 
+  /// Ders siler.
   Future<void> deleteLesson(String id) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+    _setLoading(true);
+    _error = null;
 
     try {
-      await _repository.deleteLesson(id);
+      await _databaseService.deleteLesson(id);
       await loadLessons();
-      await loadLessonsByDate(_selectedDate);
-    } catch (e) {
-      _error = 'Ders silinirken bir hata oluştu: $e';
-      _isLoading = false;
+    } on AppException catch (e) {
+      _error = e;
       notifyListeners();
+    } catch (e) {
+      _error = DatabaseException(
+        message: 'Ders silinirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
     }
   }
 
-  Future<Lesson?> getLesson(String id) async {
+  /// ID'ye göre ders arar.
+  Lesson? getLessonById(String id) {
     try {
-      return await _repository.getLesson(id);
+      return _lessons.firstWhere((lesson) => lesson.id == id);
     } catch (e) {
-      _error = 'Ders bilgileri alınırken bir hata oluştu: $e';
-      notifyListeners();
       return null;
     }
   }
-} 
+
+  /// Belirli bir tarihteki ders sayısını döndürür.
+  int getLessonCountForDate(String date) {
+    return _lessons.where((lesson) => lesson.date == date).length;
+  }
+
+  /// Duruma göre dersleri filtreler.
+  List<Lesson> filterByStatus(LessonStatus status) {
+    return _lessons.where((lesson) => lesson.status == status).toList();
+  }
+
+  /// Yükleme durumunu günceller.
+  void _setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+}

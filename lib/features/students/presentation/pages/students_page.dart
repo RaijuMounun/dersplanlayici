@@ -4,7 +4,7 @@ import 'package:ders_planlayici/features/students/presentation/pages/add_student
 import 'package:ders_planlayici/features/students/presentation/pages/student_details_page.dart';
 import 'package:ders_planlayici/features/students/presentation/widgets/student_list_item.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
-import 'package:ders_planlayici/features/students/domain/models/student.dart';
+import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
 class StudentsPage extends StatefulWidget {
   const StudentsPage({super.key});
@@ -67,7 +67,8 @@ class _StudentsPageState extends State<StudentsPage> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (studentProvider.error.isNotEmpty) {
+        if (studentProvider.error != null &&
+            studentProvider.error.toString().isNotEmpty) {
           return Center(child: Text('Hata: ${studentProvider.error}'));
         }
 

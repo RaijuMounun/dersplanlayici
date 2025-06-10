@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class StudentListItem extends StatelessWidget {
   final String name;
   final String grade;
-  final List<String> subjects;
+  final List<String>? subjects;
   final VoidCallback onTap;
 
   const StudentListItem({
@@ -58,26 +58,27 @@ class StudentListItem extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: subjects.map((subject) {
-                        return Chip(
-                          label: Text(
-                            subject,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onPrimary,
+                    if (subjects != null && subjects!.isNotEmpty)
+                      Wrap(
+                        spacing: 8,
+                        children: subjects!.map((subject) {
+                          return Chip(
+                            label: Text(
+                              subject,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
                             ),
-                          ),
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primary.withAlpha(204),
-                          padding: const EdgeInsets.all(4),
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                        );
-                      }).toList(),
-                    ),
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary.withAlpha(204),
+                            padding: const EdgeInsets.all(4),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          );
+                        }).toList(),
+                      ),
                   ],
                 ),
               ),

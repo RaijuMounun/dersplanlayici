@@ -1,5 +1,5 @@
 import 'package:ders_planlayici/core/data/database_helper.dart';
-import 'package:ders_planlayici/features/students/domain/models/student.dart';
+import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 import 'package:uuid/uuid.dart';
 
 class StudentRepository {
@@ -28,4 +28,4 @@ class StudentRepository {
   Future<void> deleteStudent(String id) async {
     await _databaseHelper.deleteStudent(id);
   }
-} 
+}
