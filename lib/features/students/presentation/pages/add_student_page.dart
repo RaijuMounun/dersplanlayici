@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
 class AddStudentPage extends StatefulWidget {
-  const AddStudentPage({super.key});
+  final String? studentId;
+  const AddStudentPage({super.key, this.studentId});
 
   @override
   State<AddStudentPage> createState() => _AddStudentPageState();
@@ -16,9 +18,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
   final _parentNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _notesController = TextEditingController();
   String _selectedGrade = '5. Sınıf';
   final List<String> _selectedSubjects = [];
   bool _isLoading = false;
+  bool _isEditMode = false;
+  Student? _originalStudent;
 
   final List<String> _availableGrades = [
     '1. Sınıf',
@@ -29,6 +34,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
     '6. Sınıf',
     '7. Sınıf',
     '8. Sınıf',
+    'Lise 1',
+    'Lise 2',
+    'Lise 3',
+    'Lise 4',
+    'Üniversite',
+    'Mezun',
   ];
 
   final List<String> _availableSubjects = [
@@ -38,7 +49,69 @@ class _AddStudentPageState extends State<AddStudentPage> {
     'Sosyal Bilgiler',
     'İngilizce',
     'Hayat Bilgisi',
+    'Fizik',
+    'Kimya',
+    'Biyoloji',
+    'Tarih',
+    'Coğrafya',
+    'Edebiyat',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditMode = widget.studentId != null;
+
+    // Eğer düzenleme modundaysa, öğrenci bilgilerini yükle
+    if (_isEditMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadStudentDetails();
+      });
+    }
+  }
+
+  Future<void> _loadStudentDetails() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (!mounted) return;
+      final studentProvider = context.read<StudentProvider>();
+      final student = studentProvider.getStudentById(widget.studentId!);
+
+      if (student != null) {
+        setState(() {
+          _originalStudent = student;
+          _nameController.text = student.name;
+          _parentNameController.text = student.parentName ?? '';
+          _phoneController.text = student.phone ?? '';
+          _emailController.text = student.email ?? '';
+          _notesController.text = student.notes ?? '';
+          _selectedGrade = student.grade;
+
+          if (student.subjects != null) {
+            _selectedSubjects.clear();
+            _selectedSubjects.addAll(student.subjects!);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Öğrenci bilgileri yüklenirken hata oluştu: $e'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -46,13 +119,24 @@ class _AddStudentPageState extends State<AddStudentPage> {
     _parentNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Öğrenci Ekle')),
+      appBar: AppBar(
+        title: Text(_isEditMode ? 'Öğrenciyi Düzenle' : 'Öğrenci Ekle'),
+        actions: [
+          if (_isEditMode)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _confirmDeleteStudent,
+              tooltip: 'Öğrenciyi Sil',
+            ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -101,6 +185,17 @@ class _AddStudentPageState extends State<AddStudentPage> {
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Notlar',
+                        border: OutlineInputBorder(),
+                        alignLabelWithHint: true,
+                      ),
+                      minLines: 3,
+                      maxLines: 5,
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -156,21 +251,32 @@ class _AddStudentPageState extends State<AddStudentPage> {
                               }
                             });
                           },
+                          selectedColor: Theme.of(
+                            context,
+                          ).colorScheme.primary.withAlpha(180),
+                          checkmarkColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : null,
+                          ),
                         );
                       }).toList(),
                     ),
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
+                      height: 50,
                       child: ElevatedButton(
-                        onPressed: _saveStudent,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
-                          'Kaydet',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                        onPressed: _isLoading ? null : _saveStudent,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(_isEditMode ? 'Güncelle' : 'Kaydet'),
                       ),
                     ),
                   ],
@@ -180,50 +286,144 @@ class _AddStudentPageState extends State<AddStudentPage> {
     );
   }
 
-  Future<void> _saveStudent() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+  void _saveStudent() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      try {
-        // Öğrenci nesnesini oluştur
-        final student = Student(
-          id: '', // ID repository tarafından atanacak
-          name: _nameController.text,
-          grade: _selectedGrade,
-          parentName: _parentNameController.text,
-          phone: _phoneController.text,
-          email: _emailController.text,
-          subjects: List.from(_selectedSubjects),
-          notes: '',
-        );
+    setState(() {
+      _isLoading = true;
+    });
 
-        // Provider üzerinden öğrenciyi kaydet
-        await Provider.of<StudentProvider>(
-          context,
-          listen: false,
-        ).addStudent(student);
+    try {
+      // Öğrenci nesnesini oluştur
+      final student = _isEditMode
+          ? _originalStudent!.copyWith(
+              name: _nameController.text,
+              grade: _selectedGrade,
+              parentName: _parentNameController.text,
+              phone: _phoneController.text,
+              email: _emailController.text,
+              subjects: List.from(_selectedSubjects),
+              notes: _notesController.text,
+            )
+          : Student(
+              name: _nameController.text,
+              grade: _selectedGrade,
+              parentName: _parentNameController.text,
+              phone: _phoneController.text,
+              email: _emailController.text,
+              subjects: List.from(_selectedSubjects),
+              notes: _notesController.text,
+            );
 
-        // Başarılı kayıt sonrası geri dön
+      // Provider üzerinden öğrenciyi kaydet veya güncelle
+      final studentProvider = Provider.of<StudentProvider>(
+        context,
+        listen: false,
+      );
+
+      if (_isEditMode) {
+        await studentProvider.updateStudent(student);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Öğrenci başarıyla eklendi')),
+            const SnackBar(
+              content: Text('Öğrenci başarıyla güncellendi'),
+              backgroundColor: Colors.green,
+            ),
           );
-          Navigator.pop(context);
         }
-      } catch (e) {
+      } else {
+        await studentProvider.addStudent(student);
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Öğrenci başarıyla eklendi'),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+      }
+
+      // Başarılı kayıt sonrası geri dön
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _confirmDeleteStudent() {
+    if (!_isEditMode || _originalStudent == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Öğrenciyi Sil'),
+        content: Text(
+          '${_originalStudent!.name} adlı öğrenciyi silmek istediğinizden emin misiniz?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteStudent();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteStudent() async {
+    if (!_isEditMode || _originalStudent == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await context.read<StudentProvider>().deleteStudent(_originalStudent!.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Öğrenci başarıyla silindi'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Öğrenci silinirken hata oluştu: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
