@@ -68,7 +68,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Create student list screen
 - [✓] Implement student detail view
 - [✓] Create add/edit student form
-- [ ] Implement student search
+- [✓] Implement student search
 - [ ] Develop student deletion with confirmation
 - [ ] Implement student-lesson relationships
 

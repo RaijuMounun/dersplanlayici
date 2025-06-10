@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
@@ -22,6 +23,10 @@ class _StudentListPageState extends State<StudentListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedGrade = '';
+  bool _isSearching = false;
+  List<Student> _searchResults = [];
+  Timer? _debounce;
+
   final List<String> _gradeOptions = [
     '',
     'İlkokul',
@@ -40,17 +45,70 @@ class _StudentListPageState extends State<StudentListPage> {
       }
     });
 
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text;
-      });
-    });
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _searchQuery = _searchController.text;
+        });
+
+        if (_searchQuery.isNotEmpty) {
+          _performSearch();
+        } else {
+          setState(() {
+            _isSearching = false;
+            _searchResults = [];
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _performSearch() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isSearching = true;
+    });
+
+    try {
+      final results = await context.read<StudentProvider>().searchStudents(
+        _searchQuery,
+      );
+
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Arama yapılırken bir hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _toggleSelectionMode() {
@@ -93,36 +151,33 @@ class _StudentListPageState extends State<StudentListPage> {
   }
 
   List<Student> _getFilteredStudents(List<Student> students) {
-    if (_searchQuery.isEmpty && _selectedGrade.isEmpty) {
-      return students;
+    // Aktif bir arama varsa ve sonuçlar mevcutsa, arama sonuçlarını kullan
+    if (_searchQuery.isNotEmpty && _searchResults.isNotEmpty) {
+      // Eğer sınıf filtresi aktifse, arama sonuçlarını sınıfa göre filtrele
+      if (_selectedGrade.isNotEmpty) {
+        return _searchResults
+            .where((student) => student.grade == _selectedGrade)
+            .toList();
+      }
+      return _searchResults;
     }
 
-    return students.where((student) {
-      bool matchesSearch = true;
-      bool matchesGrade = true;
+    // Sadece sınıf filtresi varsa
+    if (_selectedGrade.isNotEmpty) {
+      return students
+          .where((student) => student.grade == _selectedGrade)
+          .toList();
+    }
 
-      if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
-        matchesSearch =
-            student.name.toLowerCase().contains(query) ||
-            (student.parentName?.toLowerCase().contains(query) ?? false) ||
-            (student.subjects?.join(' ').toLowerCase().contains(query) ??
-                false);
-      }
-
-      if (_selectedGrade.isNotEmpty) {
-        matchesGrade = student.grade == _selectedGrade;
-      }
-
-      return matchesSearch && matchesGrade;
-    }).toList();
+    // Hiçbir filtre yoksa
+    return students;
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<StudentProvider>(
       builder: (context, studentProvider, child) {
-        if (studentProvider.isLoading) {
+        if (studentProvider.isLoading || _isSearching) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -187,7 +242,14 @@ class _StudentListPageState extends State<StudentListPage> {
       controller: _searchController,
       decoration: InputDecoration(
         hintText: 'Öğrenci ara...',
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: _isSearching
+            ? Container(
+                margin: const EdgeInsets.all(14),
+                width: 10,
+                height: 10,
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.search),
         suffixIcon: _searchQuery.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear),
@@ -482,10 +544,21 @@ class _StudentListPageState extends State<StudentListPage> {
           ),
           const SizedBox(height: AppDimensions.spacing16),
           Text(
-            'Arama kriterlerinize uygun öğrenci bulunamadı',
+            _searchQuery.isNotEmpty
+                ? '"$_searchQuery" ile ilgili hiçbir sonuç bulunamadı'
+                : 'Arama kriterlerinize uygun öğrenci bulunamadı',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          Text(
+            'Farklı anahtar kelimeler deneyebilir veya filtreleri değiştirebilirsiniz',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
               color: AppColors.textSecondary,
             ),
           ),
@@ -495,6 +568,7 @@ class _StudentListPageState extends State<StudentListPage> {
               _searchController.clear();
               setState(() {
                 _selectedGrade = '';
+                _searchResults = [];
               });
             },
             icon: const Icon(Icons.refresh),

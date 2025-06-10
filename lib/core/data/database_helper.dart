@@ -337,6 +337,45 @@ class DatabaseHelper {
     }
   }
 
+  /// Öğrencileri arama kriterlerine göre arar
+  /// [searchTerm] arama terimi
+  /// Öğrenci adı, veli adı, sınıf ve notlarda arama yapar
+  Future<List<Map<String, dynamic>>> searchStudents(String searchTerm) async {
+    try {
+      if (searchTerm.trim().isEmpty) {
+        return getStudents();
+      }
+
+      final db = await database;
+      developer.log('Öğrenciler aranıyor, Arama terimi: $searchTerm');
+
+      final query = '%${searchTerm.toLowerCase()}%';
+
+      final result = await db.rawQuery(
+        '''
+        SELECT * FROM students 
+        WHERE lower(name) LIKE ? 
+        OR lower(parentName) LIKE ? 
+        OR lower(grade) LIKE ? 
+        OR lower(notes) LIKE ?
+        OR (
+          subjects IS NOT NULL AND lower(subjects) LIKE ?
+        )
+      ''',
+        [query, query, query, query, query],
+      );
+
+      developer.log(
+        '${result.length} öğrenci bulundu, Arama terimi: $searchTerm',
+      );
+      return result;
+    } catch (e) {
+      developer.log('Öğrenci arama hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>?> getStudent(String id) async {
     try {
       final db = await database;
