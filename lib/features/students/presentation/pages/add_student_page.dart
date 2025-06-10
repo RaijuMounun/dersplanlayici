@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
+import 'package:ders_planlayici/core/theme/app_dimensions.dart';
+import 'package:ders_planlayici/core/utils/responsive_utils.dart';
+import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
@@ -78,6 +82,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
     try {
       if (!mounted) return;
       final studentProvider = context.read<StudentProvider>();
+      await studentProvider.loadStudents();
+
+      if (!mounted) return;
       final student = studentProvider.getStudentById(widget.studentId!);
 
       if (student != null) {
@@ -95,12 +102,23 @@ class _AddStudentPageState extends State<AddStudentPage> {
             _selectedSubjects.addAll(student.subjects!);
           }
         });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Öğrenci bulunamadı'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Öğrenci bilgileri yüklenirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -127,7 +145,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditMode ? 'Öğrenciyi Düzenle' : 'Öğrenci Ekle'),
+        title: Text(_isEditMode ? 'Öğrenciyi Düzenle' : 'Yeni Öğrenci Ekle'),
         actions: [
           if (_isEditMode)
             IconButton(
@@ -139,150 +157,413 @@ class _AddStudentPageState extends State<AddStudentPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Öğrenci Adı Soyadı',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Lütfen öğrenci adını girin';
-                        }
-                        return null;
-                      },
+          : ResponsiveLayout(
+              mobile: _buildMobileForm(),
+              tablet: _buildTabletForm(),
+              desktop: _buildDesktopForm(),
+            ),
+    );
+  }
+
+  // Mobil görünüm için form
+  Widget _buildMobileForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildNameField(),
+            const SizedBox(height: AppDimensions.spacing16),
+            _buildParentNameField(),
+            const SizedBox(height: AppDimensions.spacing16),
+            _buildPhoneField(),
+            const SizedBox(height: AppDimensions.spacing16),
+            _buildEmailField(),
+            const SizedBox(height: AppDimensions.spacing16),
+            _buildGradeField(),
+            const SizedBox(height: AppDimensions.spacing24),
+            _buildSubjectsField(),
+            const SizedBox(height: AppDimensions.spacing16),
+            _buildNotesField(),
+            const SizedBox(height: AppDimensions.spacing32),
+            _buildSaveButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Tablet görünüm için form
+  Widget _buildTabletForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimensions.spacing24),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildNameField(),
+                      const SizedBox(height: AppDimensions.spacing16),
+                      _buildParentNameField(),
+                      const SizedBox(height: AppDimensions.spacing16),
+                      _buildPhoneField(),
+                      const SizedBox(height: AppDimensions.spacing16),
+                      _buildEmailField(),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.spacing24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildGradeField(),
+                      const SizedBox(height: AppDimensions.spacing24),
+                      _buildSubjectsField(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.spacing24),
+            _buildNotesField(),
+            const SizedBox(height: AppDimensions.spacing32),
+            Center(child: _buildSaveButton()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Masaüstü görünüm için form
+  Widget _buildDesktopForm() {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        padding: const EdgeInsets.all(AppDimensions.spacing32),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildNameField(),
+                        const SizedBox(height: AppDimensions.spacing16),
+                        _buildParentNameField(),
+                        const SizedBox(height: AppDimensions.spacing16),
+                        _buildPhoneField(),
+                        const SizedBox(height: AppDimensions.spacing16),
+                        _buildEmailField(),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _parentNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Veli Adı Soyadı',
-                        border: OutlineInputBorder(),
-                      ),
+                  ),
+                  const SizedBox(width: AppDimensions.spacing32),
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildGradeField(),
+                        const SizedBox(height: AppDimensions.spacing24),
+                        _buildSubjectsField(),
+                        const SizedBox(height: AppDimensions.spacing24),
+                        _buildNotesField(),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Telefon',
-                        border: OutlineInputBorder(),
-                        prefixText: '+90 ',
-                      ),
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'E-posta',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Notlar',
-                        border: OutlineInputBorder(),
-                        alignLabelWithHint: true,
-                      ),
-                      minLines: 3,
-                      maxLines: 5,
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Sınıf',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _selectedGrade,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _availableGrades.map((grade) {
-                        return DropdownMenuItem<String>(
-                          value: grade,
-                          child: Text(grade),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedGrade = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Dersler',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _availableSubjects.map((subject) {
-                        final isSelected = _selectedSubjects.contains(subject);
-                        return FilterChip(
-                          label: Text(subject),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedSubjects.add(subject);
-                              } else {
-                                _selectedSubjects.remove(subject);
-                              }
-                            });
-                          },
-                          selectedColor: Theme.of(
-                            context,
-                          ).colorScheme.primary.withAlpha(180),
-                          checkmarkColor: Colors.white,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : null,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _saveStudent,
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(_isEditMode ? 'Güncelle' : 'Kaydet'),
-                      ),
-                    ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.spacing32),
+              _buildSaveButton(width: 300),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Form alanları
+  Widget _buildNameField() {
+    return TextFormField(
+      controller: _nameController,
+      decoration: InputDecoration(
+        labelText: 'Öğrenci Adı Soyadı *',
+        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: AppColors.inputBackground,
+        prefixIcon: const Icon(Icons.person),
+      ),
+      textInputAction: TextInputAction.next,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Lütfen öğrenci adını girin';
+        }
+        if (value.length < 3) {
+          return 'Ad en az 3 karakter olmalıdır';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildParentNameField() {
+    return TextFormField(
+      controller: _parentNameController,
+      decoration: InputDecoration(
+        labelText: 'Veli Adı Soyadı',
+        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: AppColors.inputBackground,
+        prefixIcon: const Icon(Icons.people),
+      ),
+      textInputAction: TextInputAction.next,
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return TextFormField(
+      controller: _phoneController,
+      decoration: InputDecoration(
+        labelText: 'Telefon',
+        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: AppColors.inputBackground,
+        prefixIcon: const Icon(Icons.phone),
+        prefixText: '+90 ',
+        hintText: '5XX XXX XX XX',
+      ),
+      keyboardType: TextInputType.phone,
+      textInputAction: TextInputAction.next,
+      validator: (value) {
+        if (value != null && value.isNotEmpty) {
+          // Basit bir telefon numarası doğrulama
+          final phoneRegex = RegExp(r'^[0-9]{10}$');
+          if (!phoneRegex.hasMatch(value.replaceAll(RegExp(r'\s+'), ''))) {
+            return 'Geçerli bir telefon numarası girin';
+          }
+        }
+        return null;
+      },
+      onChanged: (value) {
+        // Telefon numarası formatını düzenle
+        if (value.isNotEmpty) {
+          String digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+          String formatted = '';
+
+          for (int i = 0; i < digitsOnly.length && i < 10; i++) {
+            if (i == 3 || i == 6) {
+              formatted += ' ';
+            }
+            formatted += digitsOnly[i];
+          }
+
+          if (formatted != value) {
+            _phoneController.value = TextEditingValue(
+              text: formatted,
+              selection: TextSelection.collapsed(offset: formatted.length),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextFormField(
+      controller: _emailController,
+      decoration: InputDecoration(
+        labelText: 'E-posta',
+        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: AppColors.inputBackground,
+        prefixIcon: const Icon(Icons.email),
+      ),
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      validator: (value) {
+        if (value != null && value.isNotEmpty) {
+          // E-posta doğrulama
+          final emailRegex = RegExp(
+            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+          );
+          if (!emailRegex.hasMatch(value)) {
+            return 'Geçerli bir e-posta adresi girin';
+          }
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildGradeField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Sınıf *',
+          style: TextStyle(
+            fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.spacing8),
+        DropdownButtonFormField<String>(
+          value: _selectedGrade,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            filled: true,
+            fillColor: AppColors.inputBackground,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing16,
+              vertical: AppDimensions.spacing12,
+            ),
+          ),
+          items: _availableGrades.map((grade) {
+            return DropdownMenuItem<String>(value: grade, child: Text(grade));
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _selectedGrade = value;
+              });
+            }
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Lütfen bir sınıf seçin';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubjectsField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Dersler',
+          style: TextStyle(
+            fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.spacing8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppDimensions.spacing12),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.formBorder),
+            borderRadius: BorderRadius.circular(AppDimensions.radius8),
+            color: AppColors.inputBackground,
+          ),
+          child: Wrap(
+            spacing: AppDimensions.spacing8,
+            runSpacing: AppDimensions.spacing8,
+            children: _availableSubjects.map((subject) {
+              final isSelected = _selectedSubjects.contains(subject);
+              return FilterChip(
+                label: Text(subject),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedSubjects.add(subject);
+                    } else {
+                      _selectedSubjects.remove(subject);
+                    }
+                  });
+                },
+                selectedColor: AppColors.primary.withAlpha(180),
+                checkmarkColor: Colors.white,
+                labelStyle: TextStyle(color: isSelected ? Colors.white : null),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotesField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Notlar',
+          style: TextStyle(
+            fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.spacing8),
+        TextFormField(
+          controller: _notesController,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            filled: true,
+            fillColor: AppColors.inputBackground,
+            hintText: 'Öğrenci hakkında notlar...',
+          ),
+          minLines: 3,
+          maxLines: 5,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton({double? width}) {
+    return SizedBox(
+      width: width ?? double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _saveStudent,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radius8),
+          ),
+          elevation: 2,
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                _isEditMode ? 'Güncelle' : 'Kaydet',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
+      ),
     );
   }
 
@@ -299,22 +580,22 @@ class _AddStudentPageState extends State<AddStudentPage> {
       // Öğrenci nesnesini oluştur
       final student = _isEditMode
           ? _originalStudent!.copyWith(
-              name: _nameController.text,
+              name: _nameController.text.trim(),
               grade: _selectedGrade,
-              parentName: _parentNameController.text,
-              phone: _phoneController.text,
-              email: _emailController.text,
+              parentName: _parentNameController.text.trim(),
+              phone: _phoneController.text.trim(),
+              email: _emailController.text.trim(),
               subjects: List.from(_selectedSubjects),
-              notes: _notesController.text,
+              notes: _notesController.text.trim(),
             )
           : Student(
-              name: _nameController.text,
+              name: _nameController.text.trim(),
               grade: _selectedGrade,
-              parentName: _parentNameController.text,
-              phone: _phoneController.text,
-              email: _emailController.text,
+              parentName: _parentNameController.text.trim(),
+              phone: _phoneController.text.trim(),
+              email: _emailController.text.trim(),
               subjects: List.from(_selectedSubjects),
-              notes: _notesController.text,
+              notes: _notesController.text.trim(),
             );
 
       // Provider üzerinden öğrenciyi kaydet veya güncelle
@@ -327,9 +608,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         await studentProvider.updateStudent(student);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Öğrenci başarıyla güncellendi'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Öğrenci başarıyla güncellendi'),
+              backgroundColor: AppColors.success,
             ),
           );
         }
@@ -337,9 +618,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         await studentProvider.addStudent(student);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Öğrenci başarıyla eklendi'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Öğrenci başarıyla eklendi'),
+              backgroundColor: AppColors.success,
             ),
           );
         }
@@ -347,12 +628,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
       // Başarılı kayıt sonrası geri dön
       if (mounted) {
-        Navigator.pop(context);
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -372,7 +653,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
       builder: (context) => AlertDialog(
         title: const Text('Öğrenciyi Sil'),
         content: Text(
-          '${_originalStudent!.name} adlı öğrenciyi silmek istediğinizden emin misiniz?',
+          '${_originalStudent!.name} adlı öğrenciyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
         ),
         actions: [
           TextButton(
@@ -403,19 +684,19 @@ class _AddStudentPageState extends State<AddStudentPage> {
       await context.read<StudentProvider>().deleteStudent(_originalStudent!.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Öğrenci başarıyla silindi'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Öğrenci başarıyla silindi'),
+            backgroundColor: AppColors.success,
           ),
         );
-        Navigator.pop(context);
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Öğrenci silinirken hata oluştu: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
