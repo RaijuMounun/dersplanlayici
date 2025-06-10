@@ -76,7 +76,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Implement fee tracking system
 - [✓] Create fee history view
 - [✓] Develop fee management screen
-- [ ] Implement automatic fee calculation
+- [✓] Implement automatic fee calculation
 - [ ] Create payment recording system
 - [ ] Final feature implementations
 - [ ] Integrate all modules

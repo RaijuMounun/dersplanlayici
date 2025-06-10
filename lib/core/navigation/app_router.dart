@@ -10,6 +10,7 @@ import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_pa
 import 'package:ders_planlayici/features/fees/presentation/pages/add_payment_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/fee_history_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/fee_management_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/auto_fee_calculation_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
@@ -104,6 +105,13 @@ class AppRouter {
             path: 'fee-management',
             name: 'feeManagement',
             builder: (context, state) => const FeeManagementPage(),
+          ),
+
+          // Otomatik ücret hesaplama sayfası
+          GoRoute(
+            path: 'auto-fee-calculation',
+            name: 'autoFeeCalculation',
+            builder: (context, state) => const AutoFeeCalculationPage(),
           ),
 
           // Ödeme ekleme sayfası

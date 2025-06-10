@@ -154,6 +154,13 @@ class _FeeManagementPageState extends State<FeeManagementPage>
         title: const Text('Ücret Yönetimi'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calculate),
+            tooltip: 'Otomatik Ücret Hesaplama',
+            onPressed: () {
+              context.push('/auto-fee-calculation');
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'Ödeme Geçmişi',
             onPressed: () {
