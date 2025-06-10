@@ -77,8 +77,8 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Create fee history view
 - [✓] Develop fee management screen
 - [✓] Implement automatic fee calculation
-- [ ] Create payment recording system
-- [ ] Final feature implementations
+- [✓] Create payment recording system
+- [✓] Final feature implementations
 - [ ] Integrate all modules
 
 ### Aşama 3: Testing Phase (1 Hafta)

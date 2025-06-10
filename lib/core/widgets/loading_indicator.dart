@@ -50,7 +50,7 @@ class LoadingIndicator extends StatelessWidget {
           children: [
             ModalBarrier(
               dismissible: false,
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withAlpha(77),
             ),
             Center(child: loadingWidget),
           ],
@@ -68,8 +68,8 @@ class LoadingIndicator extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return WillPopScope(
-          onWillPop: () async => false,
+        return PopScope(
+          canPop: false,
           child: LoadingIndicator(message: message, isOverlay: true),
         );
       },

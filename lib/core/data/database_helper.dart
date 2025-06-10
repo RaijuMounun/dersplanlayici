@@ -48,7 +48,7 @@ class DatabaseHelper {
       // Veritabanını oluştur veya aç
       return await openDatabase(
         path,
-        version: 3,
+        version: 4,
         onCreate: _createDb,
         onUpgrade: _onUpgradeDb,
         onOpen: (db) {
@@ -163,6 +163,42 @@ class DatabaseHelper {
           )
         ''');
         developer.log('Ödemeler tablosu oluşturuldu');
+
+        // Ödeme işlemleri tablosu
+        await db.execute('''
+          CREATE TABLE payment_transactions(
+            id TEXT PRIMARY KEY,
+            paymentId TEXT NOT NULL,
+            amount REAL NOT NULL,
+            date TEXT NOT NULL,
+            method TEXT NOT NULL,
+            notes TEXT,
+            receiptNo TEXT,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL,
+            FOREIGN KEY (paymentId) REFERENCES payments (id) ON DELETE CASCADE
+          )
+        ''');
+        developer.log('Ödeme işlemleri tablosu oluşturuldu');
+      }
+
+      if (oldVersion < 4) {
+        // Versiyon 3'ten 4'e geçiş - Ödeme işlemleri tablosunu ekle
+        await db.execute('''
+          CREATE TABLE payment_transactions(
+            id TEXT PRIMARY KEY,
+            paymentId TEXT NOT NULL,
+            amount REAL NOT NULL,
+            date TEXT NOT NULL,
+            method TEXT NOT NULL,
+            notes TEXT,
+            receiptNo TEXT,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL,
+            FOREIGN KEY (paymentId) REFERENCES payments (id) ON DELETE CASCADE
+          )
+        ''');
+        developer.log('Ödeme işlemleri tablosu oluşturuldu');
       }
 
       developer.log('Veritabanı başarıyla güncellendi.');
@@ -254,6 +290,23 @@ class DatabaseHelper {
         )
       ''');
       developer.log('Ödemeler tablosu oluşturuldu');
+
+      // Ödeme işlemleri tablosu
+      await db.execute('''
+        CREATE TABLE payment_transactions(
+          id TEXT PRIMARY KEY,
+          paymentId TEXT NOT NULL,
+          amount REAL NOT NULL,
+          date TEXT NOT NULL,
+          method TEXT NOT NULL,
+          notes TEXT,
+          receiptNo TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL,
+          FOREIGN KEY (paymentId) REFERENCES payments (id) ON DELETE CASCADE
+        )
+      ''');
+      developer.log('Ödeme işlemleri tablosu oluşturuldu');
 
       // Ücret tablosu
       await db.execute('''

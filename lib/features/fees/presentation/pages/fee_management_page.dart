@@ -29,8 +29,6 @@ class _FeeManagementPageState extends State<FeeManagementPage>
   String _searchQuery = '';
 
   // Filtreleme seçenekleri
-  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
-  DateTime _endDate = DateTime.now();
   String _statusFilter = '';
 
   // İstatistikler
@@ -308,8 +306,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                   // Son 5 ödemeyi listele
                   ..._payments
                       .take(5)
-                      .map((payment) => _buildPaymentListItem(payment))
-                      .toList(),
+                      .map((payment) => _buildPaymentListItem(payment)),
                 ],
               ),
             ),
@@ -463,10 +460,6 @@ class _FeeManagementPageState extends State<FeeManagementPage>
       decimalDigits: 2,
     );
 
-    final formattedDate = DateFormat(
-      'dd/MM/yyyy',
-    ).format(DateTime.parse(payment.date));
-
     return ListTile(
       title: Text(payment.studentName),
       subtitle: Text(payment.description),
@@ -569,9 +562,6 @@ class _FeeManagementPageState extends State<FeeManagementPage>
   }
 
   Widget _buildPaymentCard(Payment payment) {
-    final formattedDate = DateFormat(
-      'dd/MM/yyyy',
-    ).format(DateTime.parse(payment.date));
     final statusColor = _getStatusColor(payment.status);
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
@@ -647,7 +637,9 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                   ),
                   const SizedBox(width: AppDimensions.spacing4),
                   Text(
-                    formattedDate,
+                    DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(DateTime.parse(payment.date)),
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                   if (payment.dueDate != null) ...[
@@ -800,8 +792,6 @@ class _FeeManagementPageState extends State<FeeManagementPage>
         return 'Gecikmiş';
       case PaymentStatus.cancelled:
         return 'İptal';
-      default:
-        return 'Bilinmiyor';
     }
   }
 
@@ -817,8 +807,6 @@ class _FeeManagementPageState extends State<FeeManagementPage>
         return Icons.warning_amber;
       case PaymentStatus.cancelled:
         return Icons.cancel;
-      default:
-        return Icons.help;
     }
   }
 
@@ -834,8 +822,6 @@ class _FeeManagementPageState extends State<FeeManagementPage>
         return AppColors.error;
       case PaymentStatus.cancelled:
         return AppColors.textSecondary;
-      default:
-        return AppColors.textPrimary;
     }
   }
 }

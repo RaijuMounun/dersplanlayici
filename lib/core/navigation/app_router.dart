@@ -11,6 +11,8 @@ import 'package:ders_planlayici/features/fees/presentation/pages/add_payment_pag
 import 'package:ders_planlayici/features/fees/presentation/pages/fee_history_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/fee_management_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/auto_fee_calculation_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/payment_transactions_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/payment_transaction_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
@@ -119,8 +121,8 @@ class AppRouter {
             path: 'add-payment',
             name: 'addPayment',
             builder: (context, state) {
-              final studentId = state.uri.queryParameters['studentId'];
-              return AddPaymentPage(studentId: studentId);
+              final queryParams = state.uri.queryParameters;
+              return AddPaymentPage(studentId: queryParams['studentId']);
             },
           ),
 
@@ -129,8 +131,8 @@ class AppRouter {
             path: 'edit-payment/:id',
             name: 'editPayment',
             builder: (context, state) {
-              final paymentId = state.pathParameters['id']!;
-              return AddPaymentPage(paymentId: paymentId);
+              final id = state.pathParameters['id'] ?? '';
+              return AddPaymentPage(paymentId: id);
             },
           ),
 
@@ -139,8 +141,38 @@ class AppRouter {
             path: 'fee-history',
             name: 'feeHistory',
             builder: (context, state) {
-              final studentId = state.uri.queryParameters['studentId'];
-              return FeeHistoryPage(studentId: studentId);
+              final queryParams = state.uri.queryParameters;
+              return FeeHistoryPage(studentId: queryParams['studentId']);
+            },
+          ),
+
+          // Payment Transaction routes
+          GoRoute(
+            path: 'payment-transactions/:paymentId',
+            name: 'paymentTransactions',
+            builder: (context, state) {
+              final paymentId = state.pathParameters['paymentId'] ?? '';
+              return PaymentTransactionsPage(paymentId: paymentId);
+            },
+          ),
+          GoRoute(
+            path: 'payment-transaction/:paymentId',
+            name: 'addPaymentTransaction',
+            builder: (context, state) {
+              final paymentId = state.pathParameters['paymentId'] ?? '';
+              return PaymentTransactionPage(paymentId: paymentId);
+            },
+          ),
+          GoRoute(
+            path: 'payment-transaction/:paymentId/:transactionId',
+            name: 'editPaymentTransaction',
+            builder: (context, state) {
+              final paymentId = state.pathParameters['paymentId'] ?? '';
+              final transactionId = state.pathParameters['transactionId'] ?? '';
+              return PaymentTransactionPage(
+                paymentId: paymentId,
+                transactionId: transactionId,
+              );
             },
           ),
         ],
