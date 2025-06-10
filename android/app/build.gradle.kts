@@ -6,8 +6,8 @@ plugins {
 }
 
 android {
-    namespace = "com.dersplanlayici.ders_planlayici"
-    compileSdk = flutter.compileSdkVersion
+    namespace = "com.raijumounun.dersplanlayici"
+    compileSdk = 34 // Android 14
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -20,14 +20,11 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.dersplanlayici.ders_planlayici"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        applicationId = "com.raijumounun.dersplanlayici"
+        minSdk = 21 // Android 5.0 Lollipop
+        targetSdk = 34 // Android 14
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     buildTypes {
@@ -35,10 +32,17 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("androidx.window:window:1.0.0")
+    implementation("androidx.window:window-java:1.0.0")
 }

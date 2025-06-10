@@ -6,8 +6,8 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 
 | Aşama | Süre | Durum |
 |-------|------|-------|
-| 1. Pre-Development Phase | 2 hafta | Devam ediyor |
-| 2. Development Phase | 5 hafta | Başlanmadı |
+| 1. Pre-Development Phase | 2 hafta | Tamamlandı |
+| 2. Development Phase | 5 hafta | Devam ediyor |
 | 3. Testing Phase | 1 hafta | Başlanmadı |
 | 4. Polish Phase | 1 hafta | Başlanmadı |
 | 5. Release Phase | 1 hafta | Başlanmadı |
@@ -28,17 +28,17 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 #### Hafta 2: Proje Kurulumu
 - [✓] Choose Flutter version
 - [✓] Set up version control
-- [ ] Configure project settings
+- [✓] Configure project settings
 - [✓] Set up folder structure
 - [✓] Install necessary packages
-- [ ] Configure build settings
+- [✓] Configure build settings
 - [✓] Create basic app structure
-- [ ] Set up development environment
+- [✓] Set up development environment
 
 ### Aşama 2: Development Phase (5 Hafta)
 
 #### Hafta 3: Temel Mimari ve Veritabanı
-- [ ] Set up project architecture
+- [✓] Set up project architecture
 - [ ] Implement state management (Provider)
 - [ ] Create navigation system
 - [ ] Set up local storage (SQLite)
@@ -118,7 +118,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 
 | Tarih | Kilometre Taşı | Durum |
 |-------|----------------|-------|
-| Hafta 2 Sonu | Temel proje yapısı kurulmuş | Başlanmadı |
+| Hafta 2 Sonu | Temel proje yapısı kurulmuş | Tamamlandı |
 | Hafta 4 Sonu | Temel UI ve navigasyon tamamlanmış | Başlanmadı |
 | Hafta 7 Sonu | Tüm temel özellikler implement edilmiş | Başlanmadı |
 | Hafta 8 Sonu | Test edilmiş ve hataları giderilmiş | Başlanmadı |
