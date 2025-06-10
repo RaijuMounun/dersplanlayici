@@ -4,6 +4,7 @@ import '../core/theme/app_theme.dart';
 import '../features/students/presentation/providers/student_provider.dart';
 import '../features/lessons/presentation/providers/lesson_provider.dart';
 import '../features/fees/presentation/providers/fee_provider.dart';
+import '../features/settings/presentation/providers/theme_provider.dart';
 import '../services/database/database_service.dart';
 import '../core/data/database_helper.dart';
 import '../core/constants/app_constants.dart';
@@ -23,6 +24,9 @@ class DersPlanlamaApp extends StatelessWidget {
         // Database servisi provider
         Provider<DatabaseService>.value(value: databaseService),
 
+        // Theme provider
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+
         // Feature providers
         ChangeNotifierProvider(
           create: (context) => StudentProvider(databaseService),
@@ -34,13 +38,15 @@ class DersPlanlamaApp extends StatelessWidget {
           create: (context) => FeeProvider(databaseService),
         ),
       ],
-      child: MaterialApp.router(
-        title: AppConstants.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        routerConfig: AppRouter.router,
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) => MaterialApp.router(
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          routerConfig: AppRouter.router,
+        ),
       ),
     );
   }

@@ -31,8 +31,8 @@ Bu dosya, özel ders veren öğretmenler için geliştirilecek ders planlama uyg
 - [✓] Create model classes (Student, Lesson, Fee, etc.)
 
 ### UI Development
-- [ ] Create design system (renk paleti, tipografi, vb.)
-- [ ] Implement theme
+- [✓] Create design system (renk paleti, tipografi, vb.)
+- [✓] Implement theme
 - [ ] Create reusable widgets (takvim, ders listesi, öğrenci kartı, vb.)
 - [ ] Implement responsive design
 - [ ] Create custom widgets

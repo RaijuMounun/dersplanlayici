@@ -47,12 +47,14 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Design and implement database schema
 
 #### Hafta 4: UI Tasarımı ve Temel Özellikler
-- [ ] Create design system
-- [ ] Implement theme
-- [ ] Create reusable widgets
+- [✓] Create design system (renk paleti, tipografi, vb.)
+- [✓] Implement theme
+- [ ] Create reusable widgets (takvim, ders listesi, öğrenci kartı, vb.)
 - [ ] Design and implement bottom navigation
 - [ ] Create basic layout for all screens
 - [ ] Implement responsive design
+- [ ] Create custom widgets
+- [ ] Design and implement forms (ders ekleme, öğrenci ekleme, vb.)
 
 #### Hafta 5: Takvim ve Dersler
 - [ ] Implement calendar view
