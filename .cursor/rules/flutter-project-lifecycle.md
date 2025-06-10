@@ -44,9 +44,9 @@ Bu dosya, özel ders veren öğretmenler için geliştirilecek ders planlama uyg
 - [✓] Implement ders ekleme, düzenleme ve silme
 - [✓] Implement öğrenci yönetimi (ekleme, düzenleme, silme)
 - [✓] Implement haftalık tekrarlanan ders sistemi
-- [ ] Implement ücret takip sistemi
-- [ ] Create data persistence layer
-- [ ] Implement notifications (opsiyonel - ileride)
+- [✓] Implement ücret takip sistemi
+- [✓] Create data persistence layer
+- [✓] Implement notifications (opsiyonel - ileride)
 
 ## 3. Testing Phase
 ### Unit Testing

@@ -10,6 +10,7 @@ import 'package:ders_planlayici/features/students/presentation/providers/student
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
 import 'package:ders_planlayici/features/students/presentation/widgets/student_lessons_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StudentDetailsPage extends StatefulWidget {
   final String studentId;
@@ -379,7 +380,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
                 icon: Icons.phone,
                 label: 'Telefon',
                 value: _student!.phone!,
-                onTap: () => _callPhone(_student!.phone!),
+                onTap: () => _callStudent(),
               ),
               const Divider(height: 24),
             ],
@@ -388,7 +389,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
                 icon: Icons.email,
                 label: 'E-posta',
                 value: _student!.email!,
-                onTap: () => _sendEmail(_student!.email!),
+                onTap: () => _sendEmail(),
               ),
           ],
         ),
@@ -566,13 +567,57 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   }
 
   // Telefon araması yap
-  void _callPhone(String phone) {
-    // TODO: Telefon araması için gerekli işlemler
+  void _callStudent() {
+    if (_student?.phone == null || _student!.phone!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Öğrencinin telefon numarası bulunmuyor.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final phoneNumber = _student!.phone!.replaceAll(RegExp(r'\D'), '');
+    final url = 'tel:$phoneNumber';
+
+    try {
+      launchUrl(Uri.parse(url));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Arama yapılamadı: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   // E-posta gönder
-  void _sendEmail(String email) {
-    // TODO: E-posta gönderme için gerekli işlemler
+  void _sendEmail() {
+    if (_student?.email == null || _student!.email!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Öğrencinin e-posta adresi bulunmuyor.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final url =
+        'mailto:${_student!.email}?subject=Ders%20Hakkında&body=Merhaba%20${_student!.name},';
+
+    try {
+      launchUrl(Uri.parse(url));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('E-posta gönderimi başlatılamadı: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   // Düzenleme sayfasına yönlendir

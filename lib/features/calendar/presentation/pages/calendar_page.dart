@@ -194,8 +194,9 @@ class _CalendarPageState extends State<CalendarPage> {
                 subject: lesson.subject,
                 startTime: lesson.startTime,
                 endTime: lesson.endTime,
-                onTap: () async {
-                  // TODO: Ders detay sayfasına yönlendir
+                onTap: () {
+                  // Ders detay sayfasına yönlendir
+                  context.push('/lesson/${lesson.id}');
                 },
               ),
             );
