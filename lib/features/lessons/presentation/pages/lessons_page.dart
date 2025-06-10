@@ -171,8 +171,7 @@ class _LessonsPageState extends State<LessonsPage>
       isRecurring: lesson.recurringPatternId != null,
       onTap: () {
         // Ders detay sayfasına yönlendir
-        // TODO: Ders detay sayfası oluşturulduğunda aktif edilecek
-        // context.push('/lesson-details/${lesson.id}');
+        context.push('/lesson/${lesson.id}');
       },
       onEditPressed: () {
         // Ders düzenleme sayfasına yönlendir

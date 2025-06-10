@@ -4,6 +4,7 @@ import 'package:ders_planlayici/features/home/presentation/pages/home_page.dart'
 import 'package:ders_planlayici/features/students/presentation/pages/add_student_page.dart';
 import 'package:ders_planlayici/features/students/presentation/pages/student_details_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/add_lesson_page.dart';
+import 'package:ders_planlayici/features/lessons/presentation/pages/lesson_details_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
@@ -49,11 +50,7 @@ class AppRouter {
             name: RouteNames.lessonDetails,
             builder: (context, state) {
               final lessonId = state.pathParameters['id']!;
-              // TODO: Lesson Details sayfası oluşturulacak
-              return Scaffold(
-                appBar: AppBar(title: Text('Ders Detayı: $lessonId')),
-                body: Center(child: Text('Ders ID: $lessonId')),
-              );
+              return LessonDetailsPage(lessonId: lessonId);
             },
           ),
         ],
