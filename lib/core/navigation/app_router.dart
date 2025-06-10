@@ -5,6 +5,7 @@ import 'package:ders_planlayici/features/students/presentation/pages/add_student
 import 'package:ders_planlayici/features/students/presentation/pages/student_details_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/add_lesson_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/lesson_details_page.dart';
+import 'package:ders_planlayici/features/lessons/presentation/pages/add_edit_lesson_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
@@ -37,11 +38,28 @@ class AppRouter {
             },
           ),
 
-          // Ders ekleme sayfası
+          // Ders ekleme sayfası (Eski sayfa)
           GoRoute(
             path: 'add-lesson',
             name: RouteNames.addLesson,
             builder: (context, state) => const AddLessonPage(),
+          ),
+
+          // Yeni ders ekleme sayfası
+          GoRoute(
+            path: 'new-lesson',
+            name: 'newLesson',
+            builder: (context, state) => const AddEditLessonPage(),
+          ),
+
+          // Ders düzenleme sayfası
+          GoRoute(
+            path: 'edit-lesson/:id',
+            name: 'editLesson',
+            builder: (context, state) {
+              final lessonId = state.pathParameters['id']!;
+              return AddEditLessonPage(lessonId: lessonId);
+            },
           ),
 
           // Ders detay sayfası

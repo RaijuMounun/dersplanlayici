@@ -60,7 +60,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 - [✓] Implement calendar view
 - [✓] Create lesson list view
 - [✓] Implement lesson detail screen
-- [ ] Create add/edit lesson form
+- [✓] Create add/edit lesson form
 - [ ] Implement lesson delete functionality
 - [ ] Develop recurring lesson logic
 

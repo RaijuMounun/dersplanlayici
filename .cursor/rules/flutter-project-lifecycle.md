@@ -41,7 +41,7 @@ Bu dosya, özel ders veren öğretmenler için geliştirilecek ders planlama uyg
 
 ### Feature Implementation
 - [✓] Implement takvim görünümü ve ders listesi
-- [ ] Implement ders ekleme, düzenleme ve silme
+- [✓] Implement ders ekleme, düzenleme ve silme
 - [ ] Implement öğrenci yönetimi (ekleme, düzenleme, silme)
 - [ ] Implement haftalık tekrarlanan ders sistemi
 - [ ] Implement ücret takip sistemi
