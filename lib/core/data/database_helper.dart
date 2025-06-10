@@ -48,7 +48,7 @@ class DatabaseHelper {
       // Veritabanını oluştur veya aç
       return await openDatabase(
         path,
-        version: 2,
+        version: 3,
         onCreate: _createDb,
         onUpgrade: _onUpgradeDb,
         onOpen: (db) {
@@ -136,6 +136,35 @@ class DatabaseHelper {
         developer.log('Tatiller tablosu oluşturuldu');
       }
 
+      if (oldVersion < 3) {
+        // Versiyon 2'den 3'e geçiş - Ödemeler tablosunu ekle
+        // Ders tablosuna fee (ücret) kolonu ekle
+        await db.execute('ALTER TABLE lessons ADD COLUMN fee REAL DEFAULT 0');
+        developer.log('Ders tablosuna fee kolonu eklendi');
+
+        // Ödemeler tablosu
+        await db.execute('''
+          CREATE TABLE payments(
+            id TEXT PRIMARY KEY,
+            studentId TEXT NOT NULL,
+            studentName TEXT NOT NULL,
+            description TEXT NOT NULL,
+            amount REAL NOT NULL,
+            paidAmount REAL DEFAULT 0,
+            date TEXT NOT NULL,
+            dueDate TEXT,
+            status TEXT NOT NULL,
+            method TEXT,
+            notes TEXT,
+            lessonIds TEXT,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL,
+            FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
+          )
+        ''');
+        developer.log('Ödemeler tablosu oluşturuldu');
+      }
+
       developer.log('Veritabanı başarıyla güncellendi.');
     } catch (e) {
       developer.log('Veritabanı güncelleme hatası: $e');
@@ -195,6 +224,7 @@ class DatabaseHelper {
           status TEXT NOT NULL,
           notes TEXT,
           recurringPatternId TEXT,
+          fee REAL DEFAULT 0,
           createdAt TEXT NOT NULL,
           updatedAt TEXT NOT NULL,
           FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE,
@@ -202,6 +232,28 @@ class DatabaseHelper {
         )
       ''');
       developer.log('Ders tablosu oluşturuldu');
+
+      // Ödemeler tablosu
+      await db.execute('''
+        CREATE TABLE payments(
+          id TEXT PRIMARY KEY,
+          studentId TEXT NOT NULL,
+          studentName TEXT NOT NULL,
+          description TEXT NOT NULL,
+          amount REAL NOT NULL,
+          paidAmount REAL DEFAULT 0,
+          date TEXT NOT NULL,
+          dueDate TEXT,
+          status TEXT NOT NULL,
+          method TEXT,
+          notes TEXT,
+          lessonIds TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL,
+          FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
+        )
+      ''');
+      developer.log('Ödemeler tablosu oluşturuldu');
 
       // Ücret tablosu
       await db.execute('''

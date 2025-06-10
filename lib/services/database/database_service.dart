@@ -333,4 +333,141 @@ class DatabaseService {
       );
     }
   }
+
+  /// Ödeme Operasyonları
+
+  /// Yeni ödeme ekler.
+  Future<int> insertPayment(Map<String, dynamic> payment) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.insert('payments', payment);
+    } catch (e) {
+      throw const DatabaseException(message: 'Ödeme eklenirken hata oluştu');
+    }
+  }
+
+  /// Ödeme bilgilerini günceller.
+  Future<int> updatePayment(Map<String, dynamic> payment) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.update(
+        'payments',
+        payment,
+        where: 'id = ?',
+        whereArgs: [payment['id']],
+      );
+    } catch (e) {
+      throw const DatabaseException(
+        message: 'Ödeme güncellenirken hata oluştu',
+      );
+    }
+  }
+
+  /// Ödemeyi siler.
+  Future<int> deletePayment(String id) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.delete('payments', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      throw const DatabaseException(message: 'Ödeme silinirken hata oluştu');
+    }
+  }
+
+  /// Tüm ödemeleri getirir.
+  Future<List<Map<String, dynamic>>> getPayments() async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.query('payments', orderBy: 'date DESC');
+    } catch (e) {
+      throw const DatabaseException(message: 'Ödemeler alınırken hata oluştu');
+    }
+  }
+
+  /// Belirli bir ödemeyi getirir.
+  Future<Map<String, dynamic>?> getPaymentById(String id) async {
+    try {
+      final db = await _databaseHelper.database;
+      final List<Map<String, dynamic>> result = await db.query(
+        'payments',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      return result.isNotEmpty ? result.first : null;
+    } catch (e) {
+      throw const DatabaseException(message: 'Ödeme alınırken hata oluştu');
+    }
+  }
+
+  /// Belirli bir öğrencinin ödemelerini getirir.
+  Future<List<Map<String, dynamic>>> getPaymentsByStudent(
+    String studentId,
+  ) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.query(
+        'payments',
+        where: 'studentId = ?',
+        whereArgs: [studentId],
+        orderBy: 'date DESC',
+      );
+    } catch (e) {
+      throw const DatabaseException(
+        message: 'Öğrenci ödemeleri alınırken hata oluştu',
+      );
+    }
+  }
+
+  /// Belirli bir tarih aralığındaki ödemeleri getirir.
+  Future<List<Map<String, dynamic>>> getPaymentsByDateRange(
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.query(
+        'payments',
+        where: 'date BETWEEN ? AND ?',
+        whereArgs: [startDate, endDate],
+        orderBy: 'date DESC',
+      );
+    } catch (e) {
+      throw const DatabaseException(
+        message: 'Tarih aralığındaki ödemeler alınırken hata oluştu',
+      );
+    }
+  }
+
+  /// Belirli bir ödeme durumuna göre ödemeleri getirir.
+  Future<List<Map<String, dynamic>>> getPaymentsByStatus(String status) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.query(
+        'payments',
+        where: 'status = ?',
+        whereArgs: [status],
+        orderBy: 'date DESC',
+      );
+    } catch (e) {
+      throw const DatabaseException(
+        message: 'Ödeme durumuna göre ödemeler alınırken hata oluştu',
+      );
+    }
+  }
+
+  /// Belirli bir öğrencinin ID'sine göre öğrenciyi getirir.
+  Future<Map<String, dynamic>?> getStudentById(String id) async {
+    try {
+      final db = await _databaseHelper.database;
+      final List<Map<String, dynamic>> result = await db.query(
+        'students',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      return result.isNotEmpty ? result.first : null;
+    } catch (e) {
+      throw const DatabaseException(message: 'Öğrenci alınırken hata oluştu');
+    }
+  }
 }

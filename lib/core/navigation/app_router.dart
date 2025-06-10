@@ -6,6 +6,8 @@ import 'package:ders_planlayici/features/students/presentation/pages/student_det
 import 'package:ders_planlayici/features/lessons/presentation/pages/add_lesson_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/lesson_details_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/add_edit_lesson_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/add_payment_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
@@ -85,6 +87,33 @@ class AppRouter {
             builder: (context, state) {
               final lessonId = state.pathParameters['id']!;
               return LessonDetailsPage(lessonId: lessonId);
+            },
+          ),
+
+          // Ödemeler listesi sayfası
+          GoRoute(
+            path: 'payments',
+            name: 'payments',
+            builder: (context, state) => const PaymentListPage(),
+          ),
+
+          // Ödeme ekleme sayfası
+          GoRoute(
+            path: 'add-payment',
+            name: 'addPayment',
+            builder: (context, state) {
+              final studentId = state.uri.queryParameters['studentId'];
+              return AddPaymentPage(studentId: studentId);
+            },
+          ),
+
+          // Ödeme düzenleme sayfası
+          GoRoute(
+            path: 'edit-payment/:id',
+            name: 'editPayment',
+            builder: (context, state) {
+              final paymentId = state.pathParameters['id']!;
+              return AddPaymentPage(paymentId: paymentId);
             },
           ),
         ],
