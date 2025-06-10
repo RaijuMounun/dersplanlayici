@@ -39,7 +39,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 
 #### Hafta 3: Temel Mimari ve Veritabanı
 - [✓] Set up project architecture
-- [ ] Implement state management (Provider)
+- [✓] Implement state management (Provider)
 - [ ] Create navigation system
 - [ ] Set up local storage (SQLite)
 - [ ] Implement error handling

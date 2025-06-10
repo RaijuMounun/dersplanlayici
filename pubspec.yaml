@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   
   # State management
-  provider: ^6.1.2
+  provider: ^6.1.5
   
   # Date and Time
   intl: ^0.19.0
@@ -51,7 +51,7 @@ dependencies:
   flutter_local_notifications: ^16.3.2
   
   # Utils
-  uuid: ^4.3.3
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

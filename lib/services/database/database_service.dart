@@ -36,6 +36,99 @@ class DatabaseService {
     }
   }
 
+  /// Verilen tablo ve kolon adlarıyla sorgu yapar.
+  ///
+  /// [table]: Sorgulanacak tablo adı.
+  /// [columns]: Getirilecek kolonlar (null ise tüm kolonlar).
+  /// [where]: WHERE koşulu.
+  /// [whereArgs]: WHERE koşulu için argümanlar.
+  /// [orderBy]: ORDER BY koşulu.
+  /// [limit]: Maksimum satır sayısı.
+  Future<List<Map<String, dynamic>>> query({
+    required String table,
+    List<String>? columns,
+    String? where,
+    List<Object?>? whereArgs,
+    String? orderBy,
+    int? limit,
+  }) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.query(
+        table,
+        columns: columns,
+        where: where,
+        whereArgs: whereArgs,
+        orderBy: orderBy,
+        limit: limit,
+      );
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Veri sorgularken hata oluştu: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Verilen tabloya bir satır ekler.
+  ///
+  /// [table]: Veri eklenecek tablo adı.
+  /// [data]: Eklenecek veri.
+  Future<int> insert({
+    required String table,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.insert(table, data);
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Veri eklerken hata oluştu: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Verilen tablodaki bir satırı günceller.
+  ///
+  /// [table]: Güncelleme yapılacak tablo adı.
+  /// [data]: Güncellenecek veri.
+  /// [where]: WHERE koşulu.
+  /// [whereArgs]: WHERE koşulu için argümanlar.
+  Future<int> update({
+    required String table,
+    required Map<String, dynamic> data,
+    required String where,
+    required List<Object?> whereArgs,
+  }) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.update(table, data, where: where, whereArgs: whereArgs);
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Veri güncellerken hata oluştu: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Verilen tablodaki bir satırı siler.
+  ///
+  /// [table]: Silme işlemi yapılacak tablo adı.
+  /// [where]: WHERE koşulu.
+  /// [whereArgs]: WHERE koşulu için argümanlar.
+  Future<int> delete({
+    required String table,
+    required String where,
+    required List<Object?> whereArgs,
+  }) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.delete(table, where: where, whereArgs: whereArgs);
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Veri silerken hata oluştu: ${e.toString()}',
+      );
+    }
+  }
+
   /// Öğrenci Operasyonları
 
   /// Yeni öğrenci ekler.

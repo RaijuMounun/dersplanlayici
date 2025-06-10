@@ -294,15 +294,14 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getLessonsByDate(DateTime date) async {
+  Future<List<Map<String, dynamic>>> getLessonsByDate(String dateString) async {
     try {
       final db = await database;
-      final dateString = date.toIso8601String().split('T').first;
       developer.log('Tarihe göre dersler alınıyor: $dateString');
       final result = await db.query(
         'lessons',
-        where: 'date LIKE ?',
-        whereArgs: ['$dateString%'],
+        where: 'date = ?',
+        whereArgs: [dateString],
         orderBy: 'startTime',
       );
       developer.log('${result.length} ders bulundu, tarih: $dateString');

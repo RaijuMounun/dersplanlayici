@@ -1,6 +1,7 @@
 import 'package:ders_planlayici/core/data/database_helper.dart';
-import 'package:ders_planlayici/features/lessons/domain/models/lesson.dart';
+import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 
 class LessonRepository {
   final DatabaseHelper _databaseHelper = DatabaseHelper();
@@ -12,7 +13,8 @@ class LessonRepository {
   }
 
   Future<List<Lesson>> getLessonsByDate(DateTime date) async {
-    final lessonMaps = await _databaseHelper.getLessonsByDate(date);
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    final lessonMaps = await _databaseHelper.getLessonsByDate(dateStr);
     return lessonMaps.map((map) => Lesson.fromMap(map)).toList();
   }
 
@@ -38,4 +40,4 @@ class LessonRepository {
   Future<void> deleteLesson(String id) async {
     await _databaseHelper.deleteLesson(id);
   }
-} 
+}

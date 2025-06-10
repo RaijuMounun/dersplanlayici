@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
-import 'package:ders_planlayici/features/lessons/domain/models/lesson.dart';
+import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
-import 'package:ders_planlayici/features/students/domain/models/student.dart';
+import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 import 'package:intl/intl.dart';
 
 class AddLessonPage extends StatefulWidget {
@@ -225,9 +225,9 @@ class _AddLessonPageState extends State<AddLessonPage> {
     if (_selectedStudentId != null) {
       final selectedStudent = _students.firstWhere(
         (student) => student.id == _selectedStudentId,
-        orElse: () => Student(id: '', name: '', grade: '', subjects: []),
+        orElse: () => Student(id: '', name: '', grade: ''),
       );
-      availableSubjects = selectedStudent.subjects;
+      availableSubjects = selectedStudent.subjects?.toList() ?? [];
     }
 
     return DropdownButtonFormField<String>(
@@ -367,12 +367,12 @@ class _AddLessonPageState extends State<AddLessonPage> {
           studentName: _selectedStudentName!,
           subject: _selectedSubject!,
           topic: _topicController.text,
-          date: _selectedDate,
+          date: DateFormat('yyyy-MM-dd').format(_selectedDate),
           startTime:
               '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
           endTime:
               '${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}',
-          status: 'Planlandı',
+          status: LessonStatus.scheduled,
           notes: _notesController.text,
         );
 

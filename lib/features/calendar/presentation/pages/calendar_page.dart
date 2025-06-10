@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/add_lesson_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/widgets/lesson_card.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
@@ -76,7 +77,8 @@ class _CalendarPageState extends State<CalendarPage> {
 
           if (mounted) {
             lessonProvider.loadLessons();
-            lessonProvider.loadLessonsByDate(_selectedDay);
+            final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDay);
+            lessonProvider.loadLessonsByDate(dateStr);
           }
         },
         child: const Icon(Icons.add),
@@ -135,7 +137,8 @@ class _CalendarPageState extends State<CalendarPage> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (lessonProvider.error.isNotEmpty) {
+        if (lessonProvider.error != null &&
+            lessonProvider.error.toString().isNotEmpty) {
           return Center(child: Text('Hata: ${lessonProvider.error}'));
         }
 

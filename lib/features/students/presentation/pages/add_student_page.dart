@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
-import 'package:ders_planlayici/features/students/domain/models/student.dart';
+import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
 class AddStudentPage extends StatefulWidget {
   const AddStudentPage({super.key});
