@@ -4,6 +4,8 @@ import '../core/theme/app_theme.dart';
 import '../features/students/presentation/providers/student_provider.dart';
 import '../features/lessons/presentation/providers/lesson_provider.dart';
 import '../features/fees/presentation/providers/fee_provider.dart';
+import '../features/fees/presentation/providers/payment_provider.dart';
+import '../features/fees/data/repositories/payment_repository.dart';
 import '../features/settings/presentation/providers/theme_provider.dart';
 import '../features/settings/presentation/providers/app_settings_provider.dart';
 import '../features/settings/data/repositories/app_settings_repository.dart';
@@ -25,6 +27,9 @@ class DersPlanlamaApp extends StatelessWidget {
     final appSettingsRepository = AppSettingsRepository(
       databaseHelper: databaseHelper,
     );
+
+    // Payment repository oluştur
+    final paymentRepository = PaymentRepository(databaseService);
 
     return MultiProvider(
       providers: [
@@ -48,6 +53,9 @@ class DersPlanlamaApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (context) => FeeProvider(databaseService),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PaymentProvider(paymentRepository),
         ),
       ],
       child: Consumer<ThemeProvider>(
