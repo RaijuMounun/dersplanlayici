@@ -17,8 +17,9 @@ import 'package:ders_planlayici/features/students/presentation/providers/student
 
 class AddEditLessonPage extends StatefulWidget {
   final String? lessonId;
+  final String? studentId;
 
-  const AddEditLessonPage({super.key, this.lessonId});
+  const AddEditLessonPage({super.key, this.lessonId, this.studentId});
 
   @override
   State<AddEditLessonPage> createState() => _AddEditLessonPageState();
@@ -48,6 +49,11 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   void initState() {
     super.initState();
     _isEditMode = widget.lessonId != null;
+
+    // URL'den gelen studentId varsa, seç
+    if (widget.studentId != null) {
+      _selectedStudentId = widget.studentId;
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeForm();

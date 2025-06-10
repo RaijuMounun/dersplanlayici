@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/utils/responsive_utils.dart';
@@ -10,6 +9,7 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
+import 'package:ders_planlayici/features/students/presentation/widgets/student_lessons_widget.dart';
 
 class StudentDetailsPage extends StatefulWidget {
   final String studentId;
@@ -427,241 +427,65 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
 
   // Dersler bölümü
   Widget _buildLessonsSection() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Dersler',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _loadStudentLessons,
-                  tooltip: 'Dersleri Yenile',
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            if (_lessonsLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_lessons.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.event_busy,
-                        size: 48,
-                        color: AppColors.textSecondary.withAlpha(150),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Bu öğrenciye ait ders bulunmuyor',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              _buildLessonsList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLessonsList() {
-    // Yaklaşan dersler ve geçmiş dersler olarak ayır
-    final now = DateTime.now();
-    final today = DateFormat('yyyy-MM-dd').format(now);
-    final currentTime = DateFormat('HH:mm').format(now);
-
-    final upcomingLessons = _lessons.where((lesson) {
-      final lessonDate = DateFormat('yyyy-MM-dd').parse(lesson.date);
-      if (lessonDate.isAfter(now)) {
-        return true;
-      }
-      if (lesson.date == today && lesson.startTime.compareTo(currentTime) > 0) {
-        return true;
-      }
-      return false;
-    }).toList();
-
-    final pastLessons = _lessons.where((lesson) {
-      final lessonDate = DateFormat('yyyy-MM-dd').parse(lesson.date);
-      if (lessonDate.isBefore(now)) {
-        return true;
-      }
-      if (lesson.date == today &&
-          lesson.startTime.compareTo(currentTime) <= 0) {
-        return true;
-      }
-      return false;
-    }).toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (upcomingLessons.isNotEmpty) ...[
-          const Text(
-            'Yaklaşan Dersler',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          ...upcomingLessons.map((lesson) => _buildLessonItem(lesson)),
-          const Divider(height: 32),
-        ],
-        if (pastLessons.isNotEmpty) ...[
-          const Text(
-            'Geçmiş Dersler',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          ...pastLessons.take(5).map((lesson) => _buildLessonItem(lesson)),
-          if (pastLessons.length > 5) ...[
-            const SizedBox(height: 16),
-            Center(
-              child: TextButton.icon(
-                onPressed: () {
-                  // TODO: Tüm dersleri göster
-                },
-                icon: const Icon(Icons.history),
-                label: Text(
-                  'Tüm Geçmiş Dersleri Göster (${pastLessons.length})',
-                ),
-              ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Dersler',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            if (!_lessonsLoading)
+              TextButton.icon(
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Ders Ekle'),
+                onPressed: () {
+                  context.push('/add-lesson?studentId=${_student!.id}');
+                },
+              ),
           ],
-        ],
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        SizedBox(
+          height: 400, // Yüksekliği sayfaya göre ayarla
+          child: StudentLessonsWidget(
+            student: _student!,
+            lessons: _lessons,
+            isLoading: _lessonsLoading,
+            onRefresh: _loadStudentLessons,
+            onDeleteLesson: _deleteLesson,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildLessonItem(Lesson lesson) {
-    // Tarih formatını düzenle
-    final dateFormatter = DateFormat('dd MMMM yyyy');
-    final date = DateFormat('yyyy-MM-dd').parse(lesson.date);
-    final formattedDate = dateFormatter.format(date);
+  Future<void> _deleteLesson(Lesson lesson) async {
+    try {
+      final lessonProvider = context.read<LessonProvider>();
+      await lessonProvider.deleteLesson(lesson.id);
 
-    // Ders durumuna göre renk belirle
-    Color statusColor;
-    String statusText;
-
-    switch (lesson.status) {
-      case LessonStatus.scheduled:
-        statusColor = AppColors.primary;
-        statusText = 'Planlandı';
-        break;
-      case LessonStatus.completed:
-        statusColor = AppColors.success;
-        statusText = 'Tamamlandı';
-        break;
-      case LessonStatus.cancelled:
-        statusColor = AppColors.error;
-        statusText = 'İptal Edildi';
-        break;
-      case LessonStatus.postponed:
-        statusColor = AppColors.warning;
-        statusText = 'Ertelendi';
-        break;
-    }
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => context.push('/lesson/${lesson.id}'),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: statusColor.withAlpha(40),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.book, color: statusColor),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            lesson.subject,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withAlpha(40),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            statusText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: statusColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(formattedDate),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${lesson.startTime} - ${lesson.endTime}',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    if (lesson.topic != null && lesson.topic!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Konu: ${lesson.topic}',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+      if (mounted) {
+        _loadStudentLessons(); // Dersleri yeniden yükle
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ders başarıyla silindi'),
+            backgroundColor: AppColors.success,
           ),
-        ),
-      ),
-    );
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ders silinirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   // Bilgi satırı widgetı

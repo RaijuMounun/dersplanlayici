@@ -1,0 +1,5 @@
+[warning] This default clause is covered by the previous cases (E:\Yazilim\FlutterProjeleri\dersplanlayici\lib\features\students\presentation\widgets\student_lessons_widget.dart:95:7)
+[info] 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss (E:\Yazilim\FlutterProjeleri\dersplanlayici\lib\features\students\presentation\widgets\student_lessons_widget.dart:196:40)
+[info] 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss (E:\Yazilim\FlutterProjeleri\dersplanlayici\lib\features\students\presentation\widgets\student_lessons_widget.dart:254:38)
+[warning] Unused import: 'package:provider/provider.dart' (E:\Yazilim\FlutterProjeleri\dersplanlayici\lib\features\students\presentation\widgets\student_lessons_widget.dart:3:8)
+[warning] Unused import: 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart' (E:\Yazilim\FlutterProjeleri\dersplanlayici\lib\features\students\presentation\widgets\student_lessons_widget.dart:10:8)

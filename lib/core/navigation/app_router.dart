@@ -52,14 +52,20 @@ class AppRouter {
           GoRoute(
             path: 'add-lesson',
             name: RouteNames.addLesson,
-            builder: (context, state) => const AddLessonPage(),
+            builder: (context, state) {
+              final studentId = state.uri.queryParameters['studentId'];
+              return AddLessonPage(studentId: studentId);
+            },
           ),
 
           // Yeni ders ekleme sayfası
           GoRoute(
             path: 'new-lesson',
             name: 'newLesson',
-            builder: (context, state) => const AddEditLessonPage(),
+            builder: (context, state) {
+              final studentId = state.uri.queryParameters['studentId'];
+              return AddEditLessonPage(studentId: studentId);
+            },
           ),
 
           // Ders düzenleme sayfası
