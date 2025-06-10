@@ -7,7 +7,9 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 import 'package:intl/intl.dart';
 
 class AddLessonPage extends StatefulWidget {
-  const AddLessonPage({super.key});
+  final String? studentId;
+
+  const AddLessonPage({super.key, this.studentId});
 
   @override
   State<AddLessonPage> createState() => _AddLessonPageState();
@@ -63,6 +65,22 @@ class _AddLessonPageState extends State<AddLessonPage> {
       setState(() {
         _students = studentProvider.students;
         _isLoadingStudents = false;
+
+        // Eğer url'den studentId parametresi geldiyse onu seç
+        if (widget.studentId != null && widget.studentId!.isNotEmpty) {
+          _selectedStudentId = widget.studentId;
+          final selectedStudent = _students.firstWhere(
+            (student) => student.id == widget.studentId,
+            orElse: () => _students.first,
+          );
+          _selectedStudentName = selectedStudent.name;
+
+          // Öğrencinin seçtiği konulardan ilkini otomatik seç
+          if (selectedStudent.subjects != null &&
+              selectedStudent.subjects!.isNotEmpty) {
+            _selectedSubject = selectedStudent.subjects!.first;
+          }
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -198,14 +216,21 @@ class _AddLessonPageState extends State<AddLessonPage> {
         );
       }).toList(),
       onChanged: (value) {
+        if (value == null) return;
+
         setState(() {
           _selectedStudentId = value;
-          if (value != null) {
-            final selectedStudent = _students.firstWhere(
-              (student) => student.id == value,
-            );
-            _selectedStudentName = selectedStudent.name;
-            _selectedSubject = null; // Öğrenci değiştiğinde dersi sıfırla
+          final selectedStudent = _students.firstWhere(
+            (student) => student.id == value,
+          );
+          _selectedStudentName = selectedStudent.name;
+
+          // Öğrencinin ilk dersini otomatik seç
+          if (selectedStudent.subjects != null &&
+              selectedStudent.subjects!.isNotEmpty) {
+            _selectedSubject = selectedStudent.subjects!.first;
+          } else {
+            _selectedSubject = null;
           }
         });
       },
