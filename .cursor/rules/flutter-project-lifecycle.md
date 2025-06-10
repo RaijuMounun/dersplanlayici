@@ -25,7 +25,7 @@ Bu dosya, özel ders veren öğretmenler için geliştirilecek ders planlama uyg
 ### Core Architecture
 - [✓] Set up project architecture
 - [✓] Implement state management
-- [ ] Create navigation system (sekme tabanlı navigasyon)
+- [✓] Create navigation system (sekme tabanlı navigasyon)
 - [ ] Set up local storage (SQLite veya Hive)
 - [ ] Implement error handling
 - [ ] Create model classes (Student, Lesson, Fee, etc.)

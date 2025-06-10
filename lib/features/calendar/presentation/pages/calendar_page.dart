@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:ders_planlayici/features/lessons/presentation/pages/add_lesson_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ders_planlayici/features/lessons/presentation/widgets/lesson_card.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
 
@@ -70,10 +70,9 @@ class _CalendarPageState extends State<CalendarPage> {
             context,
             listen: false,
           );
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddLessonPage()),
-          );
+
+          // Go Router ile navigasyon
+          await context.push('/add-lesson');
 
           if (mounted) {
             lessonProvider.loadLessons();

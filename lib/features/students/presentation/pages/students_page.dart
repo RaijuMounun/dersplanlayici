@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:ders_planlayici/features/students/presentation/pages/add_student_page.dart';
-import 'package:ders_planlayici/features/students/presentation/pages/student_details_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ders_planlayici/features/students/presentation/widgets/student_list_item.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
@@ -46,10 +45,9 @@ class _StudentsPageState extends State<StudentsPage> {
             context,
             listen: false,
           );
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddStudentPage()),
-          );
+
+          // Go Router ile navigasyon
+          await context.push('/add-student');
 
           if (mounted) {
             studentProvider.loadStudents();
@@ -90,13 +88,9 @@ class _StudentsPageState extends State<StudentsPage> {
                   context,
                   listen: false,
                 );
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        StudentDetailsPage(studentId: student.id),
-                  ),
-                );
+
+                // Go Router ile navigasyon
+                await context.push('/student/${student.id}');
 
                 if (mounted) {
                   studentProvider.loadStudents();
