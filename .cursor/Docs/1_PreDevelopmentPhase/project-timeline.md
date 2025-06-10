@@ -58,7 +58,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 
 #### Hafta 5: Takvim ve Dersler
 - [✓] Implement calendar view
-- [ ] Create lesson list view
+- [✓] Create lesson list view
 - [ ] Implement lesson detail screen
 - [ ] Create add/edit lesson form
 - [ ] Implement lesson delete functionality

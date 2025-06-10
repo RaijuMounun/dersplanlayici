@@ -8,6 +8,7 @@ import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart
 import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 
 /// Dersler listesini gösteren ana sayfa.
 class LessonsPage extends StatefulWidget {
@@ -166,19 +167,26 @@ class _LessonsPageState extends State<LessonsPage>
       startTime: _parseDateTime(lesson.date, lesson.startTime),
       endTime: _parseDateTime(lesson.date, lesson.endTime),
       isCompleted: lesson.status == LessonStatus.completed,
-      fee: 0.0, // Burada fee bilgisi modelde yok, varsayılan değer kullanıyoruz
+      fee: lesson.fee, // Ders ücretini model'den al
       isRecurring: lesson.recurringPatternId != null,
       onTap: () {
-        // TODO: Ders detay sayfasına yönlendir
+        // Ders detay sayfasına yönlendir
+        // TODO: Ders detay sayfası oluşturulduğunda aktif edilecek
+        // context.push('/lesson-details/${lesson.id}');
       },
       onEditPressed: () {
-        // TODO: Ders düzenleme sayfasına yönlendir
+        // Ders düzenleme sayfasına yönlendir
+        context.push('/edit-lesson/${lesson.id}').then((_) {
+          if (mounted) {
+            context.read<LessonProvider>().loadLessons();
+          }
+        });
       },
       onDeletePressed: () {
-        // TODO: Ders silme işlevi
+        _showDeleteConfirmation(lesson);
       },
       onMarkCompleted: () {
-        // TODO: Dersi tamamlandı olarak işaretle
+        _markLessonAsCompleted(lesson);
       },
     );
   }
@@ -240,7 +248,12 @@ class _LessonsPageState extends State<LessonsPage>
             ),
             child: ElevatedButton.icon(
               onPressed: () {
-                // TODO: Ders ekleme sayfasına yönlendir
+                // Ders ekleme sayfasına yönlendir
+                context.push('/add-lesson').then((_) {
+                  if (mounted) {
+                    context.read<LessonProvider>().loadLessons();
+                  }
+                });
               },
               icon: const Icon(Icons.add),
               label: const Text('Ders Ekle'),
@@ -292,6 +305,83 @@ class _LessonsPageState extends State<LessonsPage>
       int.parse(timeComponents[0]), // saat
       int.parse(timeComponents[1]), // dakika
     );
+  }
+
+  // Ders silme onayı diyaloğunu göster
+  void _showDeleteConfirmation(Lesson lesson) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Dersi Sil'),
+        content: Text(
+          '${lesson.subject} dersini silmek istediğinizden emin misiniz?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteLesson(lesson.id);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Dersi sil
+  Future<void> _deleteLesson(String lessonId) async {
+    try {
+      await context.read<LessonProvider>().deleteLesson(lessonId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ders başarıyla silindi'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ders silinirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Dersi tamamlandı olarak işaretle
+  Future<void> _markLessonAsCompleted(Lesson lesson) async {
+    try {
+      final updatedLesson = lesson.copyWith(status: LessonStatus.completed);
+      await context.read<LessonProvider>().updateLesson(updatedLesson);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ders tamamlandı olarak işaretlendi'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ders durumu güncellenirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
 
