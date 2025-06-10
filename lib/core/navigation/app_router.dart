@@ -9,6 +9,7 @@ import 'package:ders_planlayici/features/lessons/presentation/pages/add_edit_les
 import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/add_payment_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/fee_history_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/fee_management_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
@@ -96,6 +97,13 @@ class AppRouter {
             path: 'payments',
             name: 'payments',
             builder: (context, state) => const PaymentListPage(),
+          ),
+
+          // Ücret yönetim sayfası
+          GoRoute(
+            path: 'fee-management',
+            name: 'feeManagement',
+            builder: (context, state) => const FeeManagementPage(),
           ),
 
           // Ödeme ekleme sayfası
