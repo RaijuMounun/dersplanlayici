@@ -28,7 +28,7 @@ Bu dosya, özel ders veren öğretmenler için geliştirilecek ders planlama uyg
 - [✓] Create navigation system (sekme tabanlı navigasyon)
 - [✓] Set up local storage (SQLite veya Hive)
 - [✓] Implement error handling
-- [ ] Create model classes (Student, Lesson, Fee, etc.)
+- [✓] Create model classes (Student, Lesson, Fee, etc.)
 
 ### UI Development
 - [ ] Create design system (renk paleti, tipografi, vb.)
