@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ders_planlayici/core/data/database_helper.dart';
+import 'package:ders_planlayici/core/error/error_handler.dart';
 import 'package:file_picker/file_picker.dart';
 
 class DatabaseManagementPage extends StatefulWidget {
@@ -43,6 +44,8 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
       setState(() {
         _message = 'Veritabanı bilgileri yüklenirken hata oluştu: $e';
       });
+
+      ErrorHandler.logError(e, hint: 'Veritabanı bilgileri yüklenirken hata');
     } finally {
       if (mounted) {
         setState(() {
@@ -97,6 +100,13 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
     } catch (e) {
       if (!mounted) return;
 
+      ErrorHandler.logError(e, hint: 'Veritabanı sıfırlanırken hata');
+
+      ErrorHandler.showErrorSnackBar(
+        context,
+        message: 'Veritabanı sıfırlanırken hata oluştu: $e',
+      );
+
       setState(() {
         _message = 'Veritabanı sıfırlanırken hata oluştu: $e';
       });
@@ -127,6 +137,13 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
       });
     } catch (e) {
       if (!mounted) return;
+
+      ErrorHandler.logError(e, hint: 'Veritabanı yedeklenirken hata');
+
+      ErrorHandler.showErrorSnackBar(
+        context,
+        message: 'Veritabanı yedeklenirken hata oluştu',
+      );
 
       setState(() {
         _message = 'Veritabanı yedeklenirken hata oluştu: $e';
@@ -199,6 +216,13 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
       }
     } catch (e) {
       if (!mounted) return;
+
+      ErrorHandler.logError(e, hint: 'Veritabanı geri yüklenirken hata');
+
+      ErrorHandler.showErrorSnackBar(
+        context,
+        message: 'Veritabanı geri yüklenirken hata oluştu',
+      );
 
       setState(() {
         _message = 'Veritabanı geri yüklenirken hata oluştu: $e';
