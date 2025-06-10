@@ -2,6 +2,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'package:ders_planlayici/core/error/app_exception.dart'
+    as app_exception
+    show DatabaseException;
+import 'package:ders_planlayici/core/error/error_handler.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -49,10 +53,14 @@ class DatabaseHelper {
           developer.log('Veritabanı açıldı: ${db.path}');
         },
       );
-    } catch (e) {
-      developer.log('Veritabanı başlatma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
+    } catch (e, stackTrace) {
+      final errorMessage = 'Veritabanı başlatma hatası: $e';
+      ErrorHandler.logError(e, stackTrace: stackTrace, hint: errorMessage);
+      throw app_exception.DatabaseException(
+        message: 'Veritabanı başlatılamadı',
+        code: 'db_init_error',
+        details: e.toString(),
+      );
     }
   }
 
@@ -144,7 +152,7 @@ class DatabaseHelper {
 
   // Veritabanı bilgilerini al
   Future<Map<String, dynamic>> getDatabaseInfo() async {
-    try {
+    return ErrorHandler.handleError<Map<String, dynamic>>(() async {
       final db = await database;
       final path = db.path;
       final tables = await db.rawQuery(
@@ -165,10 +173,7 @@ class DatabaseHelper {
       }
 
       return {'path': path, 'tables': tableNames, 'counts': tableData};
-    } catch (e) {
-      developer.log('Veritabanı bilgileri alınırken hata: $e');
-      return {'error': e.toString()};
-    }
+    }, errorMessage: 'Veritabanı bilgileri alınamadı');
   }
 
   // Öğrenci işlemleri
@@ -421,72 +426,72 @@ class DatabaseHelper {
 
   // Veritabanını sıfırlar ve yeniden oluşturur
   Future<void> resetDatabase() async {
-    try {
-      developer.log('Veritabanı sıfırlanıyor...');
-      final db = await database;
+    return ErrorHandler.handleError<void>(
+      () async {
+        developer.log('Veritabanı sıfırlanıyor...');
+        final db = await database;
 
-      // Tüm tabloları sil
-      await db.execute('DROP TABLE IF EXISTS fees');
-      await db.execute('DROP TABLE IF EXISTS lessons');
-      await db.execute('DROP TABLE IF EXISTS recurring_patterns');
-      await db.execute('DROP TABLE IF EXISTS students');
+        // Tüm tabloları sil
+        await db.execute('DROP TABLE IF EXISTS fees');
+        await db.execute('DROP TABLE IF EXISTS lessons');
+        await db.execute('DROP TABLE IF EXISTS recurring_patterns');
+        await db.execute('DROP TABLE IF EXISTS students');
 
-      // Tabloları yeniden oluştur
-      await _createDb(db, 1);
-      developer.log('Veritabanı başarıyla sıfırlandı');
-    } catch (e) {
-      developer.log('Veritabanı sıfırlama hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+        // Tabloları yeniden oluştur
+        await _createDb(db, 1);
+        developer.log('Veritabanı başarıyla sıfırlandı');
+      },
+      errorMessage: 'Veritabanı sıfırlanamadı',
+      shouldRethrow: true,
+    );
   }
 
   // Veritabanını yedekler
   Future<String> backupDatabase() async {
-    try {
-      developer.log('Veritabanı yedekleniyor...');
-      final db = await database;
-      final dbPath = db.path;
+    return ErrorHandler.handleError<String>(
+      () async {
+        developer.log('Veritabanı yedekleniyor...');
+        final db = await database;
+        final dbPath = db.path;
 
-      // Yedek dosya yolu
-      final backupPath = '$dbPath.backup';
+        // Yedek dosya yolu
+        final backupPath = '$dbPath.backup';
 
-      // Veritabanı dosyasını kopyala
-      final dbFile = File(dbPath);
-      await dbFile.copy(backupPath);
+        // Veritabanı dosyasını kopyala
+        final dbFile = File(dbPath);
+        await dbFile.copy(backupPath);
 
-      developer.log('Veritabanı başarıyla yedeklendi: $backupPath');
-      return backupPath;
-    } catch (e) {
-      developer.log('Veritabanı yedekleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+        developer.log('Veritabanı başarıyla yedeklendi: $backupPath');
+        return backupPath;
+      },
+      errorMessage: 'Veritabanı yedeklenemedi',
+      shouldRethrow: true,
+    );
   }
 
   // Veritabanını yedekten geri yükler
   Future<void> restoreDatabase(String backupPath) async {
-    try {
-      developer.log('Veritabanı geri yükleniyor...');
-      final db = await database;
-      await db.close();
+    return ErrorHandler.handleError<void>(
+      () async {
+        developer.log('Veritabanı geri yükleniyor...');
+        final db = await database;
+        await db.close();
 
-      final dbPath = join(await getDatabasesPath(), 'ders_planlayici.db');
+        final dbPath = join(await getDatabasesPath(), 'ders_planlayici.db');
 
-      // Yedek dosyasını kopyala
-      final backupFile = File(backupPath);
-      await backupFile.copy(dbPath);
+        // Yedek dosyasını kopyala
+        final backupFile = File(backupPath);
+        await backupFile.copy(dbPath);
 
-      // Veritabanını yeniden aç
-      _database = null;
-      await database;
+        // Veritabanını yeniden aç
+        _database = null;
+        await database;
 
-      developer.log('Veritabanı başarıyla geri yüklendi');
-    } catch (e) {
-      developer.log('Veritabanı geri yükleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+        developer.log('Veritabanı başarıyla geri yüklendi');
+      },
+      errorMessage: 'Veritabanı geri yüklenemedi',
+      shouldRethrow: true,
+    );
   }
 
   // Tekrarlanan ders desenleri işlemleri
