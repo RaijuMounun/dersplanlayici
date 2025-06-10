@@ -23,87 +23,87 @@ class StudentProvider extends ChangeNotifier {
   StudentProvider(this._databaseService);
 
   /// Tüm öğrencileri veritabanından yükler.
-  Future<void> loadStudents() async {
-    _setLoading(true);
+  Future<void> loadStudents({bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       final studentsData = await _databaseService.getStudents();
       _students = studentsData.map((data) => Student.fromMap(data)).toList();
-      notifyListeners();
+      if (notify) notifyListeners();
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Öğrenciler yüklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Öğrenci ekler.
-  Future<void> addStudent(Student student) async {
-    _setLoading(true);
+  Future<void> addStudent(Student student, {bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       await _databaseService.insertStudent(student.toMap());
-      await loadStudents();
+      await loadStudents(notify: notify);
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci eklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Öğrenci günceller.
-  Future<void> updateStudent(Student student) async {
-    _setLoading(true);
+  Future<void> updateStudent(Student student, {bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       await _databaseService.updateStudent(student.toMap());
-      await loadStudents();
+      await loadStudents(notify: notify);
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci güncellenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Öğrenci siler.
-  Future<void> deleteStudent(String id) async {
-    _setLoading(true);
+  Future<void> deleteStudent(String id, {bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       await _databaseService.deleteStudent(id);
-      await loadStudents();
+      await loadStudents(notify: notify);
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci silinirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
@@ -129,8 +129,11 @@ class StudentProvider extends ChangeNotifier {
   /// Öğrencileri çeşitli kriterlere göre arar.
   /// [query] parametresi öğrenci adı, veli adı, sınıf, notlar ve dersler gibi alanlarda arama yapar.
   /// Bu metot veritabanı seviyesinde arama yapar, bu nedenle daha verimlidir.
-  Future<List<Student>> searchStudents(String query) async {
-    _setLoading(true);
+  Future<List<Student>> searchStudents(
+    String query, {
+    bool notify = true,
+  }) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
@@ -146,16 +149,16 @@ class StudentProvider extends ChangeNotifier {
       return searchResults;
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
       return [];
     } catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci araması yapılırken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
       return [];
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
@@ -167,8 +170,17 @@ class StudentProvider extends ChangeNotifier {
   }
 
   /// Yükleme durumunu günceller.
-  void _setLoading(bool loading) {
+  void _setLoading(bool loading, {bool notify = true}) {
     _isLoading = loading;
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  /// State değişikliklerini dinleyenlere bildirir. Bu metodu sadece build dışında ve
+  /// Future.microtask içinde çağırın.
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
   }
 }

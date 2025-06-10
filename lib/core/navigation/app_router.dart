@@ -8,6 +8,7 @@ import 'package:ders_planlayici/features/lessons/presentation/pages/lesson_detai
 import 'package:ders_planlayici/features/lessons/presentation/pages/add_edit_lesson_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/add_payment_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/fee_history_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
@@ -114,6 +115,16 @@ class AppRouter {
             builder: (context, state) {
               final paymentId = state.pathParameters['id']!;
               return AddPaymentPage(paymentId: paymentId);
+            },
+          ),
+
+          // Ödeme geçmişi sayfası
+          GoRoute(
+            path: 'fee-history',
+            name: 'feeHistory',
+            builder: (context, state) {
+              final studentId = state.uri.queryParameters['studentId'];
+              return FeeHistoryPage(studentId: studentId);
             },
           ),
         ],

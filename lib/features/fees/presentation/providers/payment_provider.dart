@@ -30,99 +30,107 @@ class PaymentProvider extends ChangeNotifier {
   PaymentProvider(this._paymentRepository);
 
   /// Tüm ödemeleri yükler.
-  Future<void> loadPayments() async {
-    _setLoading(true);
+  Future<void> loadPayments({bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       _payments = await _paymentRepository.getAllPayments();
-      notifyListeners();
+      if (notify) notifyListeners();
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Ödemeler yüklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Öğrenci ödemelerini yükler.
-  Future<void> loadPaymentsByStudent(String studentId) async {
-    _setLoading(true);
+  Future<void> loadPaymentsByStudent(
+    String studentId, {
+    bool notify = true,
+  }) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       _payments = await _paymentRepository.getPaymentsByStudent(studentId);
-      notifyListeners();
+      if (notify) notifyListeners();
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message:
             'Öğrenci ödemeleri yüklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Öğrenci ücret özetini yükler.
-  Future<FeeSummary?> loadStudentFeeSummary(String studentId) async {
-    _setLoading(true);
+  Future<FeeSummary?> loadStudentFeeSummary(
+    String studentId, {
+    bool notify = true,
+  }) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       final summary = await _paymentRepository.getStudentFeeSummary(studentId);
       _summaries = [summary];
-      notifyListeners();
+      if (notify) notifyListeners();
       return summary;
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
       return null;
     } catch (e) {
       _error = DatabaseException(
         message:
             'Öğrenci ücret özeti yüklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
       return null;
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Tüm öğrencilerin ücret özetlerini yükler.
-  Future<void> loadAllStudentFeeSummaries() async {
-    _setLoading(true);
+  Future<void> loadAllStudentFeeSummaries({bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       _summaries = await _paymentRepository.getAllStudentFeeSummaries();
-      notifyListeners();
+      if (notify) notifyListeners();
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Ücret özetleri yüklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Ödeme durumuna göre ödemeleri filtreler.
-  void filterByStatus(String status) {
+  void filterByStatus(String status, {bool notify = true}) {
     _filterStatus = status;
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
   }
 
   /// Filtrelenmiş ödemeleri döndürür.
@@ -139,8 +147,8 @@ class PaymentProvider extends ChangeNotifier {
   }
 
   /// Ödeme ekler.
-  Future<void> addPayment(Payment payment) async {
-    _setLoading(true);
+  Future<void> addPayment(Payment payment, {bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
@@ -152,23 +160,23 @@ class PaymentProvider extends ChangeNotifier {
       }
 
       await _paymentRepository.addPayment(payment);
-      await loadPayments();
+      await loadPayments(notify: notify);
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Ödeme eklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Ödeme günceller.
-  Future<void> updatePayment(Payment payment) async {
-    _setLoading(true);
+  Future<void> updatePayment(Payment payment, {bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
@@ -180,38 +188,38 @@ class PaymentProvider extends ChangeNotifier {
       }
 
       await _paymentRepository.updatePayment(payment);
-      await loadPayments();
+      await loadPayments(notify: notify);
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Ödeme güncellenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
   /// Ödeme siler.
-  Future<void> deletePayment(String id) async {
-    _setLoading(true);
+  Future<void> deletePayment(String id, {bool notify = true}) async {
+    _setLoading(true, notify: notify);
     _error = null;
 
     try {
       await _paymentRepository.deletePayment(id);
-      await loadPayments();
+      await loadPayments(notify: notify);
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       _error = DatabaseException(
         message: 'Ödeme silinirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
-      _setLoading(false);
+      _setLoading(false, notify: notify);
     }
   }
 
@@ -248,9 +256,11 @@ class PaymentProvider extends ChangeNotifier {
     );
   }
 
-  void _setLoading(bool loading) {
+  void _setLoading(bool loading, {bool notify = true}) {
     _isLoading = loading;
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
   }
 
   /// Belirli bir ID'ye sahip ödemeyi döndürür.
@@ -260,5 +270,12 @@ class PaymentProvider extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+
+  /// State değişikliklerini dinleyenlere bildirir. Bu metodu sadece build dışında ve
+  /// Future.microtask içinde çağırın.
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
   }
 }
