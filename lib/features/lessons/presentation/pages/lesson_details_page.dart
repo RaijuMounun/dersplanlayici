@@ -9,6 +9,7 @@ import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
+import 'package:ders_planlayici/features/lessons/domain/services/recurring_lesson_service.dart';
 
 /// Ders detaylarını gösteren sayfa.
 class LessonDetailsPage extends StatefulWidget {
@@ -23,6 +24,7 @@ class LessonDetailsPage extends StatefulWidget {
 class _LessonDetailsPageState extends State<LessonDetailsPage> {
   bool _isLoading = true;
   Lesson? _lesson;
+  String? _recurringPatternDescription;
 
   @override
   void initState() {
@@ -51,6 +53,11 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
       // Öğrenci bilgilerini de yükle
       if (_lesson != null && mounted) {
         await context.read<StudentProvider>().loadStudents();
+
+        // Eğer tekrarlanan bir ders ise, desen bilgilerini yükle
+        if (_lesson!.recurringPatternId != null) {
+          _loadRecurringPatternInfo();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -63,6 +70,44 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
             backgroundColor: AppColors.error,
           ),
         );
+      }
+    }
+  }
+
+  // Tekrarlanan ders deseninin bilgilerini yükle
+  Future<void> _loadRecurringPatternInfo() async {
+    if (_lesson?.recurringPatternId == null) return;
+
+    try {
+      if (!mounted) return;
+
+      final lessonProvider = context.read<LessonProvider>();
+      final pattern = await lessonProvider.getRecurringPattern(
+        _lesson!.recurringPatternId!,
+      );
+
+      if (pattern != null) {
+        // Tekrarlama servisini kullanarak açıklama oluştur
+        final service = RecurringLessonService();
+        final description = service.getRecurringDescription(pattern);
+
+        if (mounted) {
+          setState(() {
+            _recurringPatternDescription = description;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _recurringPatternDescription = 'Tekrarlı ders';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _recurringPatternDescription = 'Tekrarlı ders';
+        });
       }
     }
   }
@@ -354,7 +399,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
               _buildInfoRow(
                 icon: Icons.repeat,
                 label: 'Tekrar',
-                value: 'Tekrarlı Ders',
+                value: _recurringPatternDescription ?? 'Tekrarlı ders',
                 iconColor: AppColors.secondary,
               ),
             ],
@@ -545,29 +590,65 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
 
   // Ders silme onayı
   void _confirmDeleteLesson(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Dersi Sil'),
-        content: Text(
-          '${_lesson!.subject} dersini silmek istediğinize emin misiniz?',
+    if (_lesson!.recurringPatternId != null) {
+      // Tekrarlanan ders için özel diyalog
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Dersi Sil'),
+          content: const Text(
+            'Bu ders bir tekrarlanan ders serisinin parçasıdır. '
+            'Yalnızca bu dersi mi yoksa tüm seriyi mi silmek istiyorsunuz?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('İptal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _deleteLesson();
+              },
+              child: const Text('Sadece Bu Dersi Sil'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _deleteRecurringSeries();
+              },
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: const Text('Tüm Seriyi Sil'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('İptal'),
+      );
+    } else {
+      // Normal ders için standart diyalog
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Dersi Sil'),
+          content: Text(
+            '${_lesson!.subject} dersini silmek istediğinize emin misiniz?',
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              _deleteLesson();
-            },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Sil'),
-          ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('İptal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _deleteLesson();
+              },
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: const Text('Sil'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   // Dersi sil
@@ -596,6 +677,51 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text('Ders silinirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Tekrarlanan ders serisini sil
+  Future<void> _deleteRecurringSeries() async {
+    if (_lesson?.recurringPatternId == null) return;
+
+    try {
+      final lessonProvider = context.read<LessonProvider>();
+      final result = await lessonProvider.deleteRecurringLessons(
+        _lesson!.recurringPatternId!,
+      );
+
+      if (!mounted) return;
+
+      final successCount = result['success'] ?? 0;
+      final errorCount = result['error'] ?? 0;
+
+      String message = '$successCount ders başarıyla silindi';
+      if (errorCount > 0) {
+        message += ', $errorCount ders silinemedi';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: errorCount > 0
+              ? AppColors.warning
+              : AppColors.success,
+        ),
+      );
+
+      // Ana sayfaya dön
+      if (mounted) {
+        context.go('/');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tekrarlanan dersler silinirken hata oluştu: $e'),
             backgroundColor: AppColors.error,
           ),
         );
