@@ -470,4 +470,244 @@ class DatabaseService {
       throw const DatabaseException(message: 'Öğrenci alınırken hata oluştu');
     }
   }
+
+  /// Ödeme işlemi ekler.
+  Future<int> insertPaymentTransaction(Map<String, dynamic> transaction) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Tarih alanlarını ekle
+      final now = DateTime.now().toIso8601String();
+      transaction['createdAt'] = now;
+      transaction['updatedAt'] = now;
+
+      // İşlemi ekle
+      final result = await db.insert('payment_transactions', transaction);
+
+      // İlgili ödeme kaydının paidAmount alanını güncelle
+      final paymentId = transaction['paymentId'];
+      final amount = transaction['amount'] as double;
+
+      // Mevcut ödeme kaydını al
+      final List<Map<String, dynamic>> payments = await db.query(
+        'payments',
+        where: 'id = ?',
+        whereArgs: [paymentId],
+      );
+
+      if (payments.isNotEmpty) {
+        final payment = payments.first;
+        final currentPaidAmount = (payment['paidAmount'] as num).toDouble();
+        final totalAmount = (payment['amount'] as num).toDouble();
+        final newPaidAmount = currentPaidAmount + amount;
+
+        // Ödeme durumunu belirle
+        String status;
+        if (newPaidAmount >= totalAmount) {
+          status = 'paid';
+        } else if (newPaidAmount > 0) {
+          status = 'partiallyPaid';
+        } else {
+          status = 'pending';
+        }
+
+        // Ödeme kaydını güncelle
+        await db.update(
+          'payments',
+          {'paidAmount': newPaidAmount, 'status': status, 'updatedAt': now},
+          where: 'id = ?',
+          whereArgs: [paymentId],
+        );
+      }
+
+      return result;
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Ödeme işlemi eklenirken hata oluştu: $e',
+      );
+    }
+  }
+
+  /// Ödeme işlemini günceller.
+  Future<int> updatePaymentTransaction(Map<String, dynamic> transaction) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Güncelleme tarihini ekle
+      transaction['updatedAt'] = DateTime.now().toIso8601String();
+
+      // Mevcut işlemi al
+      final List<Map<String, dynamic>> oldTransactions = await db.query(
+        'payment_transactions',
+        where: 'id = ?',
+        whereArgs: [transaction['id']],
+      );
+
+      if (oldTransactions.isEmpty) {
+        throw Exception('Güncellenecek ödeme işlemi bulunamadı');
+      }
+
+      final oldTransaction = oldTransactions.first;
+      final oldAmount = (oldTransaction['amount'] as num).toDouble();
+      final newAmount = (transaction['amount'] as num).toDouble();
+      final paymentId = transaction['paymentId'] as String;
+
+      // Ödeme kaydını güncelle
+      if (oldAmount != newAmount) {
+        // Mevcut ödemeyi al
+        final List<Map<String, dynamic>> payments = await db.query(
+          'payments',
+          where: 'id = ?',
+          whereArgs: [paymentId],
+        );
+
+        if (payments.isNotEmpty) {
+          final payment = payments.first;
+          final currentPaidAmount = (payment['paidAmount'] as num).toDouble();
+          final totalAmount = (payment['amount'] as num).toDouble();
+
+          // Eski miktarı çıkar, yeni miktarı ekle
+          final newPaidAmount = currentPaidAmount - oldAmount + newAmount;
+
+          // Ödeme durumunu belirle
+          String status;
+          if (newPaidAmount >= totalAmount) {
+            status = 'paid';
+          } else if (newPaidAmount > 0) {
+            status = 'partiallyPaid';
+          } else {
+            status = 'pending';
+          }
+
+          // Ödeme kaydını güncelle
+          await db.update(
+            'payments',
+            {
+              'paidAmount': newPaidAmount,
+              'status': status,
+              'updatedAt': DateTime.now().toIso8601String(),
+            },
+            where: 'id = ?',
+            whereArgs: [paymentId],
+          );
+        }
+      }
+
+      return await db.update(
+        'payment_transactions',
+        transaction,
+        where: 'id = ?',
+        whereArgs: [transaction['id']],
+      );
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Ödeme işlemi güncellenirken hata oluştu: $e',
+      );
+    }
+  }
+
+  /// Ödeme işlemini siler.
+  Future<int> deletePaymentTransaction(String id) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // İşlem bilgilerini al
+      final List<Map<String, dynamic>> transactions = await db.query(
+        'payment_transactions',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+
+      if (transactions.isEmpty) {
+        throw Exception('Silinecek ödeme işlemi bulunamadı');
+      }
+
+      final transaction = transactions.first;
+      final amount = (transaction['amount'] as num).toDouble();
+      final paymentId = transaction['paymentId'] as String;
+
+      // İlgili ödeme kaydını güncelle
+      final List<Map<String, dynamic>> payments = await db.query(
+        'payments',
+        where: 'id = ?',
+        whereArgs: [paymentId],
+      );
+
+      if (payments.isNotEmpty) {
+        final payment = payments.first;
+        final currentPaidAmount = (payment['paidAmount'] as num).toDouble();
+        final totalAmount = (payment['amount'] as num).toDouble();
+        final newPaidAmount = currentPaidAmount - amount;
+
+        // Ödeme durumunu belirle
+        String status;
+        if (newPaidAmount >= totalAmount) {
+          status = 'paid';
+        } else if (newPaidAmount > 0) {
+          status = 'partiallyPaid';
+        } else {
+          status = 'pending';
+        }
+
+        // Ödeme kaydını güncelle
+        await db.update(
+          'payments',
+          {
+            'paidAmount': newPaidAmount,
+            'status': status,
+            'updatedAt': DateTime.now().toIso8601String(),
+          },
+          where: 'id = ?',
+          whereArgs: [paymentId],
+        );
+      }
+
+      return await db.delete(
+        'payment_transactions',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Ödeme işlemi silinirken hata oluştu: $e',
+      );
+    }
+  }
+
+  /// Belirli bir ödemeye ait işlemleri getirir.
+  Future<List<Map<String, dynamic>>> getPaymentTransactionsByPaymentId(
+    String paymentId,
+  ) async {
+    try {
+      final db = await _databaseHelper.database;
+      return await db.query(
+        'payment_transactions',
+        where: 'paymentId = ?',
+        whereArgs: [paymentId],
+        orderBy: 'date DESC',
+      );
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Ödeme işlemleri alınırken hata oluştu: $e',
+      );
+    }
+  }
+
+  /// Belirli bir ödeme işlemini getirir.
+  Future<Map<String, dynamic>?> getPaymentTransactionById(String id) async {
+    try {
+      final db = await _databaseHelper.database;
+      final List<Map<String, dynamic>> result = await db.query(
+        'payment_transactions',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      return result.isNotEmpty ? result.first : null;
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Ödeme işlemi alınırken hata oluştu: $e',
+      );
+    }
+  }
 }

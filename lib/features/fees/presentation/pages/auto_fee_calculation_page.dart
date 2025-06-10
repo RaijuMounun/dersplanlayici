@@ -6,7 +6,6 @@ import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/widgets/loading_indicator.dart';
 import 'package:ders_planlayici/features/fees/domain/services/fee_calculation_service.dart';
-import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
@@ -47,32 +46,35 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
+      final localContext = context;
       await LoadingIndicator.wrapWithLoading(
-        context: context,
+        context: localContext,
         message: "Veriler yükleniyor...",
         future: Future(() async {
           // Öğrencileri yükle
           final studentProvider = Provider.of<StudentProvider>(
-            context,
+            localContext,
             listen: false,
           );
           await studentProvider.loadStudents();
 
           // Dersleri yükle
           final lessonProvider = Provider.of<LessonProvider>(
-            context,
+            localContext,
             listen: false,
           );
           await lessonProvider.loadLessons();
 
           // Ödemeleri yükle
           final paymentProvider = Provider.of<PaymentProvider>(
-            context,
+            localContext,
             listen: false,
           );
           await paymentProvider.loadPayments();
@@ -115,6 +117,8 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
   }
 
   Future<void> _calculateFeeForDateRange() async {
+    if (!mounted) return;
+
     if (_selectedStudentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -130,12 +134,13 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
     });
 
     try {
+      final localContext = context;
       await LoadingIndicator.wrapWithLoading(
-        context: context,
+        context: localContext,
         message: "Ücret hesaplanıyor...",
         future: Future(() async {
           final lessonProvider = Provider.of<LessonProvider>(
-            context,
+            localContext,
             listen: false,
           );
 
@@ -207,23 +212,27 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
         '/add-payment?studentId=$studentId&amount=${amount.toStringAsFixed(2)}&description=$description&lessonIds=${lessonIds.join(",")}',
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ödeme oluşturulurken hata oluştu: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ödeme oluşturulurken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
   void _createPaymentFromCalculation() {
     if (_selectedStudentId == null || _calculatedFee <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Geçerli bir hesaplama yapılmadı.'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Geçerli bir hesaplama yapılmadı.'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
       return;
     }
 
@@ -234,19 +243,21 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
       final startDateFormatted = DateFormat('dd/MM/yyyy').format(_startDate);
       final endDateFormatted = DateFormat('dd/MM/yyyy').format(_endDate);
       final description =
-          '${student.name} - ${startDateFormatted} - ${endDateFormatted} arası dersler';
+          '${student.name} - $startDateFormatted - $endDateFormatted arası dersler';
 
       // Go router ile parametreleri gönder
       context.push(
-        '/add-payment?studentId=${_selectedStudentId}&amount=${_calculatedFee.toStringAsFixed(2)}&description=$description&lessonIds=${lessonIds.join(",")}',
+        '/add-payment?studentId=$_selectedStudentId&amount=${_calculatedFee.toStringAsFixed(2)}&description=$description&lessonIds=${lessonIds.join(",")}',
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ödeme oluşturulurken hata oluştu: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ödeme oluşturulurken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -536,7 +547,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: AppDimensions.spacing16),
               SizedBox(
                 width: double.infinity,
