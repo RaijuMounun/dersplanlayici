@@ -126,6 +126,39 @@ class StudentProvider extends ChangeNotifier {
         .toList();
   }
 
+  /// Öğrencileri çeşitli kriterlere göre arar.
+  /// [query] parametresi öğrenci adı, veli adı, sınıf, notlar ve dersler gibi alanlarda arama yapar.
+  /// Bu metot veritabanı seviyesinde arama yapar, bu nedenle daha verimlidir.
+  Future<List<Student>> searchStudents(String query) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      if (query.trim().isEmpty) {
+        return _students;
+      }
+
+      final studentsData = await _databaseService.searchStudents(query);
+      final searchResults = studentsData
+          .map((data) => Student.fromMap(data))
+          .toList();
+
+      return searchResults;
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+      return [];
+    } catch (e) {
+      _error = DatabaseException(
+        message: 'Öğrenci araması yapılırken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+      return [];
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Sınıfa göre öğrencileri filtreler.
   List<Student> filterByGrade(String grade) {
     if (grade.isEmpty) return _students;

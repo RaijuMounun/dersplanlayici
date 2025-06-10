@@ -171,6 +171,17 @@ class DatabaseService {
     }
   }
 
+  /// Arama kriterlerine göre öğrencileri arar.
+  Future<List<Map<String, dynamic>>> searchStudents(String searchTerm) async {
+    try {
+      return await _databaseHelper.searchStudents(searchTerm);
+    } catch (e) {
+      throw DatabaseException(
+        message: 'Öğrenci araması yapılırken hata oluştu: ${e.toString()}',
+      );
+    }
+  }
+
   /// Ders Operasyonları
 
   /// Yeni ders ekler.
