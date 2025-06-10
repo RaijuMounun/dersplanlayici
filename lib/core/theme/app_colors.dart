@@ -76,4 +76,8 @@ class AppColors {
         800: Color(0xFF1565C0),
         900: Color(0xFF0D47A1),
       });
+
+  // Form renkleri
+  static Color get inputBackground => const Color(0xFFF5F5F5);
+  static Color get formBorder => const Color(0xFFE0E0E0);
 }
