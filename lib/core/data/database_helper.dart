@@ -6,6 +6,7 @@ import 'package:ders_planlayici/core/error/app_exception.dart'
     as app_exception
     show DatabaseException;
 import 'package:ders_planlayici/core/error/error_handler.dart';
+import 'dart:convert';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -47,8 +48,9 @@ class DatabaseHelper {
       // Veritabanını oluştur veya aç
       return await openDatabase(
         path,
-        version: 1,
+        version: 2,
         onCreate: _createDb,
+        onUpgrade: _onUpgradeDb,
         onOpen: (db) {
           developer.log('Veritabanı açıldı: ${db.path}');
         },
@@ -61,6 +63,84 @@ class DatabaseHelper {
         code: 'db_init_error',
         details: e.toString(),
       );
+    }
+  }
+
+  /// Veritabanı sürüm yükseltme işlemini gerçekleştirir
+  Future<void> _onUpgradeDb(Database db, int oldVersion, int newVersion) async {
+    try {
+      developer.log('Veritabanı güncelleniyor... $oldVersion -> $newVersion');
+
+      if (oldVersion < 2) {
+        // Versiyon 1'den 2'ye geçiş
+        // Takvim tabloları
+        await db.execute('''
+          CREATE TABLE calendar_events(
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            date TEXT NOT NULL,
+            startTime TEXT NOT NULL,
+            endTime TEXT NOT NULL,
+            type TEXT NOT NULL,
+            color TEXT,
+            isAllDay INTEGER NOT NULL DEFAULT 0,
+            metadata TEXT,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL
+          )
+        ''');
+        developer.log('Takvim etkinlikleri tablosu oluşturuldu');
+
+        // Ayarlar tablosu
+        await db.execute('''
+          CREATE TABLE app_settings(
+            id TEXT PRIMARY KEY,
+            themeMode TEXT NOT NULL,
+            lessonNotificationTime TEXT NOT NULL,
+            showWeekends INTEGER NOT NULL DEFAULT 1,
+            defaultLessonDuration INTEGER NOT NULL DEFAULT 90,
+            defaultLessonFee REAL NOT NULL DEFAULT 0,
+            currency TEXT,
+            defaultSubject TEXT,
+            confirmBeforeDelete INTEGER NOT NULL DEFAULT 1,
+            showLessonColors INTEGER NOT NULL DEFAULT 1,
+            additionalSettings TEXT,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL
+          )
+        ''');
+        developer.log('Ayarlar tablosu oluşturuldu');
+
+        // Veritabanı yedekleri tablosu
+        await db.execute('''
+          CREATE TABLE database_backups(
+            id TEXT PRIMARY KEY,
+            path TEXT NOT NULL,
+            fileName TEXT NOT NULL,
+            fileSize INTEGER NOT NULL,
+            createdAt TEXT NOT NULL
+          )
+        ''');
+        developer.log('Veritabanı yedekleri tablosu oluşturuldu');
+
+        // Holidays tablosu (tatiller)
+        await db.execute('''
+          CREATE TABLE holidays(
+            date TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            isNationalHoliday INTEGER NOT NULL DEFAULT 0,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL
+          )
+        ''');
+        developer.log('Tatiller tablosu oluşturuldu');
+      }
+
+      developer.log('Veritabanı başarıyla güncellendi.');
+    } catch (e) {
+      developer.log('Veritabanı güncelleme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
     }
   }
 
@@ -691,6 +771,481 @@ class DatabaseHelper {
       return result;
     } catch (e) {
       developer.log('Aya göre ücret listesi alma hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  // Takvim etkinlikleri işlemleri
+  Future<int> insertCalendarEvent(Map<String, dynamic> event) async {
+    try {
+      final db = await database;
+      developer.log('Takvim etkinliği ekleniyor: ${event['title']}');
+
+      // JSON verilerini string'e dönüştür
+      if (event['metadata'] != null && event['metadata'] is Map) {
+        event['metadata'] = jsonEncode(event['metadata']);
+      }
+
+      // Tarih alanlarını ekle
+      final now = DateTime.now().toIso8601String();
+      event['createdAt'] = now;
+      event['updatedAt'] = now;
+
+      // Boolean değerleri 0/1'e dönüştür
+      if (event['isAllDay'] is bool) {
+        event['isAllDay'] = event['isAllDay'] ? 1 : 0;
+      }
+
+      final result = await db.insert('calendar_events', event);
+      developer.log(
+        'Takvim etkinliği eklendi, ID: ${event['id']}, Sonuç: $result',
+      );
+      return result;
+    } catch (e) {
+      developer.log('Takvim etkinliği ekleme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<int> updateCalendarEvent(Map<String, dynamic> event) async {
+    try {
+      final db = await database;
+      developer.log('Takvim etkinliği güncelleniyor, ID: ${event['id']}');
+
+      // JSON verilerini string'e dönüştür
+      if (event['metadata'] != null && event['metadata'] is Map) {
+        event['metadata'] = jsonEncode(event['metadata']);
+      }
+
+      // Güncelleme tarihini ekle
+      event['updatedAt'] = DateTime.now().toIso8601String();
+
+      // Boolean değerleri 0/1'e dönüştür
+      if (event['isAllDay'] is bool) {
+        event['isAllDay'] = event['isAllDay'] ? 1 : 0;
+      }
+
+      return await db.update(
+        'calendar_events',
+        event,
+        where: 'id = ?',
+        whereArgs: [event['id']],
+      );
+    } catch (e) {
+      developer.log('Takvim etkinliği güncelleme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteCalendarEvent(String id) async {
+    try {
+      final db = await database;
+      developer.log('Takvim etkinliği siliniyor, ID: $id');
+      return await db.delete(
+        'calendar_events',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      developer.log('Takvim etkinliği silme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getCalendarEvents() async {
+    try {
+      final db = await database;
+      developer.log('Tüm takvim etkinlikleri alınıyor');
+      final result = await db.query(
+        'calendar_events',
+        orderBy: 'date, startTime',
+      );
+
+      // JSON verilerini Map'e dönüştür
+      final processedResult = result.map((event) {
+        final Map<String, dynamic> processedEvent = Map.from(event);
+        if (processedEvent['metadata'] != null) {
+          try {
+            processedEvent['metadata'] = jsonDecode(
+              processedEvent['metadata'] as String,
+            );
+          } catch (e) {
+            developer.log('Metadata JSON dönüştürme hatası: $e');
+          }
+        }
+        // Boolean değerleri dönüştür
+        processedEvent['isAllDay'] = processedEvent['isAllDay'] == 1;
+        return processedEvent;
+      }).toList();
+
+      developer.log('${processedResult.length} takvim etkinliği bulundu');
+      return processedResult;
+    } catch (e) {
+      developer.log('Takvim etkinlikleri listesi alma hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getCalendarEventsByDate(
+    String dateString,
+  ) async {
+    try {
+      final db = await database;
+      developer.log('Tarihe göre takvim etkinlikleri alınıyor: $dateString');
+      final result = await db.query(
+        'calendar_events',
+        where: 'date = ?',
+        whereArgs: [dateString],
+        orderBy: 'startTime',
+      );
+
+      // JSON verilerini Map'e dönüştür
+      final processedResult = result.map((event) {
+        final Map<String, dynamic> processedEvent = Map.from(event);
+        if (processedEvent['metadata'] != null) {
+          try {
+            processedEvent['metadata'] = jsonDecode(
+              processedEvent['metadata'] as String,
+            );
+          } catch (e) {
+            developer.log('Metadata JSON dönüştürme hatası: $e');
+          }
+        }
+        // Boolean değerleri dönüştür
+        processedEvent['isAllDay'] = processedEvent['isAllDay'] == 1;
+        return processedEvent;
+      }).toList();
+
+      developer.log(
+        '${processedResult.length} takvim etkinliği bulundu, tarih: $dateString',
+      );
+      return processedResult;
+    } catch (e) {
+      developer.log('Tarihe göre takvim etkinlikleri listesi alma hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getCalendarEvent(String id) async {
+    try {
+      final db = await database;
+      developer.log('Takvim etkinliği alınıyor, ID: $id');
+      final List<Map<String, dynamic>> result = await db.query(
+        'calendar_events',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+
+      if (result.isNotEmpty) {
+        final Map<String, dynamic> processedEvent = Map.from(result.first);
+        if (processedEvent['metadata'] != null) {
+          try {
+            processedEvent['metadata'] = jsonDecode(
+              processedEvent['metadata'] as String,
+            );
+          } catch (e) {
+            developer.log('Metadata JSON dönüştürme hatası: $e');
+          }
+        }
+        // Boolean değerleri dönüştür
+        processedEvent['isAllDay'] = processedEvent['isAllDay'] == 1;
+
+        developer.log('Takvim etkinliği bulundu, ID: $id');
+        return processedEvent;
+      } else {
+        developer.log('Takvim etkinliği bulunamadı, ID: $id');
+        return null;
+      }
+    } catch (e) {
+      developer.log('Takvim etkinliği alma hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  // Ayarlar işlemleri
+  Future<int> insertOrUpdateAppSettings(Map<String, dynamic> settings) async {
+    try {
+      final db = await database;
+      developer.log('Ayarlar güncelleniyor');
+
+      // JSON verilerini string'e dönüştür
+      if (settings['additionalSettings'] != null &&
+          settings['additionalSettings'] is Map) {
+        settings['additionalSettings'] = jsonEncode(
+          settings['additionalSettings'],
+        );
+      }
+
+      // Boolean değerleri 0/1'e dönüştür
+      final boolFields = [
+        'showWeekends',
+        'confirmBeforeDelete',
+        'showLessonColors',
+      ];
+      for (final field in boolFields) {
+        if (settings[field] is bool) {
+          settings[field] = settings[field] ? 1 : 0;
+        }
+      }
+
+      // Tarih alanlarını ekle
+      final now = DateTime.now().toIso8601String();
+      settings['updatedAt'] = now;
+
+      // Önce ayarların var olup olmadığını kontrol et
+      final List<Map<String, dynamic>> existingSettings = await db.query(
+        'app_settings',
+      );
+
+      if (existingSettings.isEmpty) {
+        // Yeni ayarlar oluştur
+        settings['id'] = 'app_settings';
+        settings['createdAt'] = now;
+
+        final result = await db.insert('app_settings', settings);
+        developer.log('Yeni ayarlar oluşturuldu, Sonuç: $result');
+        return result;
+      } else {
+        // Mevcut ayarları güncelle
+        final result = await db.update(
+          'app_settings',
+          settings,
+          where: 'id = ?',
+          whereArgs: ['app_settings'],
+        );
+        developer.log('Ayarlar güncellendi, Sonuç: $result');
+        return result;
+      }
+    } catch (e) {
+      developer.log('Ayarlar güncelleme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getAppSettings() async {
+    try {
+      final db = await database;
+      developer.log('Ayarlar alınıyor');
+      final List<Map<String, dynamic>> result = await db.query('app_settings');
+
+      if (result.isNotEmpty) {
+        final Map<String, dynamic> processedSettings = Map.from(result.first);
+
+        // JSON verilerini Map'e dönüştür
+        if (processedSettings['additionalSettings'] != null) {
+          try {
+            processedSettings['additionalSettings'] = jsonDecode(
+              processedSettings['additionalSettings'] as String,
+            );
+          } catch (e) {
+            developer.log('additionalSettings JSON dönüştürme hatası: $e');
+          }
+        }
+
+        // Boolean değerleri dönüştür
+        final boolFields = [
+          'showWeekends',
+          'confirmBeforeDelete',
+          'showLessonColors',
+        ];
+        for (final field in boolFields) {
+          processedSettings[field] = processedSettings[field] == 1;
+        }
+
+        developer.log('Ayarlar bulundu');
+        return processedSettings;
+      } else {
+        developer.log('Ayarlar bulunamadı, varsayılan ayarlar döndürülecek');
+
+        // Varsayılan ayarları döndür
+        return {
+          'id': 'app_settings',
+          'themeMode': 'system',
+          'lessonNotificationTime': 'fifteenMinutes',
+          'showWeekends': true,
+          'defaultLessonDuration': 90,
+          'defaultLessonFee': 0.0,
+          'currency': 'TL',
+          'defaultSubject': null,
+          'confirmBeforeDelete': true,
+          'showLessonColors': true,
+          'additionalSettings': null,
+        };
+      }
+    } catch (e) {
+      developer.log('Ayarlar alma hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  // Veritabanı yedekleri işlemleri
+  Future<int> insertDatabaseBackup(Map<String, dynamic> backup) async {
+    try {
+      final db = await database;
+      developer.log('Veritabanı yedeği kaydediliyor: ${backup['fileName']}');
+
+      // Otomatik id oluştur
+      backup['id'] = 'backup_${DateTime.now().millisecondsSinceEpoch}';
+
+      final result = await db.insert('database_backups', backup);
+      developer.log(
+        'Veritabanı yedeği kaydedildi, ID: ${backup['id']}, Sonuç: $result',
+      );
+      return result;
+    } catch (e) {
+      developer.log('Veritabanı yedeği kaydetme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteDatabaseBackup(String id) async {
+    try {
+      final db = await database;
+      developer.log('Veritabanı yedeği siliniyor, ID: $id');
+      return await db.delete(
+        'database_backups',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      developer.log('Veritabanı yedeği silme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getDatabaseBackups() async {
+    try {
+      final db = await database;
+      developer.log('Veritabanı yedekleri alınıyor');
+      final result = await db.query(
+        'database_backups',
+        orderBy: 'createdAt DESC',
+      );
+
+      developer.log('${result.length} veritabanı yedeği bulundu');
+      return result;
+    } catch (e) {
+      developer.log('Veritabanı yedekleri alma hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  // Tatil günleri işlemleri
+  Future<int> insertHoliday(Map<String, dynamic> holiday) async {
+    try {
+      final db = await database;
+      developer.log('Tatil günü ekleniyor: ${holiday['name']}');
+
+      // Tarih alanlarını ekle
+      final now = DateTime.now().toIso8601String();
+      holiday['createdAt'] = now;
+      holiday['updatedAt'] = now;
+
+      // Boolean değerleri 0/1'e dönüştür
+      if (holiday['isNationalHoliday'] is bool) {
+        holiday['isNationalHoliday'] = holiday['isNationalHoliday'] ? 1 : 0;
+      }
+
+      final result = await db.insert('holidays', holiday);
+      developer.log(
+        'Tatil günü eklendi, Tarih: ${holiday['date']}, Sonuç: $result',
+      );
+      return result;
+    } catch (e) {
+      developer.log('Tatil günü ekleme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<int> updateHoliday(Map<String, dynamic> holiday) async {
+    try {
+      final db = await database;
+      developer.log('Tatil günü güncelleniyor, Tarih: ${holiday['date']}');
+
+      // Güncelleme tarihini ekle
+      holiday['updatedAt'] = DateTime.now().toIso8601String();
+
+      // Boolean değerleri 0/1'e dönüştür
+      if (holiday['isNationalHoliday'] is bool) {
+        holiday['isNationalHoliday'] = holiday['isNationalHoliday'] ? 1 : 0;
+      }
+
+      return await db.update(
+        'holidays',
+        holiday,
+        where: 'date = ?',
+        whereArgs: [holiday['date']],
+      );
+    } catch (e) {
+      developer.log('Tatil günü güncelleme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteHoliday(String date) async {
+    try {
+      final db = await database;
+      developer.log('Tatil günü siliniyor, Tarih: $date');
+      return await db.delete('holidays', where: 'date = ?', whereArgs: [date]);
+    } catch (e) {
+      developer.log('Tatil günü silme hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getHolidays() async {
+    try {
+      final db = await database;
+      developer.log('Tüm tatil günleri alınıyor');
+      final result = await db.query('holidays', orderBy: 'date');
+
+      // Boolean değerleri dönüştür
+      final processedResult = result.map((holiday) {
+        final Map<String, dynamic> processedHoliday = Map.from(holiday);
+        processedHoliday['isNationalHoliday'] =
+            processedHoliday['isNationalHoliday'] == 1;
+        return processedHoliday;
+      }).toList();
+
+      developer.log('${processedResult.length} tatil günü bulundu');
+      return processedResult;
+    } catch (e) {
+      developer.log('Tatil günleri alma hatası: $e');
+      developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, String>> getHolidaysMap() async {
+    try {
+      final db = await database;
+      developer.log('Tatil günleri haritası alınıyor');
+      final List<Map<String, dynamic>> holidays = await db.query('holidays');
+
+      final Map<String, String> holidaysMap = {};
+      for (final holiday in holidays) {
+        holidaysMap[holiday['date'] as String] = holiday['name'] as String;
+      }
+
+      developer.log('${holidaysMap.length} tatil günü haritası oluşturuldu');
+      return holidaysMap;
+    } catch (e) {
+      developer.log('Tatil günleri haritası alma hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
       rethrow;
     }
