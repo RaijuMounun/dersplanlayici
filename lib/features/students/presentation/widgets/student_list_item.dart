@@ -1,92 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:ders_planlayici/core/theme/app_colors.dart';
+import 'package:ders_planlayici/core/widgets/app_list_item.dart';
 
 class StudentListItem extends StatelessWidget {
   final String name;
   final String grade;
   final List<String>? subjects;
   final VoidCallback onTap;
+  final VoidCallback? onEditPressed;
+  final VoidCallback? onDeletePressed;
+  final bool isSelected;
 
   const StudentListItem({
     super.key,
     required this.name,
     required this.grade,
-    required this.subjects,
+    this.subjects,
     required this.onTap,
+    this.onEditPressed,
+    this.onDeletePressed,
+    this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+    return AppListItem(
+      title: name,
+      subtitle: _buildSubtitle(),
+      leading: isSelected
+          ? const Icon(Icons.check_circle, color: AppColors.primary)
+          : CircleAvatar(
+              backgroundColor: AppColors.primary,
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      grade,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (subjects != null && subjects!.isNotEmpty)
-                      Wrap(
-                        spacing: 8,
-                        children: subjects!.map((subject) {
-                          return Chip(
-                            label: Text(
-                              subject,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
-                            ),
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary.withAlpha(204),
-                            padding: const EdgeInsets.all(4),
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right),
-            ],
+            ),
+      trailing: _buildTrailing(),
+      onTap: onTap,
+      selected: isSelected,
+      backgroundColor: isSelected ? AppColors.primary.withAlpha(40) : null,
+    );
+  }
+
+  String _buildSubtitle() {
+    String subtitle = grade;
+
+    if (subjects != null && subjects!.isNotEmpty) {
+      final subjectsText = subjects!.length > 3
+          ? '${subjects!.take(3).join(', ')}...'
+          : subjects!.join(', ');
+      subtitle += '\n$subjectsText';
+    }
+
+    return subtitle;
+  }
+
+  Widget _buildTrailing() {
+    if (isSelected) {
+      return const SizedBox.shrink(); // Seçim modunda trailing gösterme
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (onEditPressed != null)
+          IconButton(
+            icon: Icon(Icons.edit, color: AppColors.textSecondary),
+            onPressed: onEditPressed,
+            tooltip: 'Düzenle',
           ),
-        ),
-      ),
+        if (onDeletePressed != null)
+          IconButton(
+            icon: Icon(Icons.delete, color: AppColors.error),
+            onPressed: onDeletePressed,
+            tooltip: 'Sil',
+          ),
+      ],
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ders_planlayici/features/calendar/presentation/pages/calendar_page.dart';
-import 'package:ders_planlayici/features/students/presentation/pages/students_page.dart';
+import 'package:ders_planlayici/features/students/presentation/pages/student_list_page.dart';
 import 'package:ders_planlayici/features/settings/presentation/pages/settings_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/lessons_page.dart';
 import 'package:ders_planlayici/core/widgets/app_bottom_navigation.dart';
@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const CalendarPage(),
     const LessonsPage(),
-    const StudentsPage(),
+    const StudentListPage(),
     const SettingsPage(),
   ];
 

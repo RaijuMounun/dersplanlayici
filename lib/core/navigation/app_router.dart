@@ -38,6 +38,16 @@ class AppRouter {
             },
           ),
 
+          // Öğrenci düzenleme sayfası
+          GoRoute(
+            path: 'edit-student/:id',
+            name: 'editStudent',
+            builder: (context, state) {
+              final studentId = state.pathParameters['id']!;
+              return AddStudentPage(studentId: studentId);
+            },
+          ),
+
           // Ders ekleme sayfası (Eski sayfa)
           GoRoute(
             path: 'add-lesson',
