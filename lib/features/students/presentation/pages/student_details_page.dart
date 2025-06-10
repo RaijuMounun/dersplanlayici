@@ -131,6 +131,40 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
       floatingActionButton: _student != null
           ? _buildFloatingActionButton()
           : null,
+      bottomNavigationBar: _student != null
+          ? BottomAppBar(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.spacing16,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildBottomBarButton(
+                      icon: Icons.add,
+                      label: 'Ders Ekle',
+                      onPressed: () =>
+                          context.push('/new-lesson?studentId=${_student!.id}'),
+                    ),
+                    _buildBottomBarButton(
+                      icon: Icons.payments,
+                      label: 'Ödeme Ekle',
+                      onPressed: () => context.push(
+                        '/add-payment?studentId=${_student!.id}',
+                      ),
+                    ),
+                    _buildBottomBarButton(
+                      icon: Icons.history,
+                      label: 'Ödeme Geçmişi',
+                      onPressed: () => context.push(
+                        '/fee-history?studentId=${_student!.id}',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -612,6 +646,24 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
       },
       tooltip: 'Ders Ekle',
       child: const Icon(Icons.add),
+    );
+  }
+
+  Widget _buildBottomBarButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return TextButton(
+      onPressed: onPressed,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 24, color: Colors.white),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(color: Colors.white)),
+        ],
+      ),
     );
   }
 }

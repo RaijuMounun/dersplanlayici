@@ -74,7 +74,7 @@ Bu dosya, ders planlama uygulamasının geliştirilme sürecini haftalık olarak
 
 #### Hafta 7: Ücret Takibi ve İşlevsellik Tamamlama
 - [✓] Implement fee tracking system
-- [ ] Create fee history view
+- [✓] Create fee history view
 - [ ] Develop fee management screen
 - [ ] Implement automatic fee calculation
 - [ ] Create payment recording system

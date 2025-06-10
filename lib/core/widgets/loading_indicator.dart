@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/color_constants.dart';
+import 'package:ders_planlayici/core/theme/app_colors.dart';
 
 /// Uygulama genelinde kullanılan yükleme göstergesi widget'ı.
+/// Bu widget, donma sorunlarını önlemek için özellikle tasarlanmıştır.
 class LoadingIndicator extends StatelessWidget {
   final String? message;
   final double size;
@@ -12,7 +13,7 @@ class LoadingIndicator extends StatelessWidget {
     super.key,
     this.message,
     this.size = 40.0,
-    this.color = ColorConstants.primaryColor,
+    this.color = AppColors.primary,
     this.isOverlay = false,
   });
 
@@ -49,7 +50,7 @@ class LoadingIndicator extends StatelessWidget {
           children: [
             ModalBarrier(
               dismissible: false,
-              color: Color.fromRGBO(0, 0, 0, 0.3),
+              color: Colors.black.withOpacity(0.3),
             ),
             Center(child: loadingWidget),
           ],
@@ -61,37 +62,49 @@ class LoadingIndicator extends StatelessWidget {
   }
 
   /// Ekranın üstüne yükleme göstergesi ile birlikte bir overlay gösterir.
+  /// Bu metot, donma sorunlarını önlemek için kullanılmalıdır.
   static void showOverlay(BuildContext context, {String? message}) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return LoadingIndicator(message: message, isOverlay: true);
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: LoadingIndicator(message: message, isOverlay: true),
+        );
       },
     );
   }
 
   /// Aktif overlay'ı kapatır.
   static void hideOverlay(BuildContext context) {
-    Navigator.of(context, rootNavigator: true).pop();
+    if (Navigator.of(context, rootNavigator: true).canPop()) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
   }
 
   /// Bir Future işlemi sırasında yükleme göstergesi gösterir.
+  /// Bu metot özellikle ağır işlemler için kullanılmalıdır.
   static Future<T> wrapWithLoading<T>({
     required BuildContext context,
     required Future<T> future,
     String? message,
   }) async {
-    // BuildContext'i async metot başında yakalayalım
-    showOverlay(context, message: message);
-
     try {
+      // Yükleme göstergesini hemen göster
+      showOverlay(context, message: message);
+
+      // İşlemi ayrı bir isolate veya async/await ile yap
       final result = await future;
+
+      // Sonuç döndükten sonra overlay'ı kapat
       if (context.mounted) {
         hideOverlay(context);
       }
+
       return result;
     } catch (e) {
+      // Hata durumunda overlay'ı kapat
       if (context.mounted) {
         hideOverlay(context);
       }

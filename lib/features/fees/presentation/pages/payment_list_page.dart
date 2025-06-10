@@ -28,6 +28,20 @@ class _PaymentListPageState extends State<PaymentListPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Apply filter from state if needed
+    if (_statusFilter.isNotEmpty) {
+      Future.microtask(() {
+        Provider.of<PaymentProvider>(
+          context,
+          listen: false,
+        ).filterByStatus(_statusFilter, notify: true);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -38,10 +52,20 @@ class _PaymentListPageState extends State<PaymentListPage> {
       context,
       listen: false,
     );
-    await paymentProvider.loadPayments();
+
+    // notify: false ile yükleme işlemini yap, bu sayede build sırasında state değişimi olmaz
+    await paymentProvider.loadPayments(notify: false);
+
+    // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
     if (mounted) {
-      setState(() {
-        _isLoading = false;
+      Future.microtask(() {
+        if (mounted) {
+          // State güncellemelerini build dışında yap
+          paymentProvider.notifyListeners();
+          setState(() {
+            _isLoading = false;
+          });
+        }
       });
     }
   }
@@ -52,6 +76,13 @@ class _PaymentListPageState extends State<PaymentListPage> {
       appBar: AppBar(
         title: const Text('Ödemeler'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Ödeme Geçmişi',
+            onPressed: () {
+              context.push('/fee-history');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Yenile',
@@ -238,12 +269,15 @@ class _PaymentListPageState extends State<PaymentListPage> {
         setState(() {
           _statusFilter = selected ? status : '';
         });
-        if (selected) {
-          Provider.of<PaymentProvider>(
-            context,
-            listen: false,
-          ).filterByStatus(status);
-        }
+        // Use Future.microtask to avoid build-time state change
+        Future.microtask(() {
+          if (mounted) {
+            Provider.of<PaymentProvider>(
+              context,
+              listen: false,
+            ).filterByStatus(_statusFilter, notify: true);
+          }
+        });
       },
       backgroundColor: AppColors.background,
       selectedColor: AppColors.primary.withAlpha(50),
@@ -263,10 +297,15 @@ class _PaymentListPageState extends State<PaymentListPage> {
         setState(() {
           _statusFilter = status;
         });
-        Provider.of<PaymentProvider>(
-          context,
-          listen: false,
-        ).filterByStatus(status);
+        // Use Future.microtask to avoid build-time state change
+        Future.microtask(() {
+          if (mounted) {
+            Provider.of<PaymentProvider>(
+              context,
+              listen: false,
+            ).filterByStatus(_statusFilter, notify: true);
+          }
+        });
       },
       borderRadius: BorderRadius.circular(AppDimensions.radius8),
       child: Padding(
@@ -536,23 +575,31 @@ class _PaymentListPageState extends State<PaymentListPage> {
     });
 
     try {
-      await Provider.of<PaymentProvider>(
-        context,
-        listen: false,
-      ).deletePayment(id);
+      final provider = Provider.of<PaymentProvider>(context, listen: false);
+
+      // notify: false ile silme işlemini yap, bu sayede build sırasında state değişimi olmaz
+      await provider.deletePayment(id, notify: false);
+
+      // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ödeme başarıyla silindi')),
-        );
+        Future.microtask(() {
+          if (mounted) {
+            // State güncellemelerini build dışında yap
+            provider.notifyListeners();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Ödeme başarıyla silindi')),
+            );
+            setState(() {
+              _isLoading = false;
+            });
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Hata: $e')));
-      }
-    } finally {
-      if (mounted) {
         setState(() {
           _isLoading = false;
         });

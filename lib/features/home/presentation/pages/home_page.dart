@@ -3,6 +3,7 @@ import 'package:ders_planlayici/features/calendar/presentation/pages/calendar_pa
 import 'package:ders_planlayici/features/students/presentation/pages/student_list_page.dart';
 import 'package:ders_planlayici/features/settings/presentation/pages/settings_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/lessons_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_page.dart';
 import 'package:ders_planlayici/core/widgets/app_bottom_navigation.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 
@@ -21,10 +22,17 @@ class _HomePageState extends State<HomePage> {
     const CalendarPage(),
     const LessonsPage(),
     const StudentListPage(),
+    const PaymentListPage(),
     const SettingsPage(),
   ];
 
-  final List<String> _titles = ['Takvim', 'Dersler', 'Öğrenciler', 'Ayarlar'];
+  final List<String> _titles = [
+    'Takvim',
+    'Dersler',
+    'Öğrenciler',
+    'Ödemeler',
+    'Ayarlar',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +54,7 @@ class _HomePageState extends State<HomePage> {
           AppBottomNavigationItem(label: 'Takvim', icon: Icons.calendar_today),
           AppBottomNavigationItem(label: 'Dersler', icon: Icons.book),
           AppBottomNavigationItem(label: 'Öğrenciler', icon: Icons.people),
+          AppBottomNavigationItem(label: 'Ödemeler', icon: Icons.payments),
           AppBottomNavigationItem(label: 'Ayarlar', icon: Icons.settings),
         ],
       ),
@@ -94,7 +103,16 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ];
-      case 3: // Ayarlar
+      case 3: // Ödemeler
+        return [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // TODO: Ödeme arama işlevselliği
+            },
+          ),
+        ];
+      case 4: // Ayarlar
         return null;
       default:
         return null;
@@ -128,7 +146,15 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.person_add),
         );
-      case 3: // Ayarlar
+      case 3: // Ödemeler
+        return FloatingActionButton(
+          onPressed: () {
+            // TODO: Ödeme ekleme sayfasına yönlendir
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add),
+        );
+      case 4: // Ayarlar
         return null;
       default:
         return null;

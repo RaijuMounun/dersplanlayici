@@ -5,6 +5,7 @@ import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
+import 'package:ders_planlayici/core/widgets/loading_indicator.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
@@ -75,58 +76,66 @@ class _AddStudentPageState extends State<AddStudentPage> {
   }
 
   Future<void> _loadStudentDetails() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (!mounted) return;
 
     try {
-      if (!mounted) return;
-      final studentProvider = context.read<StudentProvider>();
-      await studentProvider.loadStudents();
+      // LoadingIndicator ile işlemi saralım - bu donma sorununu önleyecek
+      await LoadingIndicator.wrapWithLoading(
+        context: context,
+        message: 'Öğrenci bilgileri yükleniyor...',
+        future: Future(() async {
+          final studentProvider = context.read<StudentProvider>();
+          await studentProvider.loadStudents(notify: false);
 
-      if (!mounted) return;
-      final student = studentProvider.getStudentById(widget.studentId!);
+          // State güncellemesini ayrı bir mikro görevde yap
+          await Future.microtask(() {
+            if (mounted) {
+              studentProvider.notifyListeners();
+            }
+          });
 
-      if (student != null) {
-        setState(() {
-          _originalStudent = student;
-          _nameController.text = student.name;
-          _parentNameController.text = student.parentName ?? '';
-          _phoneController.text = student.phone ?? '';
-          _emailController.text = student.email ?? '';
-          _notesController.text = student.notes ?? '';
-          _selectedGrade = student.grade;
+          return studentProvider.getStudentById(widget.studentId!);
+        }),
+      ).then((student) {
+        if (student != null) {
+          setState(() {
+            _isLoading = false;
+            _originalStudent = student;
+            _nameController.text = student.name;
+            _parentNameController.text = student.parentName ?? '';
+            _phoneController.text = student.phone ?? '';
+            _emailController.text = student.email ?? '';
+            _notesController.text = student.notes ?? '';
+            _selectedGrade = student.grade;
 
-          if (student.subjects != null) {
-            _selectedSubjects.clear();
-            _selectedSubjects.addAll(student.subjects!);
+            if (student.subjects != null) {
+              _selectedSubjects.clear();
+              _selectedSubjects.addAll(student.subjects!);
+            }
+          });
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Öğrenci bulunamadı'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+            context.pop();
           }
-        });
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Öğrenci bulunamadı'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-          Navigator.pop(context);
         }
-      }
+      });
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Öğrenci bilgileri yüklenirken hata oluştu: $e'),
             backgroundColor: AppColors.error,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -572,62 +581,70 @@ class _AddStudentPageState extends State<AddStudentPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Öğrenci nesnesini oluştur
+    final student = _isEditMode
+        ? _originalStudent!.copyWith(
+            name: _nameController.text.trim(),
+            grade: _selectedGrade,
+            parentName: _parentNameController.text.trim(),
+            phone: _phoneController.text.trim(),
+            email: _emailController.text.trim(),
+            subjects: List.from(_selectedSubjects),
+            notes: _notesController.text.trim(),
+          )
+        : Student(
+            name: _nameController.text.trim(),
+            grade: _selectedGrade,
+            parentName: _parentNameController.text.trim(),
+            phone: _phoneController.text.trim(),
+            email: _emailController.text.trim(),
+            subjects: List.from(_selectedSubjects),
+            notes: _notesController.text.trim(),
+          );
+
+    // Provider üzerinden öğrenciyi kaydet veya güncelle
+    final studentProvider = Provider.of<StudentProvider>(
+      context,
+      listen: false,
+    );
 
     try {
-      // Öğrenci nesnesini oluştur
-      final student = _isEditMode
-          ? _originalStudent!.copyWith(
-              name: _nameController.text.trim(),
-              grade: _selectedGrade,
-              parentName: _parentNameController.text.trim(),
-              phone: _phoneController.text.trim(),
-              email: _emailController.text.trim(),
-              subjects: List.from(_selectedSubjects),
-              notes: _notesController.text.trim(),
-            )
-          : Student(
-              name: _nameController.text.trim(),
-              grade: _selectedGrade,
-              parentName: _parentNameController.text.trim(),
-              phone: _phoneController.text.trim(),
-              email: _emailController.text.trim(),
-              subjects: List.from(_selectedSubjects),
-              notes: _notesController.text.trim(),
-            );
+      // LoadingIndicator ile işlemi saralım - bu donma sorununu önleyecek
+      await LoadingIndicator.wrapWithLoading(
+        context: context,
+        message: _isEditMode
+            ? 'Öğrenci güncelleniyor...'
+            : 'Öğrenci kaydediliyor...',
+        future: Future(() async {
+          if (_isEditMode) {
+            await studentProvider.updateStudent(student, notify: false);
+          } else {
+            await studentProvider.addStudent(student, notify: false);
+          }
 
-      // Provider üzerinden öğrenciyi kaydet veya güncelle
-      final studentProvider = Provider.of<StudentProvider>(
-        context,
-        listen: false,
+          // State güncellemesini ayrı bir mikro görevde yap
+          await Future.microtask(() {
+            studentProvider.notifyListeners();
+          });
+
+          return true;
+        }),
       );
 
-      if (_isEditMode) {
-        await studentProvider.updateStudent(student);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Öğrenci başarıyla güncellendi'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      } else {
-        await studentProvider.addStudent(student);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Öğrenci başarıyla eklendi'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      }
-
-      // Başarılı kayıt sonrası geri dön
+      // İşlem başarılı oldu, kullanıcıya bildir ve sayfadan çık
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isEditMode
+                  ? 'Öğrenci başarıyla güncellendi'
+                  : 'Öğrenci başarıyla eklendi',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
+        // Sayfadan çık
         context.pop();
       }
     } catch (e) {
@@ -635,12 +652,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -676,12 +687,29 @@ class _AddStudentPageState extends State<AddStudentPage> {
   Future<void> _deleteStudent() async {
     if (!_isEditMode || _originalStudent == null) return;
 
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      await context.read<StudentProvider>().deleteStudent(_originalStudent!.id);
+      final studentProvider = context.read<StudentProvider>();
+
+      // LoadingIndicator ile işlemi saralım - bu donma sorununu önleyecek
+      await LoadingIndicator.wrapWithLoading(
+        context: context,
+        message: 'Öğrenci siliniyor...',
+        future: Future(() async {
+          await studentProvider.deleteStudent(
+            _originalStudent!.id,
+            notify: false,
+          );
+
+          // State güncellemesini ayrı bir mikro görevde yap
+          await Future.microtask(() {
+            studentProvider.notifyListeners();
+          });
+
+          return true;
+        }),
+      );
+
+      // İşlem başarılı oldu, kullanıcıya bildir ve sayfadan çık
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -689,6 +717,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
             backgroundColor: AppColors.success,
           ),
         );
+
+        // Sayfadan çık
         context.pop();
       }
     } catch (e) {
@@ -699,12 +729,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
             backgroundColor: AppColors.error,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
