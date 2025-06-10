@@ -248,7 +248,7 @@ class _LessonsPageState extends State<LessonsPage>
             child: ElevatedButton.icon(
               onPressed: () {
                 // Ders ekleme sayfasına yönlendir
-                context.push('/add-lesson').then((_) {
+                context.push('/new-lesson').then((_) {
                   if (mounted) {
                     context.read<LessonProvider>().loadLessons();
                   }
