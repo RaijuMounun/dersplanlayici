@@ -8,7 +8,7 @@ class StudentRepository {
 
   Future<List<Student>> getAllStudents() async {
     final studentMaps = await _databaseHelper.getStudents();
-    return studentMaps.map((map) => Student.fromMap(map)).toList();
+    return studentMaps.map(Student.fromMap).toList();
   }
 
   Future<Student?> getStudent(String id) async {

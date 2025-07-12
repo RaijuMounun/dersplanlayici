@@ -2,12 +2,6 @@ import 'package:ders_planlayici/features/calendar/domain/models/calendar_event_m
 
 /// Takvimde gösterilen günü temsil eden model sınıfı.
 class CalendarDay {
-  final DateTime date;
-  final List<CalendarEvent> events;
-  final bool isToday;
-  final bool isWeekend;
-  final bool isSelectedMonth;
-  final String? holidayName;
 
   CalendarDay({
     required this.date,
@@ -21,7 +15,7 @@ class CalendarDay {
   /// Tarihten CalendarDay nesnesi oluşturur.
   factory CalendarDay.fromDate(
     DateTime date, {
-    List<CalendarEvent> events = const [],
+    List<CalendarEventModel> events = const [],
     DateTime? today,
     DateTime? selectedMonth,
     Map<String, String>? holidays,
@@ -43,24 +37,37 @@ class CalendarDay {
 
     return CalendarDay(
       date: date,
-      events: events.where((event) => event.date == dateStr).toList(),
+      events: events
+          .where(
+            (event) =>
+                event.startDate.year == date.year &&
+                event.startDate.month == date.month &&
+                event.startDate.day == date.day,
+          )
+          .toList(),
       isToday: isToday,
       isWeekend: isWeekend,
       isSelectedMonth: isSelectedMonth,
       holidayName: holidayName,
     );
   }
+  final DateTime date;
+  final List<CalendarEventModel> events;
+  final bool isToday;
+  final bool isWeekend;
+  final bool isSelectedMonth;
+  final String? holidayName;
 
   /// Bu günün toplam etkinlik sayısını döndürür.
   int get eventCount => events.length;
 
   /// Bu günün ders etkinliklerini döndürür.
-  List<CalendarEvent> get lessonEvents =>
-      events.where((event) => event.type == CalendarEventType.lesson).toList();
+  List<CalendarEventModel> get lessonEvents =>
+      events.where((event) => event.eventType == 'lesson').toList();
 
   /// Bu günün sınav etkinliklerini döndürür.
-  List<CalendarEvent> get examEvents =>
-      events.where((event) => event.type == CalendarEventType.exam).toList();
+  List<CalendarEventModel> get examEvents =>
+      events.where((event) => event.eventType == 'exam').toList();
 
   /// Bu günün tatil olup olmadığını döndürür.
   bool get isHoliday => holidayName != null;
@@ -76,8 +83,7 @@ class CalendarDay {
   int get day => date.day;
 
   /// Etkinlik eklenmiş yeni bir CalendarDay nesnesi oluşturur.
-  CalendarDay addEvent(CalendarEvent event) {
-    return CalendarDay(
+  CalendarDay addEvent(CalendarEventModel event) => CalendarDay(
       date: date,
       events: [...events, event],
       isToday: isToday,
@@ -85,11 +91,9 @@ class CalendarDay {
       isSelectedMonth: isSelectedMonth,
       holidayName: holidayName,
     );
-  }
 
   /// Çoklu etkinlik eklenmiş yeni bir CalendarDay nesnesi oluşturur.
-  CalendarDay addEvents(List<CalendarEvent> newEvents) {
-    return CalendarDay(
+  CalendarDay addEvents(List<CalendarEventModel> newEvents) => CalendarDay(
       date: date,
       events: [...events, ...newEvents],
       isToday: isToday,
@@ -97,10 +101,7 @@ class CalendarDay {
       isSelectedMonth: isSelectedMonth,
       holidayName: holidayName,
     );
-  }
 
   @override
-  String toString() {
-    return 'CalendarDay(date: $formattedDate, events: $eventCount, isToday: $isToday)';
-  }
+  String toString() => 'CalendarDay(date: $formattedDate, events: $eventCount, isToday: $isToday)';
 }

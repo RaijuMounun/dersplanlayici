@@ -18,21 +18,9 @@ enum PaymentMethod {
 }
 
 /// Ödeme bilgilerini temsil eden model sınıfı.
-class Payment {
-  final String id;
-  final String studentId;
-  final String studentName;
-  final String description;
-  final double amount;
-  final double paidAmount;
-  final String date;
-  final String? dueDate;
-  final PaymentStatus status;
-  final PaymentMethod? method;
-  final String? notes;
-  final List<String>? lessonIds; // İlişkili ders ID'leri
+class PaymentModel { // İlişkili ders ID'leri
 
-  Payment({
+  PaymentModel({
     String? id,
     required this.studentId,
     required this.studentName,
@@ -47,9 +35,8 @@ class Payment {
     this.lessonIds,
   }) : id = id ?? const Uuid().v4();
 
-  /// Map objesinden Payment nesnesine dönüştürür.
-  factory Payment.fromMap(Map<String, dynamic> map) {
-    return Payment(
+  /// Map objesinden PaymentModel nesnesine dönüştürür.
+  factory PaymentModel.fromMap(Map<String, dynamic> map) => PaymentModel(
       id: map['id'] as String,
       studentId: map['studentId'] as String,
       studentName: map['studentName'] as String,
@@ -73,11 +60,21 @@ class Payment {
           ? List<String>.from(map['lessonIds'])
           : null,
     );
-  }
+  final String id;
+  final String studentId;
+  final String studentName;
+  final String description;
+  final double amount;
+  final double paidAmount;
+  final String date;
+  final String? dueDate;
+  final PaymentStatus status;
+  final PaymentMethod? method;
+  final String? notes;
+  final List<String>? lessonIds;
 
   /// Payment nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, dynamic> toMap() => {
       'id': id,
       'studentId': studentId,
       'studentName': studentName,
@@ -91,10 +88,9 @@ class Payment {
       'notes': notes,
       'lessonIds': lessonIds,
     };
-  }
 
   /// Güncellenmiş bir ödeme nesnesi oluşturur.
-  Payment copyWith({
+  PaymentModel copyWith({
     String? id,
     String? studentId,
     String? studentName,
@@ -107,8 +103,7 @@ class Payment {
     PaymentMethod? method,
     String? notes,
     List<String>? lessonIds,
-  }) {
-    return Payment(
+  }) => PaymentModel(
       id: id ?? this.id,
       studentId: studentId ?? this.studentId,
       studentName: studentName ?? this.studentName,
@@ -122,7 +117,6 @@ class Payment {
       notes: notes ?? this.notes,
       lessonIds: lessonIds ?? this.lessonIds,
     );
-  }
 
   /// Ödeme durumunu hesaplar
   PaymentStatus calculateStatus() {
@@ -155,7 +149,5 @@ class Payment {
   }
 
   @override
-  String toString() {
-    return 'Payment(id: $id, studentName: $studentName, amount: $amount, paidAmount: $paidAmount, status: $status)';
-  }
+  String toString() => 'Payment(id: $id, studentName: $studentName, amount: $amount, paidAmount: $paidAmount, status: $status)';
 }

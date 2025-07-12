@@ -5,22 +5,22 @@ import '../../../../core/error/app_exception.dart';
 
 /// Ücret verilerini yöneten Provider sınıfı.
 class FeeProvider extends ChangeNotifier {
+
+  FeeProvider(this._databaseService);
   final DatabaseService _databaseService;
 
-  List<Fee> _fees = [];
+  List<FeeModel> _fees = [];
   bool _isLoading = false;
   AppException? _error;
 
   /// Ücret listesini döndürür.
-  List<Fee> get fees => _fees;
+  List<FeeModel> get fees => _fees;
 
   /// Yükleme durumunu döndürür.
   bool get isLoading => _isLoading;
 
   /// Hata durumunu döndürür.
   AppException? get error => _error;
-
-  FeeProvider(this._databaseService);
 
   /// Tüm ücretleri veritabanından yükler.
   Future<void> loadFees() async {
@@ -32,14 +32,14 @@ class FeeProvider extends ChangeNotifier {
         table: 'fees',
         orderBy: 'date DESC',
       );
-      _fees = feesData.map((data) => Fee.fromMap(data)).toList();
+      _fees = feesData.map(FeeModel.fromMap).toList();
       notifyListeners();
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
-        message: 'Ücretler yüklenirken bir hata oluştu: ${e.toString()}',
+        message: 'Ücretler yüklenirken bir hata oluştu:  [33m${e.toString()} [0m',
       );
       notifyListeners();
     } finally {
@@ -59,12 +59,12 @@ class FeeProvider extends ChangeNotifier {
         whereArgs: [studentId],
         orderBy: 'date DESC',
       );
-      _fees = feesData.map((data) => Fee.fromMap(data)).toList();
+      _fees = feesData.map(FeeModel.fromMap).toList();
       notifyListeners();
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Öğrenci ücretleri yüklenirken bir hata oluştu: ${e.toString()}',
@@ -87,12 +87,12 @@ class FeeProvider extends ChangeNotifier {
         whereArgs: [status.toString().split('.').last],
         orderBy: 'date DESC',
       );
-      _fees = feesData.map((data) => Fee.fromMap(data)).toList();
+      _fees = feesData.map(FeeModel.fromMap).toList();
       notifyListeners();
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Ödeme durumuna göre ücretler yüklenirken bir hata oluştu: ${e.toString()}',
@@ -104,7 +104,7 @@ class FeeProvider extends ChangeNotifier {
   }
 
   /// Ücret ekler.
-  Future<void> addFee(Fee fee) async {
+  Future<void> addFee(FeeModel fee) async {
     _setLoading(true);
     _error = null;
 
@@ -114,7 +114,7 @@ class FeeProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ücret eklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -125,7 +125,7 @@ class FeeProvider extends ChangeNotifier {
   }
 
   /// Ücret günceller.
-  Future<void> updateFee(Fee fee) async {
+  Future<void> updateFee(FeeModel fee) async {
     _setLoading(true);
     _error = null;
 
@@ -140,7 +140,7 @@ class FeeProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ücret güncellenirken bir hata oluştu: ${e.toString()}',
       );
@@ -165,7 +165,7 @@ class FeeProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ücret silinirken bir hata oluştu: ${e.toString()}',
       );
@@ -176,10 +176,10 @@ class FeeProvider extends ChangeNotifier {
   }
 
   /// ID'ye göre ücret arar.
-  Fee? getFeeById(String id) {
+  FeeModel? getFeeById(String id) {
     try {
       return _fees.firstWhere((fee) => fee.id == id);
-    } catch (e) {
+    } on Exception {
       return null;
     }
   }
@@ -194,14 +194,10 @@ class FeeProvider extends ChangeNotifier {
   }
 
   /// Ödeme durumuna göre ücretleri filtreler.
-  List<Fee> filterByStatus(PaymentStatus status) {
-    return _fees.where((fee) => fee.status == status).toList();
-  }
+  List<FeeModel> filterByStatus(PaymentStatus status) => _fees.where((fee) => fee.status == status).toList();
 
   /// Belirli bir aya ait ücretleri döndürür.
-  List<Fee> getFeesByMonth(String month) {
-    return _fees.where((fee) => fee.month == month).toList();
-  }
+  List<FeeModel> getFeesByMonth(String month) => _fees.where((fee) => fee.month == month).toList();
 
   /// Yükleme durumunu günceller.
   void _setLoading(bool loading) {

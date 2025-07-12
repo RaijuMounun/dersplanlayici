@@ -7,16 +7,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseBackupRepository {
-  final DatabaseHelper _databaseHelper;
 
   DatabaseBackupRepository({DatabaseHelper? databaseHelper})
     : _databaseHelper = databaseHelper ?? DatabaseHelper();
+  final DatabaseHelper _databaseHelper;
 
   /// Veritabanı yedeklerini getirir
-  Future<List<DatabaseBackup>> getBackups() async {
+  Future<List<DatabaseBackupModel>> getBackups() async {
     try {
       final backupMaps = await _databaseHelper.getDatabaseBackups();
-      return backupMaps.map((map) => DatabaseBackup.fromMap(map)).toList();
+      return backupMaps.map(DatabaseBackupModel.fromMap).toList();
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Yedekler alınamadı',
@@ -27,7 +27,7 @@ class DatabaseBackupRepository {
   }
 
   /// Veritabanı yedeği oluşturur
-  Future<DatabaseBackup> createBackup() async {
+  Future<DatabaseBackupModel> createBackup() async {
     try {
       // Veritabanı dosyasını al
       final db = await _databaseHelper.database;
@@ -53,7 +53,7 @@ class DatabaseBackupRepository {
       final fileSize = await backupFile.length();
 
       // Yedek bilgilerini veritabanına kaydet
-      final backup = DatabaseBackup(
+      final backup = DatabaseBackupModel(
         path: backupPath,
         fileName: backupFileName,
         createdAt: DateTime.now(),
@@ -73,7 +73,7 @@ class DatabaseBackupRepository {
   }
 
   /// Veritabanı yedeğini geri yükler
-  Future<bool> restoreBackup(DatabaseBackup backup) async {
+  Future<bool> restoreBackup(DatabaseBackupModel backup) async {
     try {
       // Önce veritabanını kapat
       final db = await _databaseHelper.database;
@@ -114,7 +114,7 @@ class DatabaseBackupRepository {
   }
 
   /// Veritabanı yedeğini siler
-  Future<bool> deleteBackup(DatabaseBackup backup) async {
+  Future<bool> deleteBackup(DatabaseBackupModel backup) async {
     try {
       // Veritabanından sil
       await _databaseHelper.deleteDatabaseBackup(backup.path);
@@ -136,10 +136,10 @@ class DatabaseBackupRepository {
   }
 
   /// Veritabanı bilgilerini getirir
-  Future<DatabaseInfo> getDatabaseInfo() async {
+  Future<DatabaseInfoModel> getDatabaseInfo() async {
     try {
       final infoMap = await _databaseHelper.getDatabaseInfo();
-      return DatabaseInfo.fromMap(infoMap);
+      return DatabaseInfoModel.fromMap(infoMap);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Veritabanı bilgileri alınamadı',

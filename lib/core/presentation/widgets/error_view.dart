@@ -3,20 +3,6 @@ import 'package:ders_planlayici/core/error/app_exception.dart';
 
 /// Hata ekranı widget'ı
 class ErrorView extends StatelessWidget {
-  /// Görüntülenecek hata mesajı
-  final String message;
-
-  /// Hata detayları (isteğe bağlı)
-  final String? details;
-
-  /// Tekrar deneme butonu için callback (isteğe bağlı)
-  final VoidCallback? onRetry;
-
-  /// Geri dönme butonu için callback (isteğe bağlı)
-  final VoidCallback? onBack;
-
-  /// Özel bir icon (isteğe bağlı)
-  final IconData? icon;
 
   /// Hata durumundan oluşturulan bir ErrorView
   const ErrorView({
@@ -34,8 +20,7 @@ class ErrorView extends StatelessWidget {
     Key? key,
     VoidCallback? onRetry,
     VoidCallback? onBack,
-  }) {
-    return ErrorView(
+  }) => ErrorView(
       key: key,
       message: exception.message,
       details: exception.details?.toString(),
@@ -43,7 +28,20 @@ class ErrorView extends StatelessWidget {
       onBack: onBack,
       icon: _getIconForException(exception),
     );
-  }
+  /// Görüntülenecek hata mesajı
+  final String message;
+
+  /// Hata detayları (isteğe bağlı)
+  final String? details;
+
+  /// Tekrar deneme butonu için callback (isteğe bağlı)
+  final VoidCallback? onRetry;
+
+  /// Geri dönme butonu için callback (isteğe bağlı)
+  final VoidCallback? onBack;
+
+  /// Özel bir icon (isteğe bağlı)
+  final IconData? icon;
 
   /// Exception tipine göre uygun bir icon seçer
   static IconData _getIconForException(AppException exception) {
@@ -63,8 +61,7 @@ class ErrorView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
+  Widget build(BuildContext context) => Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -115,19 +112,17 @@ class ErrorView extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 /// Sayfa yüklenirken gösterilecek loading ekranı
 class LoadingView extends StatelessWidget {
+
+  const LoadingView({super.key, this.message});
   /// Gösterilecek mesaj (isteğe bağlı)
   final String? message;
 
-  const LoadingView({super.key, this.message});
-
   @override
-  Widget build(BuildContext context) {
-    return Center(
+  Widget build(BuildContext context) => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -139,5 +134,4 @@ class LoadingView extends StatelessWidget {
         ],
       ),
     );
-  }
 }

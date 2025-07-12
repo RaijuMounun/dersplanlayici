@@ -12,14 +12,13 @@ import 'package:ders_planlayici/features/fees/presentation/providers/payment_pro
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_transaction_provider.dart';
 
 class PaymentTransactionPage extends StatefulWidget {
-  final String paymentId;
-  final String? transactionId;
-
   const PaymentTransactionPage({
     super.key,
     required this.paymentId,
     this.transactionId,
   });
+  final String paymentId;
+  final String? transactionId;
 
   @override
   State<PaymentTransactionPage> createState() => _PaymentTransactionPageState();
@@ -35,8 +34,8 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
   bool _isEdit = false;
   DateTime _selectedDate = DateTime.now();
   PaymentMethod _paymentMethod = PaymentMethod.cash;
-  Payment? _payment;
-  PaymentTransaction? _transaction;
+  PaymentModel? _payment;
+  PaymentTransactionModel? _transaction;
 
   @override
   void initState() {
@@ -92,14 +91,14 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
           _amountController.text = remainingAmount.toString();
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Veriler yüklenirken hata oluştu: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Veriler yüklenirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -134,12 +133,12 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
     final amount = double.tryParse(_amountController.text) ?? 0;
     if (amount <= 0) {
       if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Lütfen geçerli bir tutar girin'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lütfen geçerli bir tutar girin'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
       return;
     }
@@ -150,19 +149,25 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
 
     try {
       // Store context in a local variable
+      if (!mounted) return;
       final localContext = context;
+      // Provider'ları önceden al
+      final transactionProvider = Provider.of<PaymentTransactionProvider>(
+        localContext,
+        listen: false,
+      );
+      final paymentProvider = Provider.of<PaymentProvider>(
+        localContext,
+        listen: false,
+      );
+
       await LoadingIndicator.wrapWithLoading(
         context: localContext,
-        message: _isEdit ? "İşlem güncelleniyor..." : "İşlem kaydediliyor...",
+        message: _isEdit ? 'İşlem güncelleniyor...' : 'İşlem kaydediliyor...',
         future: Future(() async {
-          final provider = Provider.of<PaymentTransactionProvider>(
-            localContext,
-            listen: false,
-          );
-
           if (_isEdit && widget.transactionId != null) {
             // İşlemi güncelle
-            await provider.updateTransaction(
+            await transactionProvider.updateTransaction(
               id: widget.transactionId!,
               paymentId: widget.paymentId,
               amount: amount,
@@ -173,7 +178,7 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
             );
           } else {
             // Yeni işlem ekle
-            await provider.addTransaction(
+            await transactionProvider.addTransaction(
               paymentId: widget.paymentId,
               amount: amount,
               method: _paymentMethod,
@@ -184,10 +189,7 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
           }
 
           // Ödeme bilgilerini yenile
-          await Provider.of<PaymentProvider>(
-            localContext,
-            listen: false,
-          ).loadPayments();
+          await paymentProvider.loadPayments();
         }),
       );
 
@@ -198,9 +200,11 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        context.pop(true); // Başarı sonucu döndür
+        if (mounted) {
+          context.pop(true); // Başarı sonucu döndür
+        }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -213,72 +217,65 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEdit ? 'Ödeme İşlemini Düzenle' : 'Ödeme İşlemi Ekle'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildForm(),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: Text(_isEdit ? 'Ödeme İşlemini Düzenle' : 'Ödeme İşlemi Ekle'),
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _buildForm(),
+  );
 
-  Widget _buildForm() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.spacing16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_payment != null) _buildPaymentInfoCard(),
-            const SizedBox(height: AppDimensions.spacing24),
-            _buildDateField(),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildAmountField(),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildPaymentMethodDropdown(),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildReceiptNoField(),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildNotesField(),
-            const SizedBox(height: AppDimensions.spacing24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saveTransaction,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(
-                  _isEdit ? 'İşlemi Güncelle' : 'İşlemi Kaydet',
-                  style: const TextStyle(fontSize: 16),
-                ),
+  Widget _buildForm() => SingleChildScrollView(
+    padding: const EdgeInsets.all(AppDimensions.spacing16),
+    child: Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_payment != null) _buildPaymentInfoCard(),
+          const SizedBox(height: AppDimensions.spacing24),
+          _buildDateField(),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildAmountField(),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildPaymentMethodDropdown(),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildReceiptNoField(),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildNotesField(),
+          const SizedBox(height: AppDimensions.spacing24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saveTransaction,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: Text(
+                _isEdit ? 'İşlemi Güncelle' : 'İşlemi Kaydet',
+                style: const TextStyle(fontSize: 16),
               ),
             ),
-            if (_isEdit) ...[
-              const SizedBox(height: AppDimensions.spacing16),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: _confirmDelete,
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text(
-                    'İşlemi Sil',
-                    style: TextStyle(fontSize: 16),
-                  ),
+          ),
+          if (_isEdit) ...[
+            const SizedBox(height: AppDimensions.spacing16),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: _confirmDelete,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
+                child: const Text('İşlemi Sil', style: TextStyle(fontSize: 16)),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 
   Widget _buildPaymentInfoCard() {
     final currencyFormatter = NumberFormat.currency(
@@ -388,102 +385,95 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
     );
   }
 
-  Widget _buildAmountField() {
-    return TextFormField(
-      controller: _amountController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-      ],
-      decoration: const InputDecoration(
-        labelText: 'Ödeme Tutarı',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.attach_money),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Lütfen bir tutar girin';
-        }
-        final amount = double.tryParse(value);
-        if (amount == null || amount <= 0) {
-          return 'Geçerli bir tutar girin';
-        }
-        return null;
-      },
-    );
-  }
+  Widget _buildAmountField() => TextFormField(
+    controller: _amountController,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    inputFormatters: [
+      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+    ],
+    decoration: const InputDecoration(
+      labelText: 'Ödeme Tutarı',
+      border: OutlineInputBorder(),
+      prefixIcon: Icon(Icons.attach_money),
+    ),
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Lütfen bir tutar girin';
+      }
+      final amount = double.tryParse(value);
+      if (amount == null || amount <= 0) {
+        return 'Geçerli bir tutar girin';
+      }
+      return null;
+    },
+  );
 
-  Widget _buildPaymentMethodDropdown() {
-    return DropdownButtonFormField<PaymentMethod>(
-      value: _paymentMethod,
-      decoration: const InputDecoration(
-        labelText: 'Ödeme Yöntemi',
-        border: OutlineInputBorder(),
-      ),
-      items: PaymentMethod.values.map((method) {
-        String label;
-        IconData icon;
-        switch (method) {
-          case PaymentMethod.cash:
-            label = 'Nakit';
-            icon = Icons.money;
-            break;
-          case PaymentMethod.creditCard:
-            label = 'Kredi Kartı';
-            icon = Icons.credit_card;
-            break;
-          case PaymentMethod.bankTransfer:
-            label = 'Banka Havalesi';
-            icon = Icons.account_balance;
-            break;
-          case PaymentMethod.other:
-            label = 'Diğer';
-            icon = Icons.more_horiz;
-            break;
-        }
-        return DropdownMenuItem<PaymentMethod>(
-          value: method,
-          child: Row(
-            children: [
-              Icon(icon, size: 18),
-              const SizedBox(width: 8),
-              Text(label),
-            ],
-          ),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) {
-          setState(() {
-            _paymentMethod = value;
-          });
-        }
-      },
-    );
-  }
+  Widget _buildPaymentMethodDropdown() =>
+      DropdownButtonFormField<PaymentMethod>(
+        value: _paymentMethod,
+        decoration: const InputDecoration(
+          labelText: 'Ödeme Yöntemi',
+          border: OutlineInputBorder(),
+        ),
+        items: PaymentMethod.values.map((method) {
+          String label;
+          IconData icon;
+          switch (method) {
+            case PaymentMethod.cash:
+              label = 'Nakit';
+              icon = Icons.money;
+              break;
+            case PaymentMethod.creditCard:
+              label = 'Kredi Kartı';
+              icon = Icons.credit_card;
+              break;
+            case PaymentMethod.bankTransfer:
+              label = 'Banka Havalesi';
+              icon = Icons.account_balance;
+              break;
+            case PaymentMethod.other:
+              label = 'Diğer';
+              icon = Icons.more_horiz;
+              break;
+          }
+          return DropdownMenuItem<PaymentMethod>(
+            value: method,
+            child: Row(
+              children: [
+                Icon(icon, size: 18),
+                const SizedBox(width: 8),
+                Text(label),
+              ],
+            ),
+          );
+        }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              _paymentMethod = value;
+            });
+          }
+        },
+      );
 
-  Widget _buildReceiptNoField() {
-    return TextFormField(
-      controller: _receiptNoController,
-      decoration: const InputDecoration(
-        labelText: 'Makbuz/Dekont No',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.receipt),
-      ),
-    );
-  }
+  Widget _buildReceiptNoField() => TextFormField(
+    controller: _receiptNoController,
+    decoration: const InputDecoration(
+      labelText: 'Makbuz/Dekont No',
+      border: OutlineInputBorder(),
+      prefixIcon: Icon(Icons.receipt),
+    ),
+  );
 
-  Widget _buildNotesField() {
-    return TextFormField(
-      controller: _notesController,
-      decoration: const InputDecoration(
-        labelText: 'Notlar',
-        border: OutlineInputBorder(),
-        alignLabelWithHint: true,
-      ),
-      maxLines: 3,
-    );
-  }
+  Widget _buildNotesField() => TextFormField(
+    controller: _notesController,
+    decoration: const InputDecoration(
+      labelText: 'Notlar',
+      border: OutlineInputBorder(),
+      alignLabelWithHint: true,
+    ),
+    maxLines: 3,
+  );
 
   void _confirmDelete() {
     showDialog(
@@ -515,26 +505,30 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
     if (widget.transactionId == null) return;
 
     try {
+      if (!mounted) return;
       // Store context in a local variable
       final localContext = context;
+      // Provider'ları önceden al
+      final transactionProvider = Provider.of<PaymentTransactionProvider>(
+        localContext,
+        listen: false,
+      );
+      final paymentProvider = Provider.of<PaymentProvider>(
+        localContext,
+        listen: false,
+      );
+
       await LoadingIndicator.wrapWithLoading(
         context: localContext,
-        message: "İşlem siliniyor...",
+        message: 'İşlem siliniyor...',
         future: Future(() async {
-          final provider = Provider.of<PaymentTransactionProvider>(
-            localContext,
-            listen: false,
-          );
-          await provider.deleteTransaction(
+          await transactionProvider.deleteTransaction(
             widget.transactionId!,
             widget.paymentId,
           );
 
           // Ödeme bilgilerini yenile
-          await Provider.of<PaymentProvider>(
-            localContext,
-            listen: false,
-          ).loadPayments();
+          await paymentProvider.loadPayments();
         }),
       );
 
@@ -545,9 +539,11 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        context.pop(true);
+        if (mounted) {
+          context.pop(true);
+        }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

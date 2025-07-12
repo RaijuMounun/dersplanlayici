@@ -2,14 +2,6 @@ import 'package:uuid/uuid.dart';
 
 /// Öğrenci bilgilerini temsil eden model sınıfı.
 class Student {
-  final String id;
-  final String name;
-  final String grade;
-  final String? parentName;
-  final String? phone;
-  final String? email;
-  final List<String>? subjects;
-  final String? notes;
 
   Student({
     String? id,
@@ -23,8 +15,7 @@ class Student {
   }) : id = id ?? const Uuid().v4();
 
   /// Map objesinden Student nesnesine dönüştürür.
-  factory Student.fromMap(Map<String, dynamic> map) {
-    return Student(
+  factory Student.fromMap(Map<String, dynamic> map) => Student(
       id: map['id'] as String,
       name: map['name'] as String,
       grade: map['grade'] as String,
@@ -36,11 +27,17 @@ class Student {
           : null,
       notes: map['notes'] as String?,
     );
-  }
+  final String id;
+  final String name;
+  final String grade;
+  final String? parentName;
+  final String? phone;
+  final String? email;
+  final List<String>? subjects;
+  final String? notes;
 
   /// Student nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, dynamic> toMap() => {
       'id': id,
       'name': name,
       'grade': grade,
@@ -50,7 +47,6 @@ class Student {
       'subjects': subjects?.join(','),
       'notes': notes,
     };
-  }
 
   /// Güncellenmiş bir öğrenci nesnesi oluşturur.
   Student copyWith({
@@ -62,8 +58,7 @@ class Student {
     String? email,
     List<String>? subjects,
     String? notes,
-  }) {
-    return Student(
+  }) => Student(
       id: id ?? this.id,
       name: name ?? this.name,
       grade: grade ?? this.grade,
@@ -73,10 +68,7 @@ class Student {
       subjects: subjects ?? this.subjects,
       notes: notes ?? this.notes,
     );
-  }
 
   @override
-  String toString() {
-    return 'Student(id: $id, name: $name, grade: $grade)';
-  }
+  String toString() => 'Student(id: $id, name: $name, grade: $grade)';
 }

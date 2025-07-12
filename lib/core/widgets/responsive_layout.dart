@@ -4,9 +4,6 @@ import '../utils/responsive_utils.dart';
 /// Farklı ekran boyutları için responsive layout widget'ı.
 /// Cihaz türüne göre farklı içerikler gösterir.
 class ResponsiveLayout extends StatelessWidget {
-  final Widget mobile;
-  final Widget? tablet;
-  final Widget? desktop;
 
   const ResponsiveLayout({
     super.key,
@@ -14,6 +11,9 @@ class ResponsiveLayout extends StatelessWidget {
     this.tablet,
     this.desktop,
   });
+  final Widget mobile;
+  final Widget? tablet;
+  final Widget? desktop;
 
   @override
   Widget build(BuildContext context) {
@@ -32,29 +32,24 @@ class ResponsiveLayout extends StatelessWidget {
 
 /// Ekran yönüne göre farklı içerikler gösteren widget.
 class OrientationLayout extends StatelessWidget {
-  final Widget portrait;
-  final Widget landscape;
 
   const OrientationLayout({
     super.key,
     required this.portrait,
     required this.landscape,
   });
+  final Widget portrait;
+  final Widget landscape;
 
   @override
-  Widget build(BuildContext context) {
-    return MediaQuery.of(context).orientation == Orientation.portrait
+  Widget build(BuildContext context) => MediaQuery.of(context).orientation == Orientation.portrait
         ? portrait
         : landscape;
-  }
 }
 
 /// Ekran genişliğine göre içerik gösteren widget.
 /// Belirtilen genişlik değerinden küçük ekranlarda mobile widget'ını gösterir.
 class AdaptiveLayout extends StatelessWidget {
-  final Widget mobile;
-  final Widget wider;
-  final double breakpoint;
 
   const AdaptiveLayout({
     super.key,
@@ -62,9 +57,10 @@ class AdaptiveLayout extends StatelessWidget {
     required this.wider,
     this.breakpoint = 600,
   });
+  final Widget mobile;
+  final Widget wider;
+  final double breakpoint;
 
   @override
-  Widget build(BuildContext context) {
-    return MediaQuery.of(context).size.width < breakpoint ? mobile : wider;
-  }
+  Widget build(BuildContext context) => MediaQuery.of(context).size.width < breakpoint ? mobile : wider;
 }

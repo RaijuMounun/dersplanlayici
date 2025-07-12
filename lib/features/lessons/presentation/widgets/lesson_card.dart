@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
 class LessonCard extends StatelessWidget {
-  final String studentName;
-  final String subject;
-  final String startTime;
-  final String endTime;
-  final VoidCallback? onTap;
 
   const LessonCard({
     super.key,
@@ -15,10 +10,14 @@ class LessonCard extends StatelessWidget {
     required this.endTime,
     this.onTap,
   });
+  final String studentName;
+  final String subject;
+  final String startTime;
+  final String endTime;
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
+  Widget build(BuildContext context) => Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
@@ -116,25 +115,20 @@ class LessonCard extends StatelessWidget {
         ),
       ),
     );
-  }
 
-  Widget _buildStatusChip(BuildContext context) {
-    // Burada ders durumuna göre farklı bir chip gösterilebilir
-    // Örneğin: Tamamlandı, İptal Edildi, Bekliyor vb.
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withAlpha(50),
-        borderRadius: BorderRadius.circular(16),
+  Widget _buildStatusChip(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primary.withAlpha(50),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Text(
+      'Planlandı',
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.primary,
       ),
-      child: Text(
-        'Planlandı',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }

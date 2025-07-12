@@ -11,10 +11,10 @@ import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_p
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 
 class AddPaymentPage extends StatefulWidget {
-  final String? studentId;
-  final String? paymentId;
 
   const AddPaymentPage({super.key, this.studentId, this.paymentId});
+  final String? studentId;
+  final String? paymentId;
 
   @override
   State<AddPaymentPage> createState() => _AddPaymentPageState();
@@ -85,7 +85,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           _loadStudentLessons();
         }
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -126,7 +126,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         }).toList();
         _isLoadingLessons = false;
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -143,8 +143,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Ödeme Ekle')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -152,10 +151,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           ? const Center(child: CircularProgressIndicator())
           : _buildForm(),
     );
-  }
 
-  Widget _buildForm() {
-    return SingleChildScrollView(
+  Widget _buildForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Form(
         key: _formKey,
@@ -227,21 +224,17 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildStudentDropdown() {
-    return DropdownButtonFormField<String>(
+  Widget _buildStudentDropdown() => DropdownButtonFormField<String>(
       value: _selectedStudentId,
       decoration: const InputDecoration(
         labelText: 'Öğrenci',
         border: OutlineInputBorder(),
       ),
-      items: _students.map((student) {
-        return DropdownMenuItem<String>(
+      items: _students.map((student) => DropdownMenuItem<String>(
           value: student.id,
           child: Text(student.name),
-        );
-      }).toList(),
+        )).toList(),
       onChanged: (value) {
         if (value == null) return;
 
@@ -262,10 +255,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         return null;
       },
     );
-  }
 
-  Widget _buildDescriptionField() {
-    return TextFormField(
+  Widget _buildDescriptionField() => TextFormField(
       controller: _descriptionController,
       decoration: const InputDecoration(
         labelText: 'Açıklama',
@@ -278,10 +269,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         return null;
       },
     );
-  }
 
-  Widget _buildAmountField() {
-    return TextFormField(
+  Widget _buildAmountField() => TextFormField(
       controller: _amountController,
       decoration: const InputDecoration(
         labelText: 'Toplam Tutar (₺)',
@@ -302,10 +291,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         return null;
       },
     );
-  }
 
-  Widget _buildPaidAmountField() {
-    return TextFormField(
+  Widget _buildPaidAmountField() => TextFormField(
       controller: _paidAmountController,
       decoration: const InputDecoration(
         labelText: 'Ödenen Tutar (₺)',
@@ -327,15 +314,13 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         return null;
       },
     );
-  }
 
   Widget _buildDatePicker({
     required String label,
     required DateTime? selectedDate,
     required Function(DateTime) onDateSelected,
     bool isOptional = false,
-  }) {
-    return Column(
+  }) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -346,7 +331,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             ),
             if (isOptional) ...[
               const SizedBox(width: AppDimensions.spacing4),
-              Text(
+              const Text(
                 '(Opsiyonel)',
                 style: TextStyle(
                   fontSize: 12,
@@ -405,10 +390,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildStatusDropdown() {
-    return DropdownButtonFormField<PaymentStatus>(
+  Widget _buildStatusDropdown() => DropdownButtonFormField<PaymentStatus>(
       value: _paymentStatus,
       decoration: const InputDecoration(
         labelText: 'Ödeme Durumu',
@@ -446,10 +429,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         }
       },
     );
-  }
 
-  Widget _buildPaymentMethodDropdown() {
-    return DropdownButtonFormField<PaymentMethod>(
+  Widget _buildPaymentMethodDropdown() => DropdownButtonFormField<PaymentMethod>(
       value: _paymentMethod,
       decoration: const InputDecoration(
         labelText: 'Ödeme Yöntemi',
@@ -488,10 +469,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         });
       },
     );
-  }
 
-  Widget _buildNotesField() {
-    return TextFormField(
+  Widget _buildNotesField() => TextFormField(
       controller: _notesController,
       decoration: const InputDecoration(
         labelText: 'Notlar',
@@ -500,10 +479,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       ),
       maxLines: 3,
     );
-  }
 
-  Widget _buildLessonsList() {
-    return Column(
+  Widget _buildLessonsList() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
@@ -581,7 +558,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               ),
       ],
     );
-  }
 
   Future<void> _savePayment() async {
     if (!_formKey.currentState!.validate()) {
@@ -625,7 +601,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       }
 
       // Payment nesnesini oluştur
-      final payment = Payment(
+      final payment = PaymentModel(
         studentId: _selectedStudentId!,
         studentName: _selectedStudentName!,
         description: _descriptionController.text,
@@ -657,7 +633,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         ),
       );
       Navigator.pop(context);
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       // Hata mesajı göster

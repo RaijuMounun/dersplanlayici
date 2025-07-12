@@ -10,8 +10,8 @@ import 'package:ders_planlayici/features/students/presentation/providers/student
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 
 class AddStudentPage extends StatefulWidget {
-  final String? studentId;
   const AddStudentPage({super.key, this.studentId});
+  final String? studentId;
 
   @override
   State<AddStudentPage> createState() => _AddStudentPageState();
@@ -80,11 +80,11 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
     try {
       // LoadingIndicator ile işlemi saralım - bu donma sorununu önleyecek
+      final studentProvider = context.read<StudentProvider>();
       await LoadingIndicator.wrapWithLoading(
         context: context,
         message: 'Öğrenci bilgileri yükleniyor...',
         future: Future(() async {
-          final studentProvider = context.read<StudentProvider>();
           await studentProvider.loadStudents(notify: false);
 
           // State güncellemesini ayrı bir mikro görevde yap
@@ -116,8 +116,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Öğrenci bulunamadı'),
+              const SnackBar(
+                content: Text('Öğrenci bulunamadı'),
                 backgroundColor: AppColors.error,
               ),
             );
@@ -125,7 +125,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
           }
         }
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -151,8 +151,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'Öğrenciyi Düzenle' : 'Yeni Öğrenci Ekle'),
         actions: [
@@ -172,11 +171,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
               desktop: _buildDesktopForm(),
             ),
     );
-  }
 
   // Mobil görünüm için form
-  Widget _buildMobileForm() {
-    return SingleChildScrollView(
+  Widget _buildMobileForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Form(
         key: _formKey,
@@ -202,11 +199,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         ),
       ),
     );
-  }
 
   // Tablet görünüm için form
-  Widget _buildTabletForm() {
-    return SingleChildScrollView(
+  Widget _buildTabletForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing24),
       child: Form(
         key: _formKey,
@@ -251,11 +246,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         ),
       ),
     );
-  }
 
   // Masaüstü görünüm için form
-  Widget _buildDesktopForm() {
-    return Center(
+  Widget _buildDesktopForm() => Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 1200),
         padding: const EdgeInsets.all(AppDimensions.spacing32),
@@ -305,11 +298,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         ),
       ),
     );
-  }
 
   // Form alanları
-  Widget _buildNameField() {
-    return TextFormField(
+  Widget _buildNameField() => TextFormField(
       controller: _nameController,
       decoration: InputDecoration(
         labelText: 'Öğrenci Adı Soyadı *',
@@ -329,10 +320,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
         return null;
       },
     );
-  }
 
-  Widget _buildParentNameField() {
-    return TextFormField(
+  Widget _buildParentNameField() => TextFormField(
       controller: _parentNameController,
       decoration: InputDecoration(
         labelText: 'Veli Adı Soyadı',
@@ -343,10 +332,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
       ),
       textInputAction: TextInputAction.next,
     );
-  }
 
-  Widget _buildPhoneField() {
-    return TextFormField(
+  Widget _buildPhoneField() => TextFormField(
       controller: _phoneController,
       decoration: InputDecoration(
         labelText: 'Telefon',
@@ -372,7 +359,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
       onChanged: (value) {
         // Telefon numarası formatını düzenle
         if (value.isNotEmpty) {
-          String digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+          final String digitsOnly = value.replaceAll(RegExp(r'\D'), '');
           String formatted = '';
 
           for (int i = 0; i < digitsOnly.length && i < 10; i++) {
@@ -391,10 +378,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
         }
       },
     );
-  }
 
-  Widget _buildEmailField() {
-    return TextFormField(
+  Widget _buildEmailField() => TextFormField(
       controller: _emailController,
       decoration: InputDecoration(
         labelText: 'E-posta',
@@ -418,10 +403,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
         return null;
       },
     );
-  }
 
-  Widget _buildGradeField() {
-    return Column(
+  Widget _buildGradeField() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -444,16 +427,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
               vertical: AppDimensions.spacing12,
             ),
           ),
-          items: _availableGrades.map((grade) {
-            return DropdownMenuItem<String>(value: grade, child: Text(grade));
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _selectedGrade = value;
-              });
-            }
-          },
+          items: _availableGrades.map((grade) => DropdownMenuItem<String>(value: grade, child: Text(grade))).toList(),
+          onChanged: (value) =>
+              value != null ? setState(() => _selectedGrade = value) : null,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Lütfen bir sınıf seçin';
@@ -463,10 +439,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildSubjectsField() {
-    return Column(
+  Widget _buildSubjectsField() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -494,15 +468,11 @@ class _AddStudentPageState extends State<AddStudentPage> {
               return FilterChip(
                 label: Text(subject),
                 selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedSubjects.add(subject);
-                    } else {
-                      _selectedSubjects.remove(subject);
-                    }
-                  });
-                },
+                onSelected: (selected) => setState(
+                  () => selected
+                      ? _selectedSubjects.add(subject)
+                      : _selectedSubjects.remove(subject),
+                ),
                 selectedColor: AppColors.primary.withAlpha(180),
                 checkmarkColor: Colors.white,
                 labelStyle: TextStyle(color: isSelected ? Colors.white : null),
@@ -512,10 +482,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildNotesField() {
-    return Column(
+  Widget _buildNotesField() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -540,10 +508,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildSaveButton({double? width}) {
-    return SizedBox(
+  Widget _buildSaveButton({double? width}) => SizedBox(
       width: width ?? double.infinity,
       height: 50,
       child: ElevatedButton(
@@ -574,7 +540,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
               ),
       ),
     );
-  }
 
   void _saveStudent() async {
     if (!_formKey.currentState!.validate()) {
@@ -623,9 +588,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
           }
 
           // State güncellemesini ayrı bir mikro görevde yap
-          await Future.microtask(() {
-            studentProvider.notifyListeners();
-          });
+          await Future.microtask(studentProvider.notifyListeners);
 
           return true;
         }),
@@ -647,7 +610,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
         // Sayfadan çık
         context.pop();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
@@ -701,9 +664,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
           );
 
           // State güncellemesini ayrı bir mikro görevde yap
-          await Future.microtask(() {
-            studentProvider.notifyListeners();
-          });
+          await Future.microtask(studentProvider.notifyListeners);
 
           return true;
         }),
@@ -712,8 +673,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
       // İşlem başarılı oldu, kullanıcıya bildir ve sayfadan çık
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Öğrenci başarıyla silindi'),
+          const SnackBar(
+            content: Text('Öğrenci başarıyla silindi'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -721,7 +682,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
         // Sayfadan çık
         context.pop();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

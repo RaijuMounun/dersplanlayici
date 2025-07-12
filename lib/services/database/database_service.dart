@@ -1,24 +1,24 @@
 import 'package:sqflite/sqflite.dart' hide DatabaseException;
 import '../../core/data/database_helper.dart';
 import '../../core/error/app_exception.dart';
+import '../../core/error/error_logger.dart';
 
 /// Veritabanı işlemlerini yönetmek için kullanılan servis sınıfı.
 ///
 /// Bu sınıf, veritabanı işlemlerini DatabaseHelper üzerinden yaparak
 /// daha üst seviye bir API sağlar ve hata yönetimi yapar.
 class DatabaseService {
-  final DatabaseHelper _databaseHelper;
-
   /// DatabaseService sınıfı için constructor.
   ///
   /// [_databaseHelper]: Veritabanı işlemlerini gerçekleştiren helper.
   DatabaseService(this._databaseHelper);
+  final DatabaseHelper _databaseHelper;
 
   /// Veritabanı bağlantısını başlatır.
   Future<void> initDatabase() async {
     try {
       await _databaseHelper.database;
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Veritabanı başlatılırken hata oluştu',
       );
@@ -29,7 +29,7 @@ class DatabaseService {
   Future<Map<String, dynamic>> getDatabaseInfo() async {
     try {
       return await _databaseHelper.getDatabaseInfo();
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Veritabanı bilgileri alınırken hata oluştu',
       );
@@ -135,7 +135,7 @@ class DatabaseService {
   Future<int> insertStudent(Map<String, dynamic> student) async {
     try {
       return await _databaseHelper.insertStudent(student);
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Öğrenci eklenirken hata oluştu');
     }
   }
@@ -144,7 +144,7 @@ class DatabaseService {
   Future<int> updateStudent(Map<String, dynamic> student) async {
     try {
       return await _databaseHelper.updateStudent(student);
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Öğrenci güncellenirken hata oluştu',
       );
@@ -155,7 +155,7 @@ class DatabaseService {
   Future<int> deleteStudent(String id) async {
     try {
       return await _databaseHelper.deleteStudent(id);
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Öğrenci silinirken hata oluştu');
     }
   }
@@ -164,7 +164,7 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> getStudents() async {
     try {
       return await _databaseHelper.getStudents();
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Öğrenciler alınırken hata oluştu',
       );
@@ -187,28 +187,39 @@ class DatabaseService {
   /// Yeni ders ekler.
   Future<int> insertLesson(Map<String, dynamic> lesson) async {
     try {
-      print('🔍 [DatabaseService] insertLesson çağrıldı');
-      print('🔍 [DatabaseService] Ders verisi: $lesson');
+      await ErrorLogger().info('insertLesson çağrıldı', tag: 'DatabaseService');
+      await ErrorLogger().debug('Ders verisi: $lesson', tag: 'DatabaseService');
 
       final db = await _databaseHelper.database;
-      print('🔍 [DatabaseService] Veritabanı bağlantısı alındı');
+      await ErrorLogger().debug(
+        'Veritabanı bağlantısı alındı',
+        tag: 'DatabaseService',
+      );
 
       // Tarih alanlarını ekle
       final now = DateTime.now().toIso8601String();
       lesson['createdAt'] = now;
       lesson['updatedAt'] = now;
 
-      print(
-        '🔍 [DatabaseService] Tarih alanları eklendi: createdAt=$now, updatedAt=$now',
+      await ErrorLogger().debug(
+        'Tarih alanları eklendi: createdAt=$now, updatedAt=$now',
+        tag: 'DatabaseService',
       );
 
       final result = await db.insert('lessons', lesson);
-      print('🔍 [DatabaseService] Ders başarıyla eklendi, sonuç: $result');
+      await ErrorLogger().info(
+        'Ders başarıyla eklendi, sonuç: $result',
+        tag: 'DatabaseService',
+      );
 
       return result;
-    } catch (e) {
-      print('❌ [DatabaseService] Ders ekleme hatası: $e');
-      print('❌ [DatabaseService] Hata stack trace: ${StackTrace.current}');
+    } on Exception catch (e) {
+      await ErrorLogger().error(
+        'Ders ekleme hatası',
+        tag: 'DatabaseService',
+        error: e,
+        stackTrace: StackTrace.current,
+      );
       throw const DatabaseException(message: 'Ders eklenirken hata oluştu');
     }
   }
@@ -227,7 +238,7 @@ class DatabaseService {
         where: 'id = ?',
         whereArgs: [lesson['id']],
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Ders güncellenirken hata oluştu');
     }
   }
@@ -237,7 +248,7 @@ class DatabaseService {
     try {
       final db = await _databaseHelper.database;
       return await db.delete('lessons', where: 'id = ?', whereArgs: [id]);
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Ders silinirken hata oluştu');
     }
   }
@@ -247,7 +258,7 @@ class DatabaseService {
     try {
       final db = await _databaseHelper.database;
       return await db.query('lessons');
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Dersler alınırken hata oluştu');
     }
   }
@@ -262,7 +273,7 @@ class DatabaseService {
         whereArgs: [date],
         orderBy: 'startTime ASC',
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Tarihe göre dersler alınırken hata oluştu',
       );
@@ -281,7 +292,7 @@ class DatabaseService {
         whereArgs: [studentId],
         orderBy: 'date DESC, startTime ASC',
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Öğrenci dersleri alınırken hata oluştu',
       );
@@ -305,7 +316,7 @@ class DatabaseService {
         ''',
         [startDate, endDate],
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Tarih aralığındaki dersler alınırken hata oluştu',
       );
@@ -332,7 +343,7 @@ class DatabaseService {
         )
       ''';
 
-      List<Object?> args = [
+      final List<Object?> args = [
         date,
         endTime,
         startTime,
@@ -350,7 +361,7 @@ class DatabaseService {
       final result = await db.rawQuery(sql, args);
       final count = Sqflite.firstIntValue(result);
       return count != null && count > 0;
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Ders çakışması kontrolü yapılırken hata oluştu',
       );
@@ -364,7 +375,7 @@ class DatabaseService {
     try {
       final db = await _databaseHelper.database;
       return await db.insert('payments', payment);
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Ödeme eklenirken hata oluştu');
     }
   }
@@ -379,7 +390,7 @@ class DatabaseService {
         where: 'id = ?',
         whereArgs: [payment['id']],
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Ödeme güncellenirken hata oluştu',
       );
@@ -391,7 +402,7 @@ class DatabaseService {
     try {
       final db = await _databaseHelper.database;
       return await db.delete('payments', where: 'id = ?', whereArgs: [id]);
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Ödeme silinirken hata oluştu');
     }
   }
@@ -401,7 +412,7 @@ class DatabaseService {
     try {
       final db = await _databaseHelper.database;
       return await db.query('payments', orderBy: 'date DESC');
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Ödemeler alınırken hata oluştu');
     }
   }
@@ -417,7 +428,7 @@ class DatabaseService {
         limit: 1,
       );
       return result.isNotEmpty ? result.first : null;
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Ödeme alınırken hata oluştu');
     }
   }
@@ -434,7 +445,7 @@ class DatabaseService {
         whereArgs: [studentId],
         orderBy: 'date DESC',
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Öğrenci ödemeleri alınırken hata oluştu',
       );
@@ -454,7 +465,7 @@ class DatabaseService {
         whereArgs: [startDate, endDate],
         orderBy: 'date DESC',
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Tarih aralığındaki ödemeler alınırken hata oluştu',
       );
@@ -471,7 +482,7 @@ class DatabaseService {
         whereArgs: [status],
         orderBy: 'date DESC',
       );
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(
         message: 'Ödeme durumuna göre ödemeler alınırken hata oluştu',
       );
@@ -489,7 +500,7 @@ class DatabaseService {
         limit: 1,
       );
       return result.isNotEmpty ? result.first : null;
-    } catch (e) {
+    } on Exception {
       throw const DatabaseException(message: 'Öğrenci alınırken hata oluştu');
     }
   }

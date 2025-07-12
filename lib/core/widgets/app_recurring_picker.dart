@@ -8,12 +8,6 @@ enum RecurringType { none, daily, weekly, biweekly, monthly, custom }
 
 /// Ders tekrar bilgilerini içeren model
 class RecurringInfo {
-  final RecurringType type;
-  final int? interval;
-  final List<int>? weekdays; // 1: Pazartesi, 7: Pazar
-  final int? dayOfMonth;
-  final DateTime? endDate;
-  final int? totalOccurrences;
 
   const RecurringInfo({
     required this.type,
@@ -23,6 +17,12 @@ class RecurringInfo {
     this.endDate,
     this.totalOccurrences,
   });
+  final RecurringType type;
+  final int? interval;
+  final List<int>? weekdays; // 1: Pazartesi, 7: Pazar
+  final int? dayOfMonth;
+  final DateTime? endDate;
+  final int? totalOccurrences;
 
   // İnsan tarafından okunabilir tanım
   String get description {
@@ -36,7 +36,7 @@ class RecurringInfo {
         if (days.isEmpty) {
           return interval == 1 ? 'Her hafta' : 'Her $interval haftada bir';
         } else {
-          final dayNames = days.map((d) => _getDayName(d)).join(', ');
+          final dayNames = days.map(_getDayName).join(', ');
           return interval == 1
               ? 'Her hafta: $dayNames'
               : 'Her $interval haftada bir: $dayNames';
@@ -72,11 +72,6 @@ class RecurringInfo {
 
 /// Ders tekrar seçimi için özel widget.
 class AppRecurringPicker extends StatefulWidget {
-  final RecurringInfo? initialValue;
-  final ValueChanged<RecurringInfo>? onChanged;
-  final String? label;
-  final bool enabled;
-  final bool required;
 
   const AppRecurringPicker({
     super.key,
@@ -86,6 +81,11 @@ class AppRecurringPicker extends StatefulWidget {
     this.enabled = true,
     this.required = false,
   });
+  final RecurringInfo? initialValue;
+  final ValueChanged<RecurringInfo>? onChanged;
+  final String? label;
+  final bool enabled;
+  final bool required;
 
   @override
   State<AppRecurringPicker> createState() => _AppRecurringPickerState();
@@ -102,8 +102,7 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.label != null) ...[
@@ -139,15 +138,15 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
                   : AppColors.disabledBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                borderSide: BorderSide(color: AppColors.primary, width: 2),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.spacing12,
@@ -166,15 +165,12 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
         ),
       ],
     );
-  }
 
   void _showRecurringDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
+      builder: (context) => StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
               title: const Text('Tekrar Seçimi'),
               content: SizedBox(
                 width: double.maxFinite,
@@ -225,15 +221,12 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
                   child: const Text('Tamam'),
                 ),
               ],
-            );
-          },
-        );
-      },
+            ),
+        ),
     );
   }
 
-  Widget _buildRecurringTypeDropdown(StateSetter setState) {
-    return DropdownButtonFormField<RecurringType>(
+  Widget _buildRecurringTypeDropdown(StateSetter setState) => DropdownButtonFormField<RecurringType>(
       value: _recurringInfo.type,
       decoration: InputDecoration(
         border: OutlineInputBorder(
@@ -244,24 +237,24 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
           vertical: AppDimensions.spacing8,
         ),
       ),
-      items: [
-        const DropdownMenuItem(
+      items: const [
+        DropdownMenuItem(
           value: RecurringType.none,
           child: Text('Tekrarlanmaz'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: RecurringType.daily,
           child: Text('Günlük'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: RecurringType.weekly,
           child: Text('Haftalık'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: RecurringType.biweekly,
           child: Text('İki haftada bir'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: RecurringType.monthly,
           child: Text('Aylık'),
         ),
@@ -292,10 +285,8 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
         });
       },
     );
-  }
 
-  Widget _buildIntervalSelector(StateSetter setState) {
-    return Row(
+  Widget _buildIntervalSelector(StateSetter setState) => Row(
       children: [
         const Text('Her'),
         const SizedBox(width: AppDimensions.spacing8),
@@ -332,7 +323,6 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
         Text(_getIntervalSuffix()),
       ],
     );
-  }
 
   String _getIntervalSuffix() {
     switch (_recurringInfo.type) {
@@ -392,8 +382,7 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
     );
   }
 
-  Widget _buildMonthDaySelector(StateSetter setState) {
-    return Column(
+  Widget _buildMonthDaySelector(StateSetter setState) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Ayın günü:'),
@@ -430,7 +419,6 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
         ),
       ],
     );
-  }
 
   String _getDayName(int day) {
     const dayAbbreviations = ['Pt', 'Sa', 'Çr', 'Pr', 'Cu', 'Ct', 'Pz'];

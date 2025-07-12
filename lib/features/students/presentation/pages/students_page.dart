@@ -29,12 +29,9 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return _buildStudentsList();
-  }
+  Widget build(BuildContext context) => _buildStudentsList();
 
-  Widget _buildStudentsList() {
-    return Consumer<StudentProvider>(
+  Widget _buildStudentsList() => Consumer<StudentProvider>(
       builder: (context, studentProvider, child) {
         if (studentProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -57,22 +54,16 @@ class _StudentsPageState extends State<StudentsPage> {
         );
       },
     );
-  }
 
   // Liste görünümü (mobil)
-  Widget _buildListView(List<Student> students) {
-    return ListView.builder(
+  Widget _buildListView(List<Student> students) => ListView.builder(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       itemCount: students.length,
-      itemBuilder: (context, index) {
-        return _buildStudentCard(students[index]);
-      },
+      itemBuilder: (context, index) => _buildStudentCard(students[index]),
     );
-  }
 
   // Grid görünümü (tablet ve desktop)
-  Widget _buildGridView(List<Student> students, int crossAxisCount) {
-    return GridView.builder(
+  Widget _buildGridView(List<Student> students, int crossAxisCount) => GridView.builder(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
@@ -81,15 +72,11 @@ class _StudentsPageState extends State<StudentsPage> {
         childAspectRatio: 1.2,
       ),
       itemCount: students.length,
-      itemBuilder: (context, index) {
-        return _buildStudentCard(students[index]);
-      },
+      itemBuilder: (context, index) => _buildStudentCard(students[index]),
     );
-  }
 
   // Öğrenci kartı
-  Widget _buildStudentCard(Student student) {
-    return StudentCard(
+  Widget _buildStudentCard(Student student) => StudentCard(
       studentName: student.name,
       studentGrade: student.grade,
       phoneNumber: student.phone,
@@ -104,7 +91,7 @@ class _StudentsPageState extends State<StudentsPage> {
         await context.push('/student/${student.id}');
 
         if (mounted) {
-          studentProvider.loadStudents();
+          await studentProvider.loadStudents();
         }
       },
       onEditPressed: () async {
@@ -115,7 +102,7 @@ class _StudentsPageState extends State<StudentsPage> {
         await context.push('/student/${student.id}/edit');
 
         if (mounted) {
-          provider.loadStudents();
+          await provider.loadStudents();
         }
       },
       onDeletePressed: () {
@@ -123,10 +110,8 @@ class _StudentsPageState extends State<StudentsPage> {
         _showDeleteConfirmation(context, student);
       },
     );
-  }
 
-  Widget _buildEmptyState() {
-    return Center(
+  Widget _buildEmptyState() => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -154,7 +139,7 @@ class _StudentsPageState extends State<StudentsPage> {
               await context.push('/add-student');
 
               if (mounted) {
-                Provider.of<StudentProvider>(
+                await Provider.of<StudentProvider>(
                   context,
                   listen: false,
                 ).loadStudents();
@@ -166,7 +151,6 @@ class _StudentsPageState extends State<StudentsPage> {
         ],
       ),
     );
-  }
 
   void _showDeleteConfirmation(BuildContext context, Student student) {
     // Dialog boyutunu responsive yap
@@ -203,7 +187,7 @@ class _StudentsPageState extends State<StudentsPage> {
               await studentProvider.deleteStudent(student.id);
 
               if (mounted) {
-                studentProvider.loadStudents();
+                await studentProvider.loadStudents();
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),

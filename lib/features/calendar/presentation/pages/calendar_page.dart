@@ -112,8 +112,7 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildCalendarView() {
-    return Consumer<LessonProvider>(
+  Widget _buildCalendarView() => Consumer<LessonProvider>(
       builder: (context, lessonProvider, child) {
         final events = _buildEventsMap(lessonProvider);
 
@@ -132,7 +131,6 @@ class _CalendarPageState extends State<CalendarPage> {
         );
       },
     );
-  }
 
   Map<DateTime, List<dynamic>> _buildEventsMap(LessonProvider lessonProvider) {
     final Map<DateTime, List<dynamic>> eventsMap = {};
@@ -149,17 +147,13 @@ class _CalendarPageState extends State<CalendarPage> {
     return eventsMap;
   }
 
-  DateTime _parseDate(String date) {
-    final components = date.split('-');
-    return DateTime(
-      int.parse(components[0]), // yıl
-      int.parse(components[1]), // ay
-      int.parse(components[2]), // gün
-    );
-  }
+  DateTime _parseDate(String date) => DateTime(
+    int.parse(date.split('-')[0]), // yıl
+    int.parse(date.split('-')[1]), // ay
+    int.parse(date.split('-')[2]), // gün
+  );
 
-  Widget _buildDailyLessonsList() {
-    return Consumer<LessonProvider>(
+  Widget _buildDailyLessonsList() => Consumer<LessonProvider>(
       builder: (context, lessonProvider, child) {
         if (lessonProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -204,7 +198,6 @@ class _CalendarPageState extends State<CalendarPage> {
         );
       },
     );
-  }
 
   Widget _buildEmptyState() {
     final dateStr = DateFormat('dd MMMM yyyy').format(_selectedDate);
@@ -249,7 +242,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     context,
                     listen: false,
                   );
-                  lessonProvider.loadLessons();
+                  await lessonProvider.loadLessons();
                 }
               },
               icon: const Icon(Icons.add),

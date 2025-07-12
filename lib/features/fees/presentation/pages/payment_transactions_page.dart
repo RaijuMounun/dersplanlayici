@@ -10,9 +10,9 @@ import 'package:ders_planlayici/features/fees/presentation/providers/payment_pro
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_transaction_provider.dart';
 
 class PaymentTransactionsPage extends StatefulWidget {
-  final String paymentId;
 
   const PaymentTransactionsPage({super.key, required this.paymentId});
+  final String paymentId;
 
   @override
   State<PaymentTransactionsPage> createState() =>
@@ -21,7 +21,7 @@ class PaymentTransactionsPage extends StatefulWidget {
 
 class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
   bool _isLoading = true;
-  Payment? _payment;
+  PaymentModel? _payment;
 
   @override
   void initState() {
@@ -50,7 +50,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
         localContext,
         listen: false,
       ).loadTransactionsByPaymentId(widget.paymentId);
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -105,7 +105,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
               ],
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addTransaction(),
+        onPressed: _addTransaction,
         tooltip: 'Ödeme İşlemi Ekle',
         child: const Icon(Icons.add),
       ),
@@ -217,7 +217,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
     );
   }
 
-  Widget _buildTransactionsSummary(List<PaymentTransaction> transactions) {
+  Widget _buildTransactionsSummary(List<PaymentTransactionModel> transactions) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
       symbol: '₺',
@@ -280,7 +280,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
     );
   }
 
-  Widget _buildTransactionsList(List<PaymentTransaction> transactions) {
+  Widget _buildTransactionsList(List<PaymentTransactionModel> transactions) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
       symbol: '₺',
@@ -331,7 +331,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
                   const SizedBox(height: AppDimensions.spacing8),
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.calendar_today,
                         size: 16,
                         color: AppColors.textSecondary,
@@ -339,12 +339,12 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
                       const SizedBox(width: AppDimensions.spacing4),
                       Text(
                         formattedDate,
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                       if (transaction.receiptNo != null &&
                           transaction.receiptNo!.isNotEmpty) ...[
                         const SizedBox(width: AppDimensions.spacing8),
-                        Icon(
+                        const Icon(
                           Icons.receipt,
                           size: 16,
                           color: AppColors.textSecondary,
@@ -352,7 +352,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
                         const SizedBox(width: AppDimensions.spacing4),
                         Text(
                           'Makbuz: ${transaction.receiptNo}',
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       ],
                     ],
@@ -362,7 +362,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
                     const SizedBox(height: AppDimensions.spacing8),
                     Text(
                       transaction.notes!,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14,
                       ),
@@ -379,8 +379,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
+  Widget _buildEmptyState() => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -402,7 +401,6 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
         ],
       ),
     );
-  }
 
   Future<void> _addTransaction() async {
     final result = await context.push<bool>(
@@ -410,7 +408,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
     );
 
     if (result == true && mounted) {
-      _loadData();
+      await _loadData();
     }
   }
 
@@ -420,7 +418,7 @@ class _PaymentTransactionsPageState extends State<PaymentTransactionsPage> {
     );
 
     if (result == true && mounted) {
-      _loadData();
+      await _loadData();
     }
   }
 

@@ -32,12 +32,17 @@ class _PaymentListPageState extends State<PaymentListPage> {
     super.didChangeDependencies();
     // Apply filter from state if needed
     if (_statusFilter.isNotEmpty) {
-      Future.microtask(() {
-        Provider.of<PaymentProvider>(
-          context,
-          listen: false,
-        ).filterByStatus(_statusFilter, notify: true);
-      });
+      if (mounted) {
+        final localContext = context;
+        Future.microtask(() {
+          if (mounted) {
+            Provider.of<PaymentProvider>(
+              localContext,
+              listen: false,
+            ).filterByStatus(_statusFilter, notify: true);
+          }
+        });
+      }
     }
   }
 
@@ -58,7 +63,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
     // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
     if (mounted) {
-      Future.microtask(() {
+      await Future.microtask(() {
         if (mounted) {
           // State güncellemelerini build dışında yap
           paymentProvider.notifyListeners();
@@ -71,8 +76,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Ödemeler'),
         actions: [
@@ -80,7 +84,9 @@ class _PaymentListPageState extends State<PaymentListPage> {
             icon: const Icon(Icons.history),
             tooltip: 'Ödeme Geçmişi',
             onPressed: () {
-              context.push('/fee-history');
+              if (mounted) {
+                context.push('/fee-history');
+              }
             },
           ),
           IconButton(
@@ -104,25 +110,23 @@ class _PaymentListPageState extends State<PaymentListPage> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/add-payment');
+          if (mounted) {
+            context.push('/add-payment');
+          }
         },
         tooltip: 'Ödeme Ekle',
         child: const Icon(Icons.add),
       ),
     );
-  }
 
-  Widget _buildMobileLayout() {
-    return Column(
+  Widget _buildMobileLayout() => Column(
       children: [
         _buildSearchAndFilterBar(),
         Expanded(child: _buildPaymentsList()),
       ],
     );
-  }
 
-  Widget _buildTabletLayout() {
-    return Column(
+  Widget _buildTabletLayout() => Column(
       children: [
         _buildSearchAndFilterBar(),
         Expanded(
@@ -133,10 +137,8 @@ class _PaymentListPageState extends State<PaymentListPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildDesktopLayout() {
-    return Row(
+  Widget _buildDesktopLayout() => Row(
       children: [
         Expanded(
           flex: 1,
@@ -161,10 +163,8 @@ class _PaymentListPageState extends State<PaymentListPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildSearchAndFilterBar() {
-    return Padding(
+  Widget _buildSearchAndFilterBar() => Padding(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         children: [
@@ -174,10 +174,8 @@ class _PaymentListPageState extends State<PaymentListPage> {
         ],
       ),
     );
-  }
 
-  Widget _buildSearchBar() {
-    return TextField(
+  Widget _buildSearchBar() => TextField(
       controller: _searchController,
       decoration: InputDecoration(
         hintText: 'Ödeme ara...',
@@ -203,10 +201,8 @@ class _PaymentListPageState extends State<PaymentListPage> {
         });
       },
     );
-  }
 
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
+  Widget _buildFilterChips() => SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
@@ -222,10 +218,8 @@ class _PaymentListPageState extends State<PaymentListPage> {
         ],
       ),
     );
-  }
 
-  Widget _buildFilterPanel() {
-    return Card(
+  Widget _buildFilterPanel() => Card(
       child: Padding(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Column(
@@ -257,7 +251,6 @@ class _PaymentListPageState extends State<PaymentListPage> {
         ),
       ),
     );
-  }
 
   Widget _buildFilterChip(String status, String label) {
     final isSelected = _statusFilter == status;
@@ -378,7 +371,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
     );
   }
 
-  List<Payment> _filterPayments(List<Payment> payments) {
+  List<PaymentModel> _filterPayments(List<PaymentModel> payments) {
     if (_searchQuery.isEmpty && _statusFilter.isEmpty) {
       return payments;
     }
@@ -403,7 +396,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
     }).toList();
   }
 
-  Widget _buildPaymentCard(Payment payment) {
+  Widget _buildPaymentCard(PaymentModel payment) {
     final formattedDate = DateFormat(
       'dd/MM/yyyy',
     ).format(DateTime.parse(payment.date));
@@ -445,7 +438,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
                         ),
                         Text(
                           payment.description,
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -475,7 +468,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
               const SizedBox(height: AppDimensions.spacing12),
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.calendar_today,
                     size: 16,
                     color: AppColors.textSecondary,
@@ -483,15 +476,15 @@ class _PaymentListPageState extends State<PaymentListPage> {
                   const SizedBox(width: AppDimensions.spacing4),
                   Text(
                     formattedDate,
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   if (payment.dueDate != null) ...[
                     const SizedBox(width: AppDimensions.spacing8),
-                    Icon(Icons.event, size: 16, color: AppColors.textSecondary),
+                    const Icon(Icons.event, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: AppDimensions.spacing4),
                     Text(
                       'Son Ödeme: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(payment.dueDate!))}',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                   const Spacer(),
@@ -505,7 +498,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
                 const SizedBox(height: AppDimensions.spacing8),
                 Text(
                   payment.notes!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                   ),
@@ -543,7 +536,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
     );
   }
 
-  void _confirmDeletePayment(Payment payment) {
+  void _confirmDeletePayment(PaymentModel payment) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -582,7 +575,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
       // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
       if (mounted) {
-        Future.microtask(() {
+        await Future.microtask(() {
           if (mounted) {
             // State güncellemelerini build dışında yap
             provider.notifyListeners();
@@ -595,7 +588,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
           }
         });
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -607,8 +600,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
     }
   }
 
-  Widget _buildEmptyState() {
-    return Center(
+  Widget _buildEmptyState() => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -622,7 +614,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
             _searchQuery.isNotEmpty || _statusFilter.isNotEmpty
                 ? 'Arama kriterlerine uygun ödeme bulunamadı'
                 : 'Henüz ödeme kaydı bulunmuyor',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
           ),
           const SizedBox(height: AppDimensions.spacing24),
           ElevatedButton.icon(
@@ -651,7 +643,6 @@ class _PaymentListPageState extends State<PaymentListPage> {
         ],
       ),
     );
-  }
 
   Color _getStatusColor(PaymentStatus status) {
     switch (status) {

@@ -25,7 +25,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
   TabController? _tabController;
   List<FeeSummary> _feeSummaries = [];
   List<Student> _students = [];
-  List<Payment> _payments = [];
+  List<PaymentModel> _payments = [];
   String _searchQuery = '';
 
   // Filtreleme seçenekleri
@@ -56,22 +56,26 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     });
 
     try {
+      if (!mounted) return;
+      final localContext = context;
+      // Provider'ları önceden al
+      final studentProvider = Provider.of<StudentProvider>(
+        localContext,
+        listen: false,
+      );
+      final paymentProvider = Provider.of<PaymentProvider>(
+        localContext,
+        listen: false,
+      );
+
       await LoadingIndicator.wrapWithLoading(
-        context: context,
-        message: "Veriler yükleniyor...",
+        context: localContext,
+        message: 'Veriler yükleniyor...',
         future: Future(() async {
           // Öğrencileri yükle
-          final studentProvider = Provider.of<StudentProvider>(
-            context,
-            listen: false,
-          );
           await studentProvider.loadStudents(notify: false);
 
           // Ödemeleri yükle
-          final paymentProvider = Provider.of<PaymentProvider>(
-            context,
-            listen: false,
-          );
           await paymentProvider.loadPayments(notify: false);
 
           // Ücret özetlerini yükle
@@ -87,7 +91,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
         if (mounted) {
           setState(() {
             _students = data['students'] as List<Student>;
-            _payments = data['payments'] as List<Payment>;
+            _payments = data['payments'] as List<PaymentModel>;
             _feeSummaries = data['summaries'] as List<FeeSummary>;
             _isLoading = false;
 
@@ -96,7 +100,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
           });
         }
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -146,77 +150,75 @@ class _FeeManagementPageState extends State<FeeManagementPage>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ücret Yönetimi'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calculate),
-            tooltip: 'Otomatik Ücret Hesaplama',
-            onPressed: () {
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Ücret Yönetimi'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.calculate),
+          tooltip: 'Otomatik Ücret Hesaplama',
+          onPressed: () {
+            if (mounted) {
               context.push('/auto-fee-calculation');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'Ödeme Geçmişi',
-            onPressed: () {
-              context.push('/fee-history');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Yenile',
-            onPressed: _loadData,
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Genel Bakış'),
-            Tab(text: 'Öğrenciler'),
-            Tab(text: 'Ödemeler'),
-          ],
+            }
+          },
         ),
+        IconButton(
+          icon: const Icon(Icons.history),
+          tooltip: 'Ödeme Geçmişi',
+          onPressed: () {
+            if (mounted) {
+              context.push('/fee-history');
+            }
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Yenile',
+          onPressed: _loadData,
+        ),
+      ],
+      bottom: TabBar(
+        controller: _tabController,
+        tabs: const [
+          Tab(text: 'Genel Bakış'),
+          Tab(text: 'Öğrenciler'),
+          Tab(text: 'Ödemeler'),
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ResponsiveLayout(
-              mobile: _buildMobileLayout(),
-              tablet: _buildTabletLayout(),
-              desktop: _buildDesktopLayout(),
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : ResponsiveLayout(
+            mobile: _buildMobileLayout(),
+            tablet: _buildTabletLayout(),
+            desktop: _buildDesktopLayout(),
+          ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: () {
+        if (mounted) {
           context.push('/add-payment');
-        },
-        tooltip: 'Ödeme Ekle',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+        }
+      },
+      tooltip: 'Ödeme Ekle',
+      child: const Icon(Icons.add),
+    ),
+  );
 
-  Widget _buildMobileLayout() {
-    return TabBarView(
-      controller: _tabController,
-      children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
-    );
-  }
+  Widget _buildMobileLayout() => TabBarView(
+    controller: _tabController,
+    children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
+  );
 
-  Widget _buildTabletLayout() {
-    return TabBarView(
-      controller: _tabController,
-      children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
-    );
-  }
+  Widget _buildTabletLayout() => TabBarView(
+    controller: _tabController,
+    children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
+  );
 
-  Widget _buildDesktopLayout() {
-    return TabBarView(
-      controller: _tabController,
-      children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
-    );
-  }
+  Widget _buildDesktopLayout() => TabBarView(
+    controller: _tabController,
+    children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
+  );
 
   Widget _buildOverviewTab() {
     final currencyFormatter = NumberFormat.currency(
@@ -304,9 +306,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                   const SizedBox(height: AppDimensions.spacing16),
 
                   // Son 5 ödemeyi listele
-                  ..._payments
-                      .take(5)
-                      .map((payment) => _buildPaymentListItem(payment)),
+                  ..._payments.take(5).map(_buildPaymentListItem),
                 ],
               ),
             ),
@@ -316,81 +316,77 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     );
   }
 
-  Widget _buildStudentsTab() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppDimensions.spacing16),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Öğrenci ara...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              ),
+  Widget _buildStudentsTab() => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
+        child: TextField(
+          decoration: InputDecoration(
+            hintText: 'Öğrenci ara...',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radius8),
             ),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
           ),
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(AppDimensions.spacing8),
-            itemCount: _filteredStudents.length,
-            itemBuilder: (context, index) {
-              final student = _filteredStudents[index];
-              final summary = _getSummaryForStudent(student.id);
+      ),
+      Expanded(
+        child: ListView.builder(
+          padding: const EdgeInsets.all(AppDimensions.spacing8),
+          itemCount: _filteredStudents.length,
+          itemBuilder: (context, index) {
+            final student = _filteredStudents[index];
+            final summary = _getSummaryForStudent(student.id);
 
-              return _buildStudentSummaryCard(student, summary);
-            },
-          ),
+            return _buildStudentSummaryCard(student, summary);
+          },
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 
-  Widget _buildPaymentsTab() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppDimensions.spacing16),
-          child: Column(
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Ödeme ara...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                  ),
+  Widget _buildPaymentsTab() => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
+        child: Column(
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'Ödeme ara...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radius8),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
               ),
-              const SizedBox(height: AppDimensions.spacing12),
-              _buildFilterChips(),
-            ],
-          ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+            const SizedBox(height: AppDimensions.spacing12),
+            _buildFilterChips(),
+          ],
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(AppDimensions.spacing8),
-            itemCount: _filteredPayments.length,
-            itemBuilder: (context, index) {
-              final payment = _filteredPayments[index];
-              return _buildPaymentCard(payment);
-            },
-          ),
+      ),
+      Expanded(
+        child: ListView.builder(
+          padding: const EdgeInsets.all(AppDimensions.spacing8),
+          itemCount: _filteredPayments.length,
+          itemBuilder: (context, index) {
+            final payment = _filteredPayments[index];
+            return _buildPaymentCard(payment);
+          },
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 
   // Yardımcı widget'lar
   Widget _buildSummaryCard(
@@ -398,62 +394,59 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     String value,
     IconData icon,
     Color color,
-  ) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color),
-                const SizedBox(width: AppDimensions.spacing8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+  ) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(width: AppDimensions.spacing8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.spacing12),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
               ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacing12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 
-  Widget _buildProgressBar(String label, double percentage, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(label), Text('${percentage.toStringAsFixed(1)}%')],
-        ),
-        const SizedBox(height: AppDimensions.spacing8),
-        LinearProgressIndicator(
-          value: percentage / 100,
-          backgroundColor: AppColors.background,
-          valueColor: AlwaysStoppedAnimation<Color>(color),
-          minHeight: 10,
-        ),
-        const SizedBox(height: AppDimensions.spacing16),
-      ],
-    );
-  }
+  Widget _buildProgressBar(String label, double percentage, Color color) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [Text(label), Text('${percentage.toStringAsFixed(1)}%')],
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          LinearProgressIndicator(
+            value: percentage / 100,
+            backgroundColor: AppColors.background,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 10,
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+        ],
+      );
 
-  Widget _buildPaymentListItem(Payment payment) {
+  Widget _buildPaymentListItem(PaymentModel payment) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
       symbol: '₺',
@@ -550,7 +543,9 @@ class _FeeManagementPageState extends State<FeeManagementPage>
               LinearProgressIndicator(
                 value: percentage / 100,
                 backgroundColor: AppColors.background,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.success,
+                ),
               ),
               const SizedBox(height: AppDimensions.spacing8),
               Text('${percentage.toStringAsFixed(1)}% ödendi'),
@@ -561,7 +556,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     );
   }
 
-  Widget _buildPaymentCard(Payment payment) {
+  Widget _buildPaymentCard(PaymentModel payment) {
     final statusColor = _getStatusColor(payment.status);
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
@@ -600,7 +595,9 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                         ),
                         Text(
                           payment.description,
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -630,7 +627,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
               const SizedBox(height: AppDimensions.spacing12),
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.calendar_today,
                     size: 16,
                     color: AppColors.textSecondary,
@@ -640,15 +637,19 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                     DateFormat(
                       'dd/MM/yyyy',
                     ).format(DateTime.parse(payment.date)),
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   if (payment.dueDate != null) ...[
                     const SizedBox(width: AppDimensions.spacing8),
-                    Icon(Icons.event, size: 16, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.event,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: AppDimensions.spacing4),
                     Text(
                       'Son Ödeme: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(payment.dueDate!))}',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                   const Spacer(),
@@ -665,76 +666,74 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     );
   }
 
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          FilterChip(
-            label: const Text('Tümü'),
-            selected: _statusFilter.isEmpty,
-            onSelected: (selected) {
-              if (selected) {
-                _applyStatusFilter('');
-              }
-            },
-          ),
-          const SizedBox(width: AppDimensions.spacing8),
+  Widget _buildFilterChips() => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: [
+        FilterChip(
+          label: const Text('Tümü'),
+          selected: _statusFilter.isEmpty,
+          onSelected: (selected) {
+            if (selected) {
+              _applyStatusFilter('');
+            }
+          },
+        ),
+        const SizedBox(width: AppDimensions.spacing8),
 
-          FilterChip(
-            label: const Text('Beklemede'),
-            selected: _statusFilter == 'pending',
-            onSelected: (selected) {
-              if (selected) {
-                _applyStatusFilter('pending');
-              } else {
-                _applyStatusFilter('');
-              }
-            },
-          ),
-          const SizedBox(width: AppDimensions.spacing8),
+        FilterChip(
+          label: const Text('Beklemede'),
+          selected: _statusFilter == 'pending',
+          onSelected: (selected) {
+            if (selected) {
+              _applyStatusFilter('pending');
+            } else {
+              _applyStatusFilter('');
+            }
+          },
+        ),
+        const SizedBox(width: AppDimensions.spacing8),
 
-          FilterChip(
-            label: const Text('Ödenmiş'),
-            selected: _statusFilter == 'paid',
-            onSelected: (selected) {
-              if (selected) {
-                _applyStatusFilter('paid');
-              } else {
-                _applyStatusFilter('');
-              }
-            },
-          ),
-          const SizedBox(width: AppDimensions.spacing8),
+        FilterChip(
+          label: const Text('Ödenmiş'),
+          selected: _statusFilter == 'paid',
+          onSelected: (selected) {
+            if (selected) {
+              _applyStatusFilter('paid');
+            } else {
+              _applyStatusFilter('');
+            }
+          },
+        ),
+        const SizedBox(width: AppDimensions.spacing8),
 
-          FilterChip(
-            label: const Text('Kısmi Ödenmiş'),
-            selected: _statusFilter == 'partiallyPaid',
-            onSelected: (selected) {
-              if (selected) {
-                _applyStatusFilter('partiallyPaid');
-              } else {
-                _applyStatusFilter('');
-              }
-            },
-          ),
-          const SizedBox(width: AppDimensions.spacing8),
+        FilterChip(
+          label: const Text('Kısmi Ödenmiş'),
+          selected: _statusFilter == 'partiallyPaid',
+          onSelected: (selected) {
+            if (selected) {
+              _applyStatusFilter('partiallyPaid');
+            } else {
+              _applyStatusFilter('');
+            }
+          },
+        ),
+        const SizedBox(width: AppDimensions.spacing8),
 
-          FilterChip(
-            label: const Text('Gecikmiş'),
-            selected: _statusFilter == 'overdue',
-            onSelected: (selected) {
-              if (selected) {
-                _applyStatusFilter('overdue');
-              } else {
-                _applyStatusFilter('');
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
+        FilterChip(
+          label: const Text('Gecikmiş'),
+          selected: _statusFilter == 'overdue',
+          onSelected: (selected) {
+            if (selected) {
+              _applyStatusFilter('overdue');
+            } else {
+              _applyStatusFilter('');
+            }
+          },
+        ),
+      ],
+    ),
+  );
 
   // Yardımcı metodlar
   List<Student> get _filteredStudents {
@@ -743,30 +742,39 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     }
 
     final query = _searchQuery.toLowerCase();
-    return _students.where((student) {
-      return student.name.toLowerCase().contains(query) ||
-          (student.parentName?.toLowerCase().contains(query) ?? false);
-    }).toList();
+    return _students
+        .where(
+          (student) =>
+              student.name.toLowerCase().contains(query) ||
+              (student.parentName?.toLowerCase().contains(query) ?? false),
+        )
+        .toList();
   }
 
-  List<Payment> get _filteredPayments {
+  List<PaymentModel> get _filteredPayments {
     var filtered = _payments;
 
     // Arama sorgusu varsa filtrele
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
-      filtered = filtered.where((payment) {
-        return payment.studentName.toLowerCase().contains(query) ||
-            payment.description.toLowerCase().contains(query) ||
-            (payment.notes?.toLowerCase().contains(query) ?? false);
-      }).toList();
+      filtered = filtered
+          .where(
+            (payment) =>
+                payment.studentName.toLowerCase().contains(query) ||
+                payment.description.toLowerCase().contains(query) ||
+                (payment.notes?.toLowerCase().contains(query) ?? false),
+          )
+          .toList();
     }
 
     // Durum filtresi varsa uygula
     if (_statusFilter.isNotEmpty) {
-      filtered = filtered.where((payment) {
-        return payment.status.toString().split('.').last == _statusFilter;
-      }).toList();
+      filtered = filtered
+          .where(
+            (payment) =>
+                payment.status.toString().split('.').last == _statusFilter,
+          )
+          .toList();
     }
 
     return filtered;
@@ -775,7 +783,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
   FeeSummary? _getSummaryForStudent(String studentId) {
     try {
       return _feeSummaries.firstWhere((summary) => summary.id == studentId);
-    } catch (e) {
+    } on Exception {
       return null;
     }
   }

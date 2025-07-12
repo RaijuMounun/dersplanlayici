@@ -21,7 +21,7 @@ class AppStyles {
       cardTheme.copyWith(color: AppColors.surfaceDark);
 
   // AppBar stilleri
-  static AppBarTheme get appBarTheme => AppBarTheme(
+  static AppBarTheme get appBarTheme => const AppBarTheme(
     elevation: AppDimensions.elevation0,
     centerTitle: true,
     backgroundColor: AppColors.primary,
@@ -74,7 +74,7 @@ class AppStyles {
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.all(AppColors.primary),
           side: WidgetStateProperty.all(
-            BorderSide(
+            const BorderSide(
               color: AppColors.primary,
               width: AppDimensions.borderWidth1,
             ),
@@ -122,42 +122,42 @@ class AppStyles {
     ),
     border: OutlineInputBorder(
       borderRadius: AppDimensions.borderRadius8,
-      borderSide: BorderSide(
+      borderSide: const BorderSide(
         color: AppColors.border,
         width: AppDimensions.borderWidth1,
       ),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: AppDimensions.borderRadius8,
-      borderSide: BorderSide(
+      borderSide: const BorderSide(
         color: AppColors.border,
         width: AppDimensions.borderWidth1,
       ),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: AppDimensions.borderRadius8,
-      borderSide: BorderSide(
+      borderSide: const BorderSide(
         color: AppColors.primary,
         width: AppDimensions.borderWidth2,
       ),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: AppDimensions.borderRadius8,
-      borderSide: BorderSide(
+      borderSide: const BorderSide(
         color: AppColors.error,
         width: AppDimensions.borderWidth1,
       ),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: AppDimensions.borderRadius8,
-      borderSide: BorderSide(
+      borderSide: const BorderSide(
         color: AppColors.error,
         width: AppDimensions.borderWidth2,
       ),
     ),
-    hintStyle: TextStyle(color: AppColors.textHint, fontSize: 16),
-    labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 16),
-    errorStyle: TextStyle(color: AppColors.error, fontSize: 12),
+    hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 16),
+    labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+    errorStyle: const TextStyle(color: AppColors.error, fontSize: 12),
   );
 
   static InputDecorationTheme get darkInputDecorationTheme =>
@@ -165,14 +165,14 @@ class AppStyles {
         fillColor: AppColors.surfaceDark,
         border: OutlineInputBorder(
           borderRadius: AppDimensions.borderRadius8,
-          borderSide: BorderSide(
+          borderSide: const BorderSide(
             color: AppColors.borderDark,
             width: AppDimensions.borderWidth1,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppDimensions.borderRadius8,
-          borderSide: BorderSide(
+          borderSide: const BorderSide(
             color: AppColors.borderDark,
             width: AppDimensions.borderWidth1,
           ),
@@ -181,18 +181,18 @@ class AppStyles {
 
   // Bottom Navigation Bar stilleri
   static BottomNavigationBarThemeData get bottomNavigationBarTheme =>
-      BottomNavigationBarThemeData(
+      const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: AppDimensions.elevation8,
-        selectedLabelStyle: const TextStyle(
+        selectedLabelStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
-        unselectedLabelStyle: const TextStyle(
+        unselectedLabelStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
@@ -222,12 +222,12 @@ class AppStyles {
   );
 
   // TabBar stilleri
-  static TabBarTheme get tabBarTheme => TabBarTheme(
+  static TabBarTheme get tabBarTheme => const TabBarTheme(
     labelColor: AppColors.primary,
     unselectedLabelColor: AppColors.textSecondary,
     indicatorColor: AppColors.primary,
-    labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-    unselectedLabelStyle: const TextStyle(
+    labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+    unselectedLabelStyle: TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w400,
     ),
@@ -235,7 +235,7 @@ class AppStyles {
   );
 
   // Divider stilleri
-  static DividerThemeData get dividerTheme => DividerThemeData(
+  static DividerThemeData get dividerTheme => const DividerThemeData(
     color: AppColors.divider,
     thickness: AppDimensions.borderWidth1,
     space: AppDimensions.spacing16,

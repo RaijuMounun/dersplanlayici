@@ -4,12 +4,6 @@ import '../constants/app_constants.dart';
 
 /// Uygulama genelinde kullanılan dialog widget'ı.
 class AppDialog extends StatelessWidget {
-  final String title;
-  final String? message;
-  final Widget? content;
-  final List<Widget>? actions;
-  final bool isDismissible;
-  final VoidCallback? onDismiss;
 
   const AppDialog({
     super.key,
@@ -20,10 +14,15 @@ class AppDialog extends StatelessWidget {
     this.isDismissible = true,
     this.onDismiss,
   });
+  final String title;
+  final String? message;
+  final Widget? content;
+  final List<Widget>? actions;
+  final bool isDismissible;
+  final VoidCallback? onDismiss;
 
   @override
-  Widget build(BuildContext context) {
-    return PopScope(
+  Widget build(BuildContext context) => PopScope(
       canPop: isDismissible,
       child: AlertDialog(
         title: Text(title, style: Theme.of(context).textTheme.titleLarge),
@@ -50,7 +49,6 @@ class AppDialog extends StatelessWidget {
         elevation: 4,
       ),
     );
-  }
 
   /// Basit bir bilgi dialogu gösterir.
   static Future<void> showInfo({
@@ -58,8 +56,7 @@ class AppDialog extends StatelessWidget {
     required String title,
     required String message,
     String buttonText = 'Tamam',
-  }) async {
-    return showDialog<void>(
+  }) async => showDialog<void>(
       context: context,
       builder: (context) => AppDialog(
         title: title,
@@ -72,7 +69,6 @@ class AppDialog extends StatelessWidget {
         ],
       ),
     );
-  }
 
   /// Onay dialogu gösterir ve kullanıcının cevabını döndürür.
   static Future<bool> showConfirm({
@@ -108,8 +104,7 @@ class AppDialog extends StatelessWidget {
     required String title,
     required String message,
     String buttonText = 'Tamam',
-  }) async {
-    return showDialog<void>(
+  }) async => showDialog<void>(
       context: context,
       builder: (context) => AppDialog(
         title: title,
@@ -123,5 +118,4 @@ class AppDialog extends StatelessWidget {
         ],
       ),
     );
-  }
 }

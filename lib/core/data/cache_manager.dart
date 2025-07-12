@@ -3,10 +3,10 @@ import 'dart:collection';
 
 /// Önbellek giriş sınıfı
 class CacheEntry<T> {
-  final T value;
-  final DateTime expiry;
 
   CacheEntry(this.value, Duration ttl) : expiry = DateTime.now().add(ttl);
+  final T value;
+  final DateTime expiry;
 
   bool get isExpired => DateTime.now().isAfter(expiry);
 }
@@ -17,6 +17,18 @@ class CacheEntry<T> {
 /// Sık kullanılan verileri belirli bir süre boyunca bellekte tutarak,
 /// tekrarlanan veritabanı sorguları veya API isteklerini azaltır.
 class CacheManager {
+
+  factory CacheManager({int maxSize = 100}) {
+    _instance._maxSize = maxSize;
+    return _instance;
+  }
+
+  CacheManager._internal() {
+    // Düzenli aralıklarla süresi dolmuş önbellek girişlerini temizle
+    _cleanupTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _cleanExpiredEntries();
+    });
+  }
   static final CacheManager _instance = CacheManager._internal();
 
   // Önbellek için maksimum boyut (öğe sayısı)
@@ -33,18 +45,6 @@ class CacheManager {
 
   // Periyodik temizleme için timer
   Timer? _cleanupTimer;
-
-  factory CacheManager({int maxSize = 100}) {
-    _instance._maxSize = maxSize;
-    return _instance;
-  }
-
-  CacheManager._internal() {
-    // Düzenli aralıklarla süresi dolmuş önbellek girişlerini temizle
-    _cleanupTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      _cleanExpiredEntries();
-    });
-  }
 
   /// Önbellekten bir değer alır.
   T? get<T>(String key) {

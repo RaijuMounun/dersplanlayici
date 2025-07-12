@@ -7,9 +7,9 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 import 'package:intl/intl.dart';
 
 class AddLessonPage extends StatefulWidget {
-  final String? studentId;
 
   const AddLessonPage({super.key, this.studentId});
+  final String? studentId;
 
   @override
   State<AddLessonPage> createState() => _AddLessonPageState();
@@ -82,7 +82,7 @@ class _AddLessonPageState extends State<AddLessonPage> {
           }
         }
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -100,8 +100,7 @@ class _AddLessonPageState extends State<AddLessonPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Yeni Ders Ekle')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -200,21 +199,17 @@ class _AddLessonPageState extends State<AddLessonPage> {
               ),
             ),
     );
-  }
 
-  Widget _buildStudentDropdown() {
-    return DropdownButtonFormField<String>(
+  Widget _buildStudentDropdown() => DropdownButtonFormField<String>(
       value: _selectedStudentId,
       decoration: const InputDecoration(
         labelText: 'Öğrenci',
         border: OutlineInputBorder(),
       ),
-      items: _students.map((student) {
-        return DropdownMenuItem<String>(
+      items: _students.map((student) => DropdownMenuItem<String>(
           value: student.id,
           child: Text(student.name),
-        );
-      }).toList(),
+        )).toList(),
       onChanged: (value) {
         if (value == null) return;
 
@@ -241,7 +236,6 @@ class _AddLessonPageState extends State<AddLessonPage> {
         return null;
       },
     );
-  }
 
   Widget _buildSubjectDropdown() {
     // Seçilen öğrencinin dersleri
@@ -261,9 +255,7 @@ class _AddLessonPageState extends State<AddLessonPage> {
         labelText: 'Ders',
         border: OutlineInputBorder(),
       ),
-      items: availableSubjects.map((subject) {
-        return DropdownMenuItem<String>(value: subject, child: Text(subject));
-      }).toList(),
+      items: availableSubjects.map((subject) => DropdownMenuItem<String>(value: subject, child: Text(subject))).toList(),
       onChanged: (value) {
         setState(() {
           _selectedSubject = value;
@@ -278,8 +270,7 @@ class _AddLessonPageState extends State<AddLessonPage> {
     );
   }
 
-  Widget _buildDatePicker(BuildContext context) {
-    return Column(
+  Widget _buildDatePicker(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
@@ -321,15 +312,13 @@ class _AddLessonPageState extends State<AddLessonPage> {
         ),
       ],
     );
-  }
 
   Widget _buildTimePicker(
     BuildContext context,
     String label,
     TimeOfDay time,
     Function(TimeOfDay) onTimeSelected,
-  ) {
-    return Column(
+  ) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -367,7 +356,6 @@ class _AddLessonPageState extends State<AddLessonPage> {
         ),
       ],
     );
-  }
 
   Future<void> _saveLesson() async {
     if (_formKey.currentState!.validate()) {
@@ -413,7 +401,7 @@ class _AddLessonPageState extends State<AddLessonPage> {
           );
           Navigator.pop(context);
         }
-      } catch (e) {
+      } on Exception catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(
             context,

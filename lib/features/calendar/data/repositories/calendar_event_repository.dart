@@ -4,17 +4,17 @@ import 'package:ders_planlayici/features/calendar/domain/models/calendar_event_m
 import 'package:uuid/uuid.dart';
 
 class CalendarEventRepository {
-  final DatabaseHelper _databaseHelper;
-  final _uuid = const Uuid();
 
   CalendarEventRepository({DatabaseHelper? databaseHelper})
     : _databaseHelper = databaseHelper ?? DatabaseHelper();
+  final DatabaseHelper _databaseHelper;
+  final _uuid = const Uuid();
 
   /// Tüm takvim etkinliklerini getirir
-  Future<List<CalendarEvent>> getAllEvents() async {
+  Future<List<CalendarEventModel>> getAllEvents() async {
     try {
       final eventMaps = await _databaseHelper.getCalendarEvents();
-      return eventMaps.map((map) => CalendarEvent.fromMap(map)).toList();
+      return eventMaps.map(CalendarEventModel.fromMap).toList();
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Takvim etkinlikleri alınamadı',
@@ -25,12 +25,12 @@ class CalendarEventRepository {
   }
 
   /// Belirli bir tarihe ait takvim etkinliklerini getirir
-  Future<List<CalendarEvent>> getEventsByDate(String dateString) async {
+  Future<List<CalendarEventModel>> getEventsByDate(String dateString) async {
     try {
       final eventMaps = await _databaseHelper.getCalendarEventsByDate(
         dateString,
       );
-      return eventMaps.map((map) => CalendarEvent.fromMap(map)).toList();
+      return eventMaps.map(CalendarEventModel.fromMap).toList();
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Tarihe göre takvim etkinlikleri alınamadı',
@@ -41,11 +41,11 @@ class CalendarEventRepository {
   }
 
   /// Belirli bir takvim etkinliğini getirir
-  Future<CalendarEvent?> getEventById(String id) async {
+  Future<CalendarEventModel?> getEventById(String id) async {
     try {
       final eventMap = await _databaseHelper.getCalendarEvent(id);
       if (eventMap != null) {
-        return CalendarEvent.fromMap(eventMap);
+        return CalendarEventModel.fromMap(eventMap);
       }
       return null;
     } catch (e) {
@@ -58,7 +58,7 @@ class CalendarEventRepository {
   }
 
   /// Yeni bir takvim etkinliği ekler
-  Future<CalendarEvent> addEvent(CalendarEvent event) async {
+  Future<CalendarEventModel> addEvent(CalendarEventModel event) async {
     try {
       // Eğer ID yoksa, yeni bir ID oluştur
       final eventWithId = event.id.isEmpty
@@ -77,7 +77,7 @@ class CalendarEventRepository {
   }
 
   /// Bir takvim etkinliğini günceller
-  Future<bool> updateEvent(CalendarEvent event) async {
+  Future<bool> updateEvent(CalendarEventModel event) async {
     try {
       final result = await _databaseHelper.updateCalendarEvent(event.toMap());
       return result > 0;
@@ -105,7 +105,7 @@ class CalendarEventRepository {
   }
 
   /// Derslerden takvim etkinlikleri oluşturur
-  Future<List<CalendarEvent>> syncEventsFromLessons(
+  Future<List<CalendarEventModel>> syncEventsFromLessons(
     List<Map<String, dynamic>> lessons,
   ) async {
     try {
@@ -113,7 +113,7 @@ class CalendarEventRepository {
       final existingEvents = await getAllEvents();
 
       // Yeni eklenecek etkinlikler listesi
-      final List<CalendarEvent> newEvents = [];
+      final List<CalendarEventModel> newEvents = [];
 
       // Her ders için bir takvim etkinliği oluştur
       for (final lessonMap in lessons) {
@@ -135,7 +135,7 @@ class CalendarEventRepository {
                     event.metadata!['lessonId'] == lessonId,
               );
 
-        // Dersten yeni bir CalendarEvent oluştur
+        // Dersten yeni bir CalendarEventModel oluştur
         final lesson = {
           'id': lessonId,
           'subject': lessonMap['subject'],
@@ -148,7 +148,7 @@ class CalendarEventRepository {
           'status': lessonMap['status'],
         };
 
-        // CalendarEvent'i oluştur
+        // CalendarEventModel'i oluştur
         final calendarEvent = _createEventFromLesson(lesson, existingEvent?.id);
 
         // Eğer mevcut bir etkinlik varsa, güncelle
@@ -171,23 +171,23 @@ class CalendarEventRepository {
     }
   }
 
-  /// Ders bilgilerinden CalendarEvent oluşturur
-  CalendarEvent _createEventFromLesson(
+  /// Ders bilgilerinden CalendarEventModel oluşturur
+  CalendarEventModel _createEventFromLesson(
     Map<String, dynamic> lesson, [
     String? eventId,
   ]) {
     final title = '${lesson['subject']} - ${lesson['studentName']}';
     final id = eventId ?? _uuid.v4();
 
-    return CalendarEvent(
+    return CalendarEventModel(
       id: id,
       title: lesson['topic'] != null && lesson['topic'].toString().isNotEmpty
           ? '$title (${lesson['topic']})'
           : title,
-      date: lesson['date'],
-      startTime: lesson['startTime'],
-      endTime: lesson['endTime'],
-      type: CalendarEventType.lesson,
+      description: lesson['topic'] ?? '',
+      startDate: DateTime.parse(lesson['date']),
+      endDate: DateTime.parse(lesson['date']),
+      eventType: 'lesson',
       metadata: {
         'lessonId': lesson['id'],
         'studentId': lesson['studentId'],

@@ -11,11 +11,6 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 enum LessonFilterType { all, upcoming, past, completed, cancelled }
 
 class StudentLessonsWidget extends StatefulWidget {
-  final Student student;
-  final List<Lesson> lessons;
-  final bool isLoading;
-  final VoidCallback onRefresh;
-  final Function(Lesson) onDeleteLesson;
 
   const StudentLessonsWidget({
     super.key,
@@ -25,6 +20,11 @@ class StudentLessonsWidget extends StatefulWidget {
     required this.onRefresh,
     required this.onDeleteLesson,
   });
+  final Student student;
+  final List<Lesson> lessons;
+  final bool isLoading;
+  final VoidCallback onRefresh;
+  final Function(Lesson) onDeleteLesson;
 
   @override
   State<StudentLessonsWidget> createState() => _StudentLessonsWidgetState();
@@ -48,15 +48,13 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
 
     // Arama filtreleme
     if (_searchQuery.isNotEmpty) {
-      result = result.where((lesson) {
-        return lesson.subject.toLowerCase().contains(
+      result = result.where((lesson) => lesson.subject.toLowerCase().contains(
               _searchQuery.toLowerCase(),
             ) ||
             (lesson.topic != null &&
                 lesson.topic!.toLowerCase().contains(
                   _searchQuery.toLowerCase(),
-                ));
-      }).toList();
+                ))).toList();
     }
 
     // Durum filtreleme
@@ -105,8 +103,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildFilterBar(),
@@ -126,10 +123,8 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
           _buildLessonsList(),
       ],
     );
-  }
 
-  Widget _buildFilterBar() {
-    return Column(
+  Widget _buildFilterBar() => Column(
       children: [
         TextField(
           controller: _searchController,
@@ -176,7 +171,6 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
         ),
       ],
     );
-  }
 
   Widget _buildFilterChip(LessonFilterType filter, String label) {
     final isSelected = _currentFilter == filter;
@@ -199,8 +193,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
     );
   }
 
-  Widget _buildLessonsList() {
-    return Expanded(
+  Widget _buildLessonsList() => Expanded(
       child: ListView.builder(
         controller: _scrollController,
         itemCount: filteredLessons.length,
@@ -210,7 +203,6 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
         },
       ),
     );
-  }
 
   Widget _buildLessonCard(Lesson lesson) {
     final formattedDate = date_utils.DateUtils.formatDateWithDay(lesson.date);
@@ -237,7 +229,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
                     if (lesson.topic != null && lesson.topic!.isNotEmpty)
                       Text(
                         lesson.topic!,
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                   ],
                 ),
@@ -265,7 +257,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
           const SizedBox(height: AppDimensions.spacing8),
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.calendar_today,
                 size: 16,
                 color: AppColors.textSecondary,
@@ -273,7 +265,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
               const SizedBox(width: AppDimensions.spacing4),
               Text(formattedDate),
               const SizedBox(width: AppDimensions.spacing16),
-              Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+              const Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
               const SizedBox(width: AppDimensions.spacing4),
               Text('${lesson.startTime} - ${lesson.endTime}'),
             ],
@@ -330,8 +322,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return SizedBox(
+  Widget _buildEmptyState() => SizedBox(
       height: 200,
       child: Center(
         child: Column(
@@ -343,7 +334,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
               color: AppColors.textSecondary.withAlpha(128),
             ),
             const SizedBox(height: AppDimensions.spacing16),
-            Text(
+            const Text(
               'Bu öğrenciye ait ders bulunmuyor',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
             ),
@@ -359,10 +350,8 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
         ),
       ),
     );
-  }
 
-  Widget _buildNoResultsState() {
-    return SizedBox(
+  Widget _buildNoResultsState() => SizedBox(
       height: 200,
       child: Center(
         child: Column(
@@ -378,7 +367,7 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
               _searchQuery.isNotEmpty
                   ? '"$_searchQuery" aramasına uygun ders bulunamadı'
                   : 'Seçili filtrelere uygun ders bulunamadı',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppDimensions.spacing16),
@@ -397,7 +386,6 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
         ),
       ),
     );
-  }
 
   Color _getLessonStatusColor(LessonStatus status) {
     switch (status) {

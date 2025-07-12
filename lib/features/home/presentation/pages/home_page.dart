@@ -36,8 +36,7 @@ class _HomePageState extends State<HomePage> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: Text(_titles[_selectedIndex]),
         actions: _buildActions(),
@@ -60,7 +59,6 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
 
   List<Widget>? _buildActions() {
     // Seçili sayfaya göre app bar için action'ları döndür
@@ -234,8 +232,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Filtreleme için checkbox oluşturur
-  Widget _buildFilterCheckbox(String label, bool initialValue) {
-    return StatefulBuilder(
+  Widget _buildFilterCheckbox(String label, bool initialValue) => StatefulBuilder(
       builder: (context, setState) {
         bool isChecked = initialValue;
         return CheckboxListTile(
@@ -251,11 +248,9 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
-  }
 
   // Tarih aralığı seçici
-  Widget _buildDateRangeSelector() {
-    return Column(
+  Widget _buildDateRangeSelector() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
@@ -301,7 +296,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
     );
-  }
 
   // Arama işlemini gerçekleştirir
   void _performSearch(String query) {

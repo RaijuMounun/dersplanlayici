@@ -5,17 +5,6 @@ import 'package:ders_planlayici/core/widgets/app_card.dart';
 
 /// Öğrenci bilgilerini gösteren kart widget'ı.
 class StudentCard extends StatelessWidget {
-  final String studentName;
-  final String? studentGrade;
-  final String? phoneNumber;
-  final String? email;
-  final int? totalLessons;
-  final double? totalFee;
-  final VoidCallback? onTap;
-  final VoidCallback? onEditPressed;
-  final VoidCallback? onDeletePressed;
-  final String? avatarUrl;
-  final Color? avatarBackgroundColor;
 
   const StudentCard({
     super.key,
@@ -31,6 +20,17 @@ class StudentCard extends StatelessWidget {
     this.avatarUrl,
     this.avatarBackgroundColor,
   });
+  final String studentName;
+  final String? studentGrade;
+  final String? phoneNumber;
+  final String? email;
+  final int? totalLessons;
+  final double? totalFee;
+  final VoidCallback? onTap;
+  final VoidCallback? onEditPressed;
+  final VoidCallback? onDeletePressed;
+  final String? avatarUrl;
+  final Color? avatarBackgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +70,7 @@ class StudentCard extends StatelessWidget {
                       )
                     : null,
               ),
-              SizedBox(width: AppDimensions.spacing16),
+              const SizedBox(width: AppDimensions.spacing16),
 
               // İsim ve Sınıf
               Expanded(
@@ -84,7 +84,7 @@ class StudentCard extends StatelessWidget {
                       ),
                     ),
                     if (studentGrade != null) ...[
-                      SizedBox(height: AppDimensions.spacing4),
+                      const SizedBox(height: AppDimensions.spacing4),
                       Text(
                         studentGrade!,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -101,11 +101,11 @@ class StudentCard extends StatelessWidget {
                 children: [
                   if (onEditPressed != null)
                     IconButton(
-                      icon: Icon(Icons.edit, color: AppColors.primary),
+                      icon: const Icon(Icons.edit, color: AppColors.primary),
                       onPressed: onEditPressed,
                       tooltip: 'Düzenle',
                       constraints: BoxConstraints.tight(
-                        Size(
+                        const Size(
                           AppDimensions.iconSizeMedium,
                           AppDimensions.iconSizeMedium,
                         ),
@@ -115,11 +115,11 @@ class StudentCard extends StatelessWidget {
                     ),
                   if (onDeletePressed != null)
                     IconButton(
-                      icon: Icon(Icons.delete, color: AppColors.error),
+                      icon: const Icon(Icons.delete, color: AppColors.error),
                       onPressed: onDeletePressed,
                       tooltip: 'Sil',
                       constraints: BoxConstraints.tight(
-                        Size(
+                        const Size(
                           AppDimensions.iconSizeMedium,
                           AppDimensions.iconSizeMedium,
                         ),
@@ -132,29 +132,29 @@ class StudentCard extends StatelessWidget {
             ],
           ),
 
-          SizedBox(height: AppDimensions.spacing16),
+          const SizedBox(height: AppDimensions.spacing16),
 
           // İletişim bilgileri
           if (phoneNumber != null || email != null) ...[
             Row(
               children: [
                 if (phoneNumber != null) ...[
-                  Icon(
+                  const Icon(
                     Icons.phone,
                     size: AppDimensions.iconSizeSmall,
                     color: AppColors.textSecondary,
                   ),
-                  SizedBox(width: AppDimensions.spacing8),
+                  const SizedBox(width: AppDimensions.spacing8),
                   Text(phoneNumber!, style: theme.textTheme.bodyMedium),
-                  SizedBox(width: AppDimensions.spacing16),
+                  const SizedBox(width: AppDimensions.spacing16),
                 ],
                 if (email != null) ...[
-                  Icon(
+                  const Icon(
                     Icons.email,
                     size: AppDimensions.iconSizeSmall,
                     color: AppColors.textSecondary,
                   ),
-                  SizedBox(width: AppDimensions.spacing8),
+                  const SizedBox(width: AppDimensions.spacing8),
                   Expanded(
                     child: Text(
                       email!,
@@ -165,7 +165,7 @@ class StudentCard extends StatelessWidget {
                 ],
               ],
             ),
-            SizedBox(height: AppDimensions.spacing12),
+            const SizedBox(height: AppDimensions.spacing12),
           ],
 
           // Ders ve ücret bilgisi
@@ -199,9 +199,8 @@ class StudentCard extends StatelessWidget {
     IconData icon,
     String text,
     Color color,
-  ) {
-    return Container(
-      padding: EdgeInsets.symmetric(
+  ) => Container(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.spacing12,
         vertical: AppDimensions.spacing4,
       ),
@@ -213,7 +212,7 @@ class StudentCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: color),
-          SizedBox(width: AppDimensions.spacing4),
+          const SizedBox(width: AppDimensions.spacing4),
           Text(
             text,
             style: TextStyle(
@@ -225,7 +224,6 @@ class StudentCard extends StatelessWidget {
         ],
       ),
     );
-  }
 
   String _getInitials(String name) {
     final nameParts = name.split(' ');

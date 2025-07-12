@@ -3,13 +3,6 @@ import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/widgets/app_list_item.dart';
 
 class StudentListItem extends StatelessWidget {
-  final String name;
-  final String grade;
-  final List<String>? subjects;
-  final VoidCallback onTap;
-  final VoidCallback? onEditPressed;
-  final VoidCallback? onDeletePressed;
-  final bool isSelected;
 
   const StudentListItem({
     super.key,
@@ -21,10 +14,16 @@ class StudentListItem extends StatelessWidget {
     this.onDeletePressed,
     this.isSelected = false,
   });
+  final String name;
+  final String grade;
+  final List<String>? subjects;
+  final VoidCallback onTap;
+  final VoidCallback? onEditPressed;
+  final VoidCallback? onDeletePressed;
+  final bool isSelected;
 
   @override
-  Widget build(BuildContext context) {
-    return AppListItem(
+  Widget build(BuildContext context) => AppListItem(
       title: name,
       subtitle: _buildSubtitle(),
       leading: isSelected
@@ -45,7 +44,6 @@ class StudentListItem extends StatelessWidget {
       selected: isSelected,
       backgroundColor: isSelected ? AppColors.primary.withAlpha(40) : null,
     );
-  }
 
   String _buildSubtitle() {
     String subtitle = grade;
@@ -70,13 +68,13 @@ class StudentListItem extends StatelessWidget {
       children: [
         if (onEditPressed != null)
           IconButton(
-            icon: Icon(Icons.edit, color: AppColors.textSecondary),
+            icon: const Icon(Icons.edit, color: AppColors.textSecondary),
             onPressed: onEditPressed,
             tooltip: 'Düzenle',
           ),
         if (onDeletePressed != null)
           IconButton(
-            icon: Icon(Icons.delete, color: AppColors.error),
+            icon: const Icon(Icons.delete, color: AppColors.error),
             onPressed: onDeletePressed,
             tooltip: 'Sil',
           ),

@@ -9,18 +9,18 @@ class LessonRepository {
 
   Future<List<Lesson>> getAllLessons() async {
     final lessonMaps = await _databaseHelper.getLessons();
-    return lessonMaps.map((map) => Lesson.fromMap(map)).toList();
+    return lessonMaps.map(Lesson.fromMap).toList();
   }
 
   Future<List<Lesson>> getLessonsByDate(DateTime date) async {
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
     final lessonMaps = await _databaseHelper.getLessonsByDate(dateStr);
-    return lessonMaps.map((map) => Lesson.fromMap(map)).toList();
+    return lessonMaps.map(Lesson.fromMap).toList();
   }
 
   Future<List<Lesson>> getLessonsByStudent(String studentId) async {
     final lessonMaps = await _databaseHelper.getLessonsByStudent(studentId);
-    return lessonMaps.map((map) => Lesson.fromMap(map)).toList();
+    return lessonMaps.map(Lesson.fromMap).toList();
   }
 
   Future<Lesson?> getLesson(String id) async {

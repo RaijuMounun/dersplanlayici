@@ -51,7 +51,7 @@ void main() async {
 
     runApp(const DersPlanlamaApp());
   } catch (e, stackTrace) {
-    errorLogger.critical(
+    await errorLogger.critical(
       'Application failed to start',
       tag: 'Startup',
       error: e,

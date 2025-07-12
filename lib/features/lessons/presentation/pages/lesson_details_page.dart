@@ -13,9 +13,9 @@ import 'package:ders_planlayici/features/lessons/domain/services/recurring_lesso
 
 /// Ders detaylarını gösteren sayfa.
 class LessonDetailsPage extends StatefulWidget {
-  final String lessonId;
 
   const LessonDetailsPage({super.key, required this.lessonId});
+  final String lessonId;
 
   @override
   State<LessonDetailsPage> createState() => _LessonDetailsPageState();
@@ -56,10 +56,10 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
 
         // Eğer tekrarlanan bir ders ise, desen bilgilerini yükle
         if (_lesson!.recurringPatternId != null) {
-          _loadRecurringPatternInfo();
+          await _loadRecurringPatternInfo();
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -103,7 +103,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
           });
         }
       }
-    } catch (e) {
+    } on Exception {
       if (mounted) {
         setState(() {
           _recurringPatternDescription = 'Tekrarlı ders';
@@ -113,8 +113,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: Text(
           _lesson != null ? 'Ders: ${_lesson!.subject}' : 'Ders Detayı',
@@ -153,10 +152,8 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
             )
           : null,
     );
-  }
 
-  Widget _buildLessonNotFound() {
-    return Center(
+  Widget _buildLessonNotFound() => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -181,11 +178,9 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         ],
       ),
     );
-  }
 
   // Mobil görünüm
-  Widget _buildMobileLayout() {
-    return SingleChildScrollView(
+  Widget _buildMobileLayout() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,11 +195,9 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         ],
       ),
     );
-  }
 
   // Tablet görünüm
-  Widget _buildTabletLayout() {
-    return SingleChildScrollView(
+  Widget _buildTabletLayout() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,11 +217,9 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         ],
       ),
     );
-  }
 
   // Masaüstü görünüm
-  Widget _buildDesktopLayout() {
-    return SingleChildScrollView(
+  Widget _buildDesktopLayout() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +239,6 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         ],
       ),
     );
-  }
 
   // Ders başlık bilgisi
   Widget _buildLessonHeader() {
@@ -469,7 +459,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
                         const SizedBox(height: 4),
                         Text(
                           student.grade,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,
                           ),
@@ -514,8 +504,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
   }
 
   // Notlar kısmı
-  Widget _buildNotes() {
-    return Card(
+  Widget _buildNotes() => Card(
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -550,7 +539,6 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         ),
       ),
     );
-  }
 
   // Bilgi satırı widgetı
   Widget _buildInfoRow({
@@ -558,8 +546,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
     required String label,
     required String value,
     Color? iconColor,
-  }) {
-    return Row(
+  }) => Row(
       children: [
         Icon(icon, size: 20, color: iconColor),
         const SizedBox(width: 12),
@@ -569,7 +556,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
             children: [
               Text(
                 label,
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
               Text(value, style: const TextStyle(fontSize: 16)),
             ],
@@ -577,7 +564,6 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         ),
       ],
     );
-  }
 
   // Düzenleme sayfasına yönlendir
   void _navigateToEdit(BuildContext context) {
@@ -672,7 +658,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
       if (mounted) {
         context.go('/');
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(
@@ -717,7 +703,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
       if (mounted) {
         context.go('/');
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -741,7 +727,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
 
       // Durumu güncelle ve sayfayı yenile
       if (mounted) {
-        _loadLessonDetails();
+        await _loadLessonDetails();
         scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Ders tamamlandı olarak işaretlendi'),
@@ -749,7 +735,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(

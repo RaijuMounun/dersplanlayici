@@ -3,22 +3,22 @@ import 'package:ders_planlayici/core/error/app_exception.dart' as app_exception;
 import 'package:ders_planlayici/features/settings/domain/models/app_settings_model.dart';
 
 class AppSettingsRepository {
-  final DatabaseHelper _databaseHelper;
 
   AppSettingsRepository({DatabaseHelper? databaseHelper})
     : _databaseHelper = databaseHelper ?? DatabaseHelper();
+  final DatabaseHelper _databaseHelper;
 
   /// Uygulama ayarlarını getirir
-  Future<AppSettings> getSettings() async {
+  Future<AppSettingsModel> getSettings() async {
     try {
       final settingsMap = await _databaseHelper.getAppSettings();
 
       if (settingsMap == null) {
         // Eğer veritabanında ayarlar yoksa, varsayılan ayarları döndür
-        return AppSettings.defaultSettings();
+        return AppSettingsModel.defaultSettings();
       }
 
-      return AppSettings.fromMap(settingsMap);
+      return AppSettingsModel.fromMap(settingsMap);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Ayarlar alınamadı',
@@ -29,7 +29,7 @@ class AppSettingsRepository {
   }
 
   /// Uygulama ayarlarını kaydeder
-  Future<bool> saveSettings(AppSettings settings) async {
+  Future<bool> saveSettings(AppSettingsModel settings) async {
     try {
       final result = await _databaseHelper.insertOrUpdateAppSettings(
         settings.toMap(),

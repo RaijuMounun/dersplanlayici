@@ -128,7 +128,7 @@ class RecurringLessonService {
         final day = pattern.dayOfMonth ?? currentDate.day;
 
         // Bir sonraki ay
-        DateTime nextMonth = DateTime(
+        final DateTime nextMonth = DateTime(
           currentDate.year,
           currentDate.month + pattern.interval,
           1,

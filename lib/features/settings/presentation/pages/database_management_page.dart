@@ -38,7 +38,7 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
       setState(() {
         _databaseInfo = info;
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -97,7 +97,7 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
           _message = 'Veritabanı başarıyla sıfırlandı.';
         });
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       ErrorHandler.logError(e, hint: 'Veritabanı sıfırlanırken hata');
@@ -135,7 +135,7 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
       setState(() {
         _message = 'Veritabanı yedeklendi: $backupPath';
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       ErrorHandler.logError(e, hint: 'Veritabanı yedeklenirken hata');
@@ -214,7 +214,7 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
           }
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
 
       ErrorHandler.logError(e, hint: 'Veritabanı geri yüklenirken hata');
@@ -237,8 +237,7 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Veritabanı Yönetimi')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -341,5 +340,4 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
         child: const Icon(Icons.refresh),
       ),
     );
-  }
 }
