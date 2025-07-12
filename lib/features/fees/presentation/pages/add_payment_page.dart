@@ -11,7 +11,6 @@ import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_p
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 
 class AddPaymentPage extends StatefulWidget {
-
   const AddPaymentPage({super.key, this.studentId, this.paymentId});
   final String? studentId;
   final String? paymentId;
@@ -119,11 +118,13 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       if (!mounted) return;
 
       setState(() {
-        _lessons = lessonProvider.lessons.where((lesson) {
-          // Sadece planlanmış ve tamamlanmış dersleri göster
-          return lesson.status == LessonStatus.scheduled ||
-              lesson.status == LessonStatus.completed;
-        }).toList();
+        _lessons = lessonProvider.lessons
+            .where(
+              (lesson) =>
+                  lesson.status == LessonStatus.scheduled ||
+                  lesson.status == LessonStatus.completed,
+            )
+            .toList();
         _isLoadingLessons = false;
       });
     } on Exception catch (e) {
@@ -133,187 +134,193 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         _isLoadingLessons = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Dersler yüklenirken hata oluştu: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Dersler yüklenirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Ödeme Ekle')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _isLoadingStudents
-          ? const Center(child: CircularProgressIndicator())
-          : _buildForm(),
-    );
+    appBar: AppBar(title: const Text('Ödeme Ekle')),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _isLoadingStudents
+        ? const Center(child: CircularProgressIndicator())
+        : _buildForm(),
+  );
 
   Widget _buildForm() => SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.spacing16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStudentDropdown(),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildDescriptionField(),
-            const SizedBox(height: AppDimensions.spacing16),
-            Row(
-              children: [
-                Expanded(child: _buildAmountField()),
-                const SizedBox(width: AppDimensions.spacing16),
-                Expanded(child: _buildPaidAmountField()),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDatePicker(
-                    label: 'Tarih',
-                    selectedDate: _selectedDate,
-                    onDateSelected: (date) {
-                      setState(() {
-                        _selectedDate = date;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.spacing16),
-                Expanded(
-                  child: _buildDatePicker(
-                    label: 'Son Ödeme Tarihi',
-                    selectedDate: _dueDate,
-                    onDateSelected: (date) {
-                      setState(() {
-                        _dueDate = date;
-                      });
-                    },
-                    isOptional: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildStatusDropdown(),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildPaymentMethodDropdown(),
-            const SizedBox(height: AppDimensions.spacing16),
-            _buildNotesField(),
-            if (_selectedStudentId != null && _lessons.isNotEmpty) ...[
-              const SizedBox(height: AppDimensions.spacing24),
-              _buildLessonsList(),
+    padding: const EdgeInsets.all(AppDimensions.spacing16),
+    child: Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStudentDropdown(),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildDescriptionField(),
+          const SizedBox(height: AppDimensions.spacing16),
+          Row(
+            children: [
+              Expanded(child: _buildAmountField()),
+              const SizedBox(width: AppDimensions.spacing16),
+              Expanded(child: _buildPaidAmountField()),
             ],
-            const SizedBox(height: AppDimensions.spacing32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _savePayment,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDatePicker(
+                  label: 'Tarih',
+                  selectedDate: _selectedDate,
+                  onDateSelected: (date) {
+                    setState(() {
+                      _selectedDate = date;
+                    });
+                  },
                 ),
-                child: const Text('Kaydet', style: TextStyle(fontSize: 16)),
               ),
-            ),
+              const SizedBox(width: AppDimensions.spacing16),
+              Expanded(
+                child: _buildDatePicker(
+                  label: 'Son Ödeme Tarihi',
+                  selectedDate: _dueDate,
+                  onDateSelected: (date) {
+                    setState(() {
+                      _dueDate = date;
+                    });
+                  },
+                  isOptional: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildStatusDropdown(),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildPaymentMethodDropdown(),
+          const SizedBox(height: AppDimensions.spacing16),
+          _buildNotesField(),
+          if (_selectedStudentId != null && _lessons.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.spacing24),
+            _buildLessonsList(),
           ],
-        ),
+          const SizedBox(height: AppDimensions.spacing32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _savePayment,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text('Kaydet', style: TextStyle(fontSize: 16)),
+            ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 
   Widget _buildStudentDropdown() => DropdownButtonFormField<String>(
-      value: _selectedStudentId,
-      decoration: const InputDecoration(
-        labelText: 'Öğrenci',
-        border: OutlineInputBorder(),
-      ),
-      items: _students.map((student) => DropdownMenuItem<String>(
-          value: student.id,
-          child: Text(student.name),
-        )).toList(),
-      onChanged: (value) {
-        if (value == null) return;
+    value: _selectedStudentId,
+    decoration: const InputDecoration(
+      labelText: 'Öğrenci',
+      border: OutlineInputBorder(),
+    ),
+    items: _students
+        .map(
+          (student) => DropdownMenuItem<String>(
+            value: student.id,
+            child: Text(student.name),
+          ),
+        )
+        .toList(),
+    onChanged: (value) {
+      if (value == null) return;
 
-        setState(() {
-          _selectedStudentId = value;
-          _selectedStudentName = _students
-              .firstWhere((student) => student.id == value)
-              .name;
-          _selectedLessonIds = [];
-        });
+      setState(() {
+        _selectedStudentId = value;
+        _selectedStudentName = _students
+            .firstWhere((student) => student.id == value)
+            .name;
+        _selectedLessonIds = [];
+      });
 
-        _loadStudentLessons();
-      },
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Lütfen bir öğrenci seçin';
-        }
-        return null;
-      },
-    );
+      _loadStudentLessons();
+    },
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Lütfen bir öğrenci seçin';
+      }
+      return null;
+    },
+  );
 
   Widget _buildDescriptionField() => TextFormField(
-      controller: _descriptionController,
-      decoration: const InputDecoration(
-        labelText: 'Açıklama',
-        border: OutlineInputBorder(),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Lütfen açıklama girin';
-        }
-        return null;
-      },
-    );
+    controller: _descriptionController,
+    decoration: const InputDecoration(
+      labelText: 'Açıklama',
+      border: OutlineInputBorder(),
+    ),
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Lütfen açıklama girin';
+      }
+      return null;
+    },
+  );
 
   Widget _buildAmountField() => TextFormField(
-      controller: _amountController,
-      decoration: const InputDecoration(
-        labelText: 'Toplam Tutar (₺)',
-        border: OutlineInputBorder(),
-      ),
-      keyboardType: TextInputType.number,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Tutar gerekli';
-        }
-        final amount = double.tryParse(value.replaceAll(',', '.'));
-        if (amount == null) {
-          return 'Geçerli bir tutar girin';
-        }
-        if (amount <= 0) {
-          return 'Tutar sıfırdan büyük olmalı';
-        }
-        return null;
-      },
-    );
+    controller: _amountController,
+    decoration: const InputDecoration(
+      labelText: 'Toplam Tutar (₺)',
+      border: OutlineInputBorder(),
+    ),
+    keyboardType: TextInputType.number,
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Tutar gerekli';
+      }
+      final amount = double.tryParse(value.replaceAll(',', '.'));
+      if (amount == null) {
+        return 'Geçerli bir tutar girin';
+      }
+      if (amount <= 0) {
+        return 'Tutar sıfırdan büyük olmalı';
+      }
+      return null;
+    },
+  );
 
   Widget _buildPaidAmountField() => TextFormField(
-      controller: _paidAmountController,
-      decoration: const InputDecoration(
-        labelText: 'Ödenen Tutar (₺)',
-        border: OutlineInputBorder(),
-      ),
-      keyboardType: TextInputType.number,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          // Ödenen tutar boş bırakılabilir (0 olarak kabul edilir)
-          return null;
-        }
-        final paidAmount = double.tryParse(value.replaceAll(',', '.'));
-        if (paidAmount == null) {
-          return 'Geçerli bir tutar girin';
-        }
-        if (paidAmount < 0) {
-          return 'Tutar negatif olamaz';
-        }
+    controller: _paidAmountController,
+    decoration: const InputDecoration(
+      labelText: 'Ödenen Tutar (₺)',
+      border: OutlineInputBorder(),
+    ),
+    keyboardType: TextInputType.number,
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        // Ödenen tutar boş bırakılabilir (0 olarak kabul edilir)
         return null;
-      },
-    );
+      }
+      final paidAmount = double.tryParse(value.replaceAll(',', '.'));
+      if (paidAmount == null) {
+        return 'Geçerli bir tutar girin';
+      }
+      if (paidAmount < 0) {
+        return 'Tutar negatif olamaz';
+      }
+      return null;
+    },
+  );
 
   Widget _buildDatePicker({
     required String label,
@@ -321,243 +328,241 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     required Function(DateTime) onDateSelected,
     bool isOptional = false,
   }) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            if (isOptional) ...[
-              const SizedBox(width: AppDimensions.spacing4),
-              const Text(
-                '(Opsiyonel)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontStyle: FontStyle.italic,
-                ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          if (isOptional) ...[
+            const SizedBox(width: AppDimensions.spacing4),
+            const Text(
+              '(Opsiyonel)',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                fontStyle: FontStyle.italic,
               ),
-            ],
+            ),
           ],
-        ),
-        const SizedBox(height: AppDimensions.spacing8),
-        InkWell(
-          onTap: () async {
-            final DateTime? picked = await showDatePicker(
-              context: context,
-              initialDate: selectedDate ?? DateTime.now(),
-              firstDate: DateTime(2020),
-              lastDate: DateTime(2100),
-            );
-            if (picked != null) {
-              onDateSelected(picked);
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacing12,
-              vertical: AppDimensions.spacing16,
-            ),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(AppDimensions.radius4),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  selectedDate != null
-                      ? DateFormat('dd/MM/yyyy').format(selectedDate)
-                      : 'Tarih Seçin',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: selectedDate != null
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                Icon(
-                  Icons.calendar_today,
+        ],
+      ),
+      const SizedBox(height: AppDimensions.spacing8),
+      InkWell(
+        onTap: () async {
+          final DateTime? picked = await showDatePicker(
+            context: context,
+            initialDate: selectedDate ?? DateTime.now(),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) {
+            onDateSelected(picked);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing12,
+            vertical: AppDimensions.spacing16,
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(AppDimensions.radius4),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                selectedDate != null
+                    ? DateFormat('dd/MM/yyyy').format(selectedDate)
+                    : 'Tarih Seçin',
+                style: TextStyle(
+                  fontSize: 16,
                   color: selectedDate != null
-                      ? AppColors.primary
+                      ? AppColors.textPrimary
                       : AppColors.textSecondary,
                 ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.calendar_today,
+                color: selectedDate != null
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+              ),
+            ],
           ),
         ),
-      ],
-    );
+      ),
+    ],
+  );
 
   Widget _buildStatusDropdown() => DropdownButtonFormField<PaymentStatus>(
-      value: _paymentStatus,
-      decoration: const InputDecoration(
-        labelText: 'Ödeme Durumu',
-        border: OutlineInputBorder(),
-      ),
-      items: PaymentStatus.values.map((status) {
-        String label;
-        switch (status) {
-          case PaymentStatus.pending:
-            label = 'Beklemede';
-            break;
-          case PaymentStatus.paid:
-            label = 'Ödenmiş';
-            break;
-          case PaymentStatus.partiallyPaid:
-            label = 'Kısmi Ödenmiş';
-            break;
-          case PaymentStatus.overdue:
-            label = 'Gecikmiş';
-            break;
-          case PaymentStatus.cancelled:
-            label = 'İptal Edilmiş';
-            break;
-        }
-        return DropdownMenuItem<PaymentStatus>(
-          value: status,
-          child: Text(label),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) {
-          setState(() {
-            _paymentStatus = value;
-          });
-        }
-      },
-    );
-
-  Widget _buildPaymentMethodDropdown() => DropdownButtonFormField<PaymentMethod>(
-      value: _paymentMethod,
-      decoration: const InputDecoration(
-        labelText: 'Ödeme Yöntemi',
-        border: OutlineInputBorder(),
-      ),
-      items: [
-        const DropdownMenuItem<PaymentMethod>(
-          value: null,
-          child: Text('Seçiniz'),
-        ),
-        ...PaymentMethod.values.map((method) {
-          String label;
-          switch (method) {
-            case PaymentMethod.cash:
-              label = 'Nakit';
-              break;
-            case PaymentMethod.creditCard:
-              label = 'Kredi Kartı';
-              break;
-            case PaymentMethod.bankTransfer:
-              label = 'Banka Havalesi';
-              break;
-            case PaymentMethod.other:
-              label = 'Diğer';
-              break;
-          }
-          return DropdownMenuItem<PaymentMethod>(
-            value: method,
-            child: Text(label),
-          );
-        }),
-      ],
-      onChanged: (value) {
+    value: _paymentStatus,
+    decoration: const InputDecoration(
+      labelText: 'Ödeme Durumu',
+      border: OutlineInputBorder(),
+    ),
+    items: PaymentStatus.values.map((status) {
+      String label;
+      switch (status) {
+        case PaymentStatus.pending:
+          label = 'Beklemede';
+          break;
+        case PaymentStatus.paid:
+          label = 'Ödenmiş';
+          break;
+        case PaymentStatus.partiallyPaid:
+          label = 'Kısmi Ödenmiş';
+          break;
+        case PaymentStatus.overdue:
+          label = 'Gecikmiş';
+          break;
+        case PaymentStatus.cancelled:
+          label = 'İptal Edilmiş';
+          break;
+      }
+      return DropdownMenuItem<PaymentStatus>(value: status, child: Text(label));
+    }).toList(),
+    onChanged: (value) {
+      if (value != null) {
         setState(() {
-          _paymentMethod = value;
+          _paymentStatus = value;
         });
-      },
-    );
+      }
+    },
+  );
+
+  Widget _buildPaymentMethodDropdown() =>
+      DropdownButtonFormField<PaymentMethod>(
+        value: _paymentMethod,
+        decoration: const InputDecoration(
+          labelText: 'Ödeme Yöntemi',
+          border: OutlineInputBorder(),
+        ),
+        items: [
+          const DropdownMenuItem<PaymentMethod>(
+            value: null,
+            child: Text('Seçiniz'),
+          ),
+          ...PaymentMethod.values.map((method) {
+            String label;
+            switch (method) {
+              case PaymentMethod.cash:
+                label = 'Nakit';
+                break;
+              case PaymentMethod.creditCard:
+                label = 'Kredi Kartı';
+                break;
+              case PaymentMethod.bankTransfer:
+                label = 'Banka Havalesi';
+                break;
+              case PaymentMethod.other:
+                label = 'Diğer';
+                break;
+            }
+            return DropdownMenuItem<PaymentMethod>(
+              value: method,
+              child: Text(label),
+            );
+          }),
+        ],
+        onChanged: (value) {
+          setState(() {
+            _paymentMethod = value;
+          });
+        },
+      );
 
   Widget _buildNotesField() => TextFormField(
-      controller: _notesController,
-      decoration: const InputDecoration(
-        labelText: 'Notlar',
-        border: OutlineInputBorder(),
-        alignLabelWithHint: true,
-      ),
-      maxLines: 3,
-    );
+    controller: _notesController,
+    decoration: const InputDecoration(
+      labelText: 'Notlar',
+      border: OutlineInputBorder(),
+      alignLabelWithHint: true,
+    ),
+    maxLines: 3,
+  );
 
   Widget _buildLessonsList() => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'İlişkili Dersler',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: AppDimensions.spacing8),
-        const Text(
-          'Bu ödemeyle ilişkilendirilecek dersleri seçin:',
-          style: TextStyle(fontSize: 14),
-        ),
-        const SizedBox(height: AppDimensions.spacing12),
-        _isLoadingLessons
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppDimensions.spacing16),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            : _lessons.isEmpty
-            ? const Text(
-                'Bu öğrenciye ait ders bulunamadı.',
-                style: TextStyle(fontStyle: FontStyle.italic),
-              )
-            : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _lessons.length,
-                itemBuilder: (context, index) {
-                  final lesson = _lessons[index];
-                  final formattedDate = DateFormat(
-                    'dd/MM/yyyy',
-                  ).format(DateTime.parse(lesson.date));
-                  final isSelected = _selectedLessonIds.contains(lesson.id);
-
-                  return CheckboxListTile(
-                    title: Text(
-                      '${lesson.subject} - ${lesson.topic ?? "Konu belirtilmemiş"}',
-                    ),
-                    subtitle: Text('$formattedDate, ${lesson.startTime}'),
-                    secondary: Text(
-                      '${lesson.fee.toStringAsFixed(2)} ₺',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    value: isSelected,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedLessonIds.add(lesson.id);
-
-                          // Seçilen dersin ücretini toplam tutara ekle
-                          final currentAmount =
-                              double.tryParse(
-                                _amountController.text.replaceAll(',', '.'),
-                              ) ??
-                              0;
-                          _amountController.text = (currentAmount + lesson.fee)
-                              .toStringAsFixed(2);
-                        } else {
-                          _selectedLessonIds.remove(lesson.id);
-
-                          // Seçimi kaldırılan dersin ücretini toplam tutardan çıkar
-                          final currentAmount =
-                              double.tryParse(
-                                _amountController.text.replaceAll(',', '.'),
-                              ) ??
-                              0;
-                          _amountController.text = (currentAmount - lesson.fee)
-                              .toStringAsFixed(2);
-                        }
-                      });
-                    },
-                  );
-                },
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'İlişkili Dersler',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: AppDimensions.spacing8),
+      const Text(
+        'Bu ödemeyle ilişkilendirilecek dersleri seçin:',
+        style: TextStyle(fontSize: 14),
+      ),
+      const SizedBox(height: AppDimensions.spacing12),
+      _isLoadingLessons
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(AppDimensions.spacing16),
+                child: CircularProgressIndicator(),
               ),
-      ],
-    );
+            )
+          : _lessons.isEmpty
+          ? const Text(
+              'Bu öğrenciye ait ders bulunamadı.',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            )
+          : ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _lessons.length,
+              itemBuilder: (context, index) {
+                final lesson = _lessons[index];
+                final formattedDate = DateFormat(
+                  'dd/MM/yyyy',
+                ).format(DateTime.parse(lesson.date));
+                final isSelected = _selectedLessonIds.contains(lesson.id);
+
+                return CheckboxListTile(
+                  title: Text(
+                    '${lesson.subject} - ${lesson.topic ?? "Konu belirtilmemiş"}',
+                  ),
+                  subtitle: Text('$formattedDate, ${lesson.startTime}'),
+                  secondary: Text(
+                    '${lesson.fee.toStringAsFixed(2)} ₺',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  value: isSelected,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      if (value == true) {
+                        _selectedLessonIds.add(lesson.id);
+
+                        // Seçilen dersin ücretini toplam tutara ekle
+                        final currentAmount =
+                            double.tryParse(
+                              _amountController.text.replaceAll(',', '.'),
+                            ) ??
+                            0;
+                        _amountController.text = (currentAmount + lesson.fee)
+                            .toStringAsFixed(2);
+                      } else {
+                        _selectedLessonIds.remove(lesson.id);
+
+                        // Seçimi kaldırılan dersin ücretini toplam tutardan çıkar
+                        final currentAmount =
+                            double.tryParse(
+                              _amountController.text.replaceAll(',', '.'),
+                            ) ??
+                            0;
+                        _amountController.text = (currentAmount - lesson.fee)
+                            .toStringAsFixed(2);
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+    ],
+  );
 
   Future<void> _savePayment() async {
     if (!_formKey.currentState!.validate()) {

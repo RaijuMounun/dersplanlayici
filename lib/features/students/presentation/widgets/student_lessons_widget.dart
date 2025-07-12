@@ -11,7 +11,6 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 enum LessonFilterType { all, upcoming, past, completed, cancelled }
 
 class StudentLessonsWidget extends StatefulWidget {
-
   const StudentLessonsWidget({
     super.key,
     required this.student,
@@ -48,13 +47,18 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
 
     // Arama filtreleme
     if (_searchQuery.isNotEmpty) {
-      result = result.where((lesson) => lesson.subject.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ) ||
-            (lesson.topic != null &&
-                lesson.topic!.toLowerCase().contains(
+      result = result
+          .where(
+            (lesson) =>
+                lesson.subject.toLowerCase().contains(
                   _searchQuery.toLowerCase(),
-                ))).toList();
+                ) ||
+                (lesson.topic != null &&
+                    lesson.topic!.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    )),
+          )
+          .toList();
     }
 
     // Durum filtreleme
@@ -104,73 +108,73 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
 
   @override
   Widget build(BuildContext context) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildFilterBar(),
-        const SizedBox(height: AppDimensions.spacing16),
-        if (widget.isLoading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(AppDimensions.spacing24),
-              child: CircularProgressIndicator(),
-            ),
-          )
-        else if (widget.lessons.isEmpty)
-          _buildEmptyState()
-        else if (filteredLessons.isEmpty)
-          _buildNoResultsState()
-        else
-          _buildLessonsList(),
-      ],
-    );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildFilterBar(),
+      const SizedBox(height: AppDimensions.spacing16),
+      if (widget.isLoading)
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.all(AppDimensions.spacing24),
+            child: CircularProgressIndicator(),
+          ),
+        )
+      else if (widget.lessons.isEmpty)
+        _buildEmptyState()
+      else if (filteredLessons.isEmpty)
+        _buildNoResultsState()
+      else
+        _buildLessonsList(),
+    ],
+  );
 
   Widget _buildFilterBar() => Column(
-      children: [
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Ders ara...',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _searchQuery = '';
-                      });
-                    },
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-            ),
-          ),
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-        ),
-        const SizedBox(height: AppDimensions.spacing12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildFilterChip(LessonFilterType.all, 'Tümü'),
-              const SizedBox(width: AppDimensions.spacing8),
-              _buildFilterChip(LessonFilterType.upcoming, 'Yaklaşan'),
-              const SizedBox(width: AppDimensions.spacing8),
-              _buildFilterChip(LessonFilterType.past, 'Geçmiş'),
-              const SizedBox(width: AppDimensions.spacing8),
-              _buildFilterChip(LessonFilterType.completed, 'Tamamlandı'),
-              const SizedBox(width: AppDimensions.spacing8),
-              _buildFilterChip(LessonFilterType.cancelled, 'İptal'),
-            ],
+    children: [
+      TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Ders ara...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _searchController.clear();
+                      _searchQuery = '';
+                    });
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radius8),
           ),
         ),
-      ],
-    );
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+      ),
+      const SizedBox(height: AppDimensions.spacing12),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildFilterChip(LessonFilterType.all, 'Tümü'),
+            const SizedBox(width: AppDimensions.spacing8),
+            _buildFilterChip(LessonFilterType.upcoming, 'Yaklaşan'),
+            const SizedBox(width: AppDimensions.spacing8),
+            _buildFilterChip(LessonFilterType.past, 'Geçmiş'),
+            const SizedBox(width: AppDimensions.spacing8),
+            _buildFilterChip(LessonFilterType.completed, 'Tamamlandı'),
+            const SizedBox(width: AppDimensions.spacing8),
+            _buildFilterChip(LessonFilterType.cancelled, 'İptal'),
+          ],
+        ),
+      ),
+    ],
+  );
 
   Widget _buildFilterChip(LessonFilterType filter, String label) {
     final isSelected = _currentFilter == filter;
@@ -194,15 +198,15 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
   }
 
   Widget _buildLessonsList() => Expanded(
-      child: ListView.builder(
-        controller: _scrollController,
-        itemCount: filteredLessons.length,
-        itemBuilder: (context, index) {
-          final lesson = filteredLessons[index];
-          return _buildLessonCard(lesson);
-        },
-      ),
-    );
+    child: ListView.builder(
+      controller: _scrollController,
+      itemCount: filteredLessons.length,
+      itemBuilder: (context, index) {
+        final lesson = filteredLessons[index];
+        return _buildLessonCard(lesson);
+      },
+    ),
+  );
 
   Widget _buildLessonCard(Lesson lesson) {
     final formattedDate = date_utils.DateUtils.formatDateWithDay(lesson.date);
@@ -265,7 +269,11 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
               const SizedBox(width: AppDimensions.spacing4),
               Text(formattedDate),
               const SizedBox(width: AppDimensions.spacing16),
-              const Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+              const Icon(
+                Icons.access_time,
+                size: 16,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: AppDimensions.spacing4),
               Text('${lesson.startTime} - ${lesson.endTime}'),
             ],
@@ -323,69 +331,72 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
   }
 
   Widget _buildEmptyState() => SizedBox(
-      height: 200,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.event_busy,
-              size: 64,
-              color: AppColors.textSecondary.withAlpha(128),
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            const Text(
-              'Bu öğrenciye ait ders bulunmuyor',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
-            ),
-            const SizedBox(height: AppDimensions.spacing24),
-            ElevatedButton.icon(
-              onPressed: () {
-                context.push('/add-lesson?studentId=${widget.student.id}');
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Ders Ekle'),
-            ),
-          ],
-        ),
+    height: 200,
+    child: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.event_busy,
+            size: 64,
+            color: AppColors.textSecondary.withAlpha(128),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          const Text(
+            'Bu öğrenciye ait ders bulunmuyor',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          ),
+          const SizedBox(height: AppDimensions.spacing24),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.push('/add-lesson?studentId=${widget.student.id}');
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Ders Ekle'),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 
   Widget _buildNoResultsState() => SizedBox(
-      height: 200,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 48,
-              color: AppColors.textSecondary.withAlpha(128),
+    height: 200,
+    child: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 48,
+            color: AppColors.textSecondary.withAlpha(128),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          Text(
+            _searchQuery.isNotEmpty
+                ? '"$_searchQuery" aramasına uygun ders bulunamadı'
+                : 'Seçili filtrelere uygun ders bulunamadı',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 16,
             ),
-            const SizedBox(height: AppDimensions.spacing16),
-            Text(
-              _searchQuery.isNotEmpty
-                  ? '"$_searchQuery" aramasına uygun ders bulunamadı'
-                  : 'Seçili filtrelere uygun ders bulunamadı',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _searchController.clear();
-                  _searchQuery = '';
-                  _currentFilter = LessonFilterType.all;
-                });
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Filtreleri Temizle'),
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _searchController.clear();
+                _searchQuery = '';
+                _currentFilter = LessonFilterType.all;
+              });
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Filtreleri Temizle'),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 
   Color _getLessonStatusColor(LessonStatus status) {
     switch (status) {

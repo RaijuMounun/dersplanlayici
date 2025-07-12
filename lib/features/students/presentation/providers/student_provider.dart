@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../../domain/models/student_model.dart';
 import '../../../../services/database/database_service.dart';
 import '../../../../core/error/app_exception.dart';
+import 'package:collection/collection.dart';
 
 /// Öğrenci verilerini yöneten Provider sınıfı.
 class StudentProvider extends ChangeNotifier {
@@ -107,13 +108,7 @@ class StudentProvider extends ChangeNotifier {
   }
 
   /// ID'ye göre öğrenci arar.
-  Student? getStudentById(String id) {
-    try {
-      return _students.firstWhere((student) => student.id == id);
-    } on Exception {
-      return null;
-    }
-  }
+  Student? getStudentById(String id) => _students.firstWhereOrNull((student) => student.id == id);
 
   /// Adına göre öğrenci arar.
   List<Student> searchStudentsByName(String query) {

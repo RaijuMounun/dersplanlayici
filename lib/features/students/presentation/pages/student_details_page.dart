@@ -483,29 +483,32 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     try {
       final lessonProvider = context.read<LessonProvider>();
       await lessonProvider.deleteLesson(lesson.id);
+      await _loadStudentLessons(); // Dersleri yeniden yükle
 
+      // Başarı mesajını göstermek için mounted kontrolü ile callback
       if (mounted) {
-        final localContext = context;
-        await _loadStudentLessons(); // Dersleri yeniden yükle
-        if (mounted) {
-          ScaffoldMessenger.of(localContext).showSnackBar(
-            const SnackBar(
-              content: Text('Ders başarıyla silindi'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
+        _showSuccessMessage('Ders başarıyla silindi');
       }
     } on Exception catch (e) {
+      // Hata mesajını göstermek için mounted kontrolü ile callback
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ders silinirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        _showErrorMessage('Ders silinirken hata oluştu: $e');
       }
     }
+  }
+
+  // Başarı mesajı gösterme
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.success),
+    );
+  }
+
+  // Hata mesajı gösterme
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
+    );
   }
 
   // Bilgi satırı widgetı

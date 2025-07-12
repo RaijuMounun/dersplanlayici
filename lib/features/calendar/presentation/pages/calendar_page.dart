@@ -37,100 +37,97 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Responsive layout kullanarak farklı ekran boyutları için farklı layoutlar göster
-    return ResponsiveLayout(
-      // Mobil görünüm - Calendar üstte, dersler altta
-      mobile: Column(
-        children: [
-          // Takvim görünümü
-          _buildCalendarView(),
-      
-          // Günlük ders listesi
-          Expanded(child: _buildDailyLessonsList()),
-        ],
-      ),
+  Widget build(BuildContext context) => ResponsiveLayout(
+    // Mobil görünüm - Calendar üstte, dersler altta
+    mobile: Column(
+      children: [
+        // Takvim görünümü
+        _buildCalendarView(),
 
-      // Tablet görünüm - Daha geniş alanlı düşey layout
-      tablet: Column(
-        children: [
-          // Takvim görünümü
-          Padding(
-            padding: const EdgeInsets.all(AppDimensions.spacing16),
-            child: _buildCalendarView(),
-          ),
+        // Günlük ders listesi
+        Expanded(child: _buildDailyLessonsList()),
+      ],
+    ),
 
-          // Günlük ders listesi
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacing24,
-              ),
-              child: _buildDailyLessonsList(),
+    // Tablet görünüm - Daha geniş alanlı düşey layout
+    tablet: Column(
+      children: [
+        // Takvim görünümü
+        Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
+          child: _buildCalendarView(),
+        ),
+
+        // Günlük ders listesi
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing24,
             ),
+            child: _buildDailyLessonsList(),
           ),
-        ],
-      ),
+        ),
+      ],
+    ),
 
-      // Desktop görünüm - Yatay layout (Takvim solda, dersler sağda)
-      desktop: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Takvim görünümü - sabit genişlik
-          Container(
-            width: 400,
+    // Desktop görünüm - Yatay layout (Takvim solda, dersler sağda)
+    desktop: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Takvim görünümü - sabit genişlik
+        Container(
+          width: 400,
+          padding: const EdgeInsets.all(AppDimensions.spacing24),
+          child: _buildCalendarView(),
+        ),
+
+        // Dikey çizgi ayırıcı
+        Container(width: 1, height: double.infinity, color: AppColors.border),
+
+        // Günlük ders listesi - kalan alanı doldur
+        Expanded(
+          child: Padding(
             padding: const EdgeInsets.all(AppDimensions.spacing24),
-            child: _buildCalendarView(),
-          ),
-
-          // Dikey çizgi ayırıcı
-          Container(width: 1, height: double.infinity, color: AppColors.border),
-
-          // Günlük ders listesi - kalan alanı doldur
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.spacing24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Tarih başlığı
-                  Text(
-                    DateFormat('dd MMMM yyyy').format(_selectedDate),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tarih başlığı
+                Text(
+                  DateFormat('dd MMMM yyyy').format(_selectedDate),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: AppDimensions.spacing16),
-                  // Ders listesi
-                  Expanded(child: _buildDailyLessonsList()),
-                ],
-              ),
+                ),
+                const SizedBox(height: AppDimensions.spacing16),
+                // Ders listesi
+                Expanded(child: _buildDailyLessonsList()),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 
   Widget _buildCalendarView() => Consumer<LessonProvider>(
-      builder: (context, lessonProvider, child) {
-        final events = _buildEventsMap(lessonProvider);
+    builder: (context, lessonProvider, child) {
+      final events = _buildEventsMap(lessonProvider);
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing8),
-          child: AppCalendar(
-            initialDate: _selectedDate,
-            events: events,
-            onDateSelected: (date) {
-              setState(() {
-                _selectedDate = date;
-              });
-              lessonProvider.setSelectedDate(_selectedDate);
-            },
-          ),
-        );
-      },
-    );
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing8),
+        child: AppCalendar(
+          initialDate: _selectedDate,
+          events: events,
+          onDateSelected: (date) {
+            setState(() {
+              _selectedDate = date;
+            });
+            lessonProvider.setSelectedDate(_selectedDate);
+          },
+        ),
+      );
+    },
+  );
 
   Map<DateTime, List<dynamic>> _buildEventsMap(LessonProvider lessonProvider) {
     final Map<DateTime, List<dynamic>> eventsMap = {};
@@ -154,50 +151,50 @@ class _CalendarPageState extends State<CalendarPage> {
   );
 
   Widget _buildDailyLessonsList() => Consumer<LessonProvider>(
-      builder: (context, lessonProvider, child) {
-        if (lessonProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    builder: (context, lessonProvider, child) {
+      if (lessonProvider.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        if (lessonProvider.error != null &&
-            lessonProvider.error.toString().isNotEmpty) {
-          return Center(child: Text('Hata: ${lessonProvider.error}'));
-        }
+      if (lessonProvider.error != null &&
+          lessonProvider.error.toString().isNotEmpty) {
+        return Center(child: Text('Hata: ${lessonProvider.error}'));
+      }
 
-        if (lessonProvider.dailyLessons.isEmpty) {
-          return _buildEmptyState();
-        }
+      if (lessonProvider.dailyLessons.isEmpty) {
+        return _buildEmptyState();
+      }
 
-        // Ekran boyutuna göre farklı padding ve tasarım kullan
-        final padding = ResponsiveUtils.deviceValue<EdgeInsets>(
-          context: context,
-          mobile: const EdgeInsets.all(AppDimensions.spacing8),
-          tablet: const EdgeInsets.all(AppDimensions.spacing16),
-          desktop: const EdgeInsets.symmetric(vertical: AppDimensions.spacing8),
-        );
+      // Ekran boyutuna göre farklı padding ve tasarım kullan
+      final padding = ResponsiveUtils.deviceValue<EdgeInsets>(
+        context: context,
+        mobile: const EdgeInsets.all(AppDimensions.spacing8),
+        tablet: const EdgeInsets.all(AppDimensions.spacing16),
+        desktop: const EdgeInsets.symmetric(vertical: AppDimensions.spacing8),
+      );
 
-        return ListView.builder(
-          padding: padding,
-          itemCount: lessonProvider.dailyLessons.length,
-          itemBuilder: (context, index) {
-            final lesson = lessonProvider.dailyLessons[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppDimensions.spacing8),
-              child: LessonCard(
-                studentName: lesson.studentName,
-                subject: lesson.subject,
-                startTime: lesson.startTime,
-                endTime: lesson.endTime,
-                onTap: () {
-                  // Ders detay sayfasına yönlendir
-                  context.push('/lesson/${lesson.id}');
-                },
-              ),
-            );
-          },
-        );
-      },
-    );
+      return ListView.builder(
+        padding: padding,
+        itemCount: lessonProvider.dailyLessons.length,
+        itemBuilder: (context, index) {
+          final lesson = lessonProvider.dailyLessons[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppDimensions.spacing8),
+            child: LessonCard(
+              studentName: lesson.studentName,
+              subject: lesson.subject,
+              startTime: lesson.startTime,
+              endTime: lesson.endTime,
+              onTap: () {
+                // Ders detay sayfasına yönlendir
+                context.push('/lesson/${lesson.id}');
+              },
+            ),
+          );
+        },
+      );
+    },
+  );
 
   Widget _buildEmptyState() {
     final dateStr = DateFormat('dd MMMM yyyy').format(_selectedDate);

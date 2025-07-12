@@ -196,7 +196,6 @@ class ErrorLogger {
   static final ErrorLogger _instance = ErrorLogger._internal();
 
   late final SimpleFileLogDestination _fileDestination;
-  final bool _isInitialized = false;
 
   /// Debug seviyesinde log kaydı
   Future<void> debug(
