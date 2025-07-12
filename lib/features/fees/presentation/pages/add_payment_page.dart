@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
+import 'package:ders_planlayici/core/widgets/app_text_field.dart';
 import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
@@ -42,11 +43,17 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   @override
   void initState() {
     super.initState();
-    _initializeForm();
+    // Provider erişimini build sonrasına ertele
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initializeForm();
+      }
+    });
   }
 
   @override
   void dispose() {
+    // Controller'ları güvenli şekilde dispose et
     _descriptionController.dispose();
     _amountController.dispose();
     _paidAmountController.dispose();
@@ -65,7 +72,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         context,
         listen: false,
       );
-      await studentProvider.loadStudents();
+      await studentProvider.loadStudents(notify: false);
 
       if (!mounted) return;
 
@@ -263,12 +270,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     },
   );
 
-  Widget _buildDescriptionField() => TextFormField(
+  Widget _buildDescriptionField() => AppTextField(
     controller: _descriptionController,
-    decoration: const InputDecoration(
-      labelText: 'Açıklama',
-      border: OutlineInputBorder(),
-    ),
+    label: 'Açıklama',
+    hint: 'Lütfen açıklama girin',
     validator: (value) {
       if (value == null || value.isEmpty) {
         return 'Lütfen açıklama girin';
@@ -277,12 +282,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     },
   );
 
-  Widget _buildAmountField() => TextFormField(
+  Widget _buildAmountField() => AppTextField(
     controller: _amountController,
-    decoration: const InputDecoration(
-      labelText: 'Toplam Tutar (₺)',
-      border: OutlineInputBorder(),
-    ),
+    label: 'Toplam Tutar (₺)',
+    hint: 'Tutar gerekli',
     keyboardType: TextInputType.number,
     validator: (value) {
       if (value == null || value.isEmpty) {
@@ -299,12 +302,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     },
   );
 
-  Widget _buildPaidAmountField() => TextFormField(
+  Widget _buildPaidAmountField() => AppTextField(
     controller: _paidAmountController,
-    decoration: const InputDecoration(
-      labelText: 'Ödenen Tutar (₺)',
-      border: OutlineInputBorder(),
-    ),
+    label: 'Ödenen Tutar (₺)',
+    hint: 'Ödenen tutar boş bırakılabilir (0 olarak kabul edilir)',
     keyboardType: TextInputType.number,
     validator: (value) {
       if (value == null || value.isEmpty) {
@@ -475,13 +476,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         },
       );
 
-  Widget _buildNotesField() => TextFormField(
+  Widget _buildNotesField() => AppTextField(
     controller: _notesController,
-    decoration: const InputDecoration(
-      labelText: 'Notlar',
-      border: OutlineInputBorder(),
-      alignLabelWithHint: true,
-    ),
+    label: 'Notlar',
+    hint: 'Lütfen notları girin',
     maxLines: 3,
   );
 

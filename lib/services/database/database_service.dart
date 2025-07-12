@@ -374,6 +374,12 @@ class DatabaseService {
   Future<int> insertPayment(Map<String, dynamic> payment) async {
     try {
       final db = await _databaseHelper.database;
+
+      // Tarih alanlarını ekle
+      final now = DateTime.now().toIso8601String();
+      payment['createdAt'] = now;
+      payment['updatedAt'] = now;
+
       return await db.insert('payments', payment);
     } on Exception {
       throw const DatabaseException(message: 'Ödeme eklenirken hata oluştu');

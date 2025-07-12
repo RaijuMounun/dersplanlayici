@@ -24,7 +24,11 @@ class _PaymentListPageState extends State<PaymentListPage> {
   @override
   void initState() {
     super.initState();
-    _loadPayments();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadPayments();
+      }
+    });
   }
 
   @override
@@ -35,7 +39,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
       Provider.of<PaymentProvider>(
         context,
         listen: false,
-      ).filterByStatus(_statusFilter, notify: true);
+      ).filterByStatus(_statusFilter, notify: false);
     }
   }
 
@@ -48,70 +52,84 @@ class _PaymentListPageState extends State<PaymentListPage> {
   Future<void> _loadPayments() async {
     if (!mounted) return;
 
-    final paymentProvider = Provider.of<PaymentProvider>(
-      context,
-      listen: false,
-    );
+    setState(() {
+      _isLoading = true;
+    });
 
-    // notify: false ile yükleme işlemini yap, bu sayede build sırasında state değişimi olmaz
-    await paymentProvider.loadPayments(notify: false);
+    try {
+      final paymentProvider = Provider.of<PaymentProvider>(
+        context,
+        listen: false,
+      );
 
-    // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
-    if (mounted) {
-      await Future.microtask(() {
-        if (mounted) {
-          // State güncellemelerini build dışında yap
-          paymentProvider.notifyListeners();
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      });
+      await paymentProvider.loadPayments(notify: false);
+    } on Exception catch (e) {
+      // Hata durumunda sadece loading'i false yap
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ödemeler yüklenirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Ödemeler'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.history),
-          tooltip: 'Ödeme Geçmişi',
-          onPressed: () {
+  Widget build(BuildContext context) => Consumer<PaymentProvider>(
+    builder: (context, paymentProvider, child) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Ödemeler'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.history),
+              tooltip: 'Ödeme Geçmişi',
+              onPressed: () {
+                if (mounted) {
+                  context.push('/fee-history');
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Yenile',
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                });
+                _loadPayments();
+              },
+            ),
+          ],
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ResponsiveLayout(
+                mobile: _buildMobileLayout(),
+                tablet: _buildTabletLayout(),
+                desktop: _buildDesktopLayout(),
+              ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
             if (mounted) {
-              context.push('/fee-history');
+              await context.push('/add-payment');
+              // Ödeme ekleme sayfasından döndükten sonra ödemeleri yeniden yükle
+              if (mounted) {
+                await _loadPayments();
+              }
             }
           },
+          tooltip: 'Ödeme Ekle',
+          child: const Icon(Icons.add),
         ),
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Yenile',
-          onPressed: () {
-            setState(() {
-              _isLoading = true;
-            });
-            _loadPayments();
-          },
-        ),
-      ],
-    ),
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : ResponsiveLayout(
-            mobile: _buildMobileLayout(),
-            tablet: _buildTabletLayout(),
-            desktop: _buildDesktopLayout(),
-          ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () {
-        if (mounted) {
-          context.push('/add-payment');
-        }
-      },
-      tooltip: 'Ödeme Ekle',
-      child: const Icon(Icons.add),
-    ),
+      ),
   );
 
   Widget _buildMobileLayout() => Column(
@@ -325,7 +343,10 @@ class _PaymentListPageState extends State<PaymentListPage> {
   }
 
   Widget _buildStatCard() {
-    final paymentProvider = Provider.of<PaymentProvider>(context);
+    final paymentProvider = Provider.of<PaymentProvider>(
+      context,
+      listen: false,
+    );
 
     if (paymentProvider.summaries.isEmpty) {
       return const SizedBox(
@@ -349,22 +370,23 @@ class _PaymentListPageState extends State<PaymentListPage> {
     );
   }
 
-  Widget _buildPaymentsList() {
-    final paymentProvider = Provider.of<PaymentProvider>(context);
-    final filteredPayments = _filterPayments(paymentProvider.payments);
+  Widget _buildPaymentsList() => Consumer<PaymentProvider>(
+    builder: (context, paymentProvider, child) {
+      final filteredPayments = _filterPayments(paymentProvider.payments);
 
-    if (filteredPayments.isEmpty) {
-      return _buildEmptyState();
-    }
+      if (filteredPayments.isEmpty) {
+        return _buildEmptyState();
+      }
 
-    return ListView.builder(
-      itemCount: filteredPayments.length,
-      itemBuilder: (context, index) {
-        final payment = filteredPayments[index];
-        return _buildPaymentCard(payment);
-      },
-    );
-  }
+      return ListView.builder(
+        itemCount: filteredPayments.length,
+        itemBuilder: (context, index) {
+          final payment = filteredPayments[index];
+          return _buildPaymentCard(payment);
+        },
+      );
+    },
+  );
 
   List<PaymentModel> _filterPayments(List<PaymentModel> payments) {
     if (_searchQuery.isEmpty && _statusFilter.isEmpty) {
@@ -570,30 +592,21 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
     try {
       final provider = Provider.of<PaymentProvider>(context, listen: false);
-
-      // notify: false ile silme işlemini yap, bu sayede build sırasında state değişimi olmaz
       await provider.deletePayment(id, notify: false);
 
-      // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
       if (mounted) {
-        await Future.microtask(() {
-          if (mounted) {
-            // State güncellemelerini build dışında yap
-            provider.notifyListeners();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Ödeme başarıyla silindi')),
-            );
-            setState(() {
-              _isLoading = false;
-            });
-          }
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ödeme başarıyla silindi')),
+        );
       }
     } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
@@ -619,7 +632,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
         ),
         const SizedBox(height: AppDimensions.spacing24),
         ElevatedButton.icon(
-          onPressed: () {
+          onPressed: () async {
             if (_searchQuery.isNotEmpty || _statusFilter.isNotEmpty) {
               setState(() {
                 _searchQuery = '';
@@ -627,7 +640,11 @@ class _PaymentListPageState extends State<PaymentListPage> {
                 _searchController.clear();
               });
             } else {
-              context.push('/add-payment');
+              await context.push('/add-payment');
+              // Ödeme ekleme sayfasından döndükten sonra ödemeleri yeniden yükle
+              if (mounted) {
+                await _loadPayments();
+              }
             }
           },
           icon: Icon(

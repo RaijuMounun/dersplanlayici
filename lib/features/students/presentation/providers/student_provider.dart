@@ -33,12 +33,12 @@ class StudentProvider extends ChangeNotifier {
       if (notify) notifyListeners();
     } on AppException catch (e) {
       _error = e;
-      notifyListeners();
+      if (notify) notifyListeners();
     } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Öğrenciler yüklenirken bir hata oluştu: ${e.toString()}',
       );
-      notifyListeners();
+      if (notify) notifyListeners();
     } finally {
       _setLoading(false, notify: notify);
     }
@@ -108,7 +108,8 @@ class StudentProvider extends ChangeNotifier {
   }
 
   /// ID'ye göre öğrenci arar.
-  Student? getStudentById(String id) => _students.firstWhereOrNull((student) => student.id == id);
+  Student? getStudentById(String id) =>
+      _students.firstWhereOrNull((student) => student.id == id);
 
   /// Adına göre öğrenci arar.
   List<Student> searchStudentsByName(String query) {

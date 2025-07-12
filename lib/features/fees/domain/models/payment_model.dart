@@ -1,4 +1,5 @@
 import 'package:uuid/uuid.dart';
+import 'dart:convert';
 
 /// Ödeme durumunu temsil eden enum.
 enum PaymentStatus {
@@ -18,7 +19,8 @@ enum PaymentMethod {
 }
 
 /// Ödeme bilgilerini temsil eden model sınıfı.
-class PaymentModel { // İlişkili ders ID'leri
+class PaymentModel {
+  // İlişkili ders ID'leri
 
   PaymentModel({
     String? id,
@@ -37,29 +39,48 @@ class PaymentModel { // İlişkili ders ID'leri
 
   /// Map objesinden PaymentModel nesnesine dönüştürür.
   factory PaymentModel.fromMap(Map<String, dynamic> map) => PaymentModel(
-      id: map['id'] as String,
-      studentId: map['studentId'] as String,
-      studentName: map['studentName'] as String,
-      description: map['description'] as String,
-      amount: (map['amount'] as num).toDouble(),
-      paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0,
-      date: map['date'] as String,
-      dueDate: map['dueDate'] as String?,
-      status: PaymentStatus.values.firstWhere(
-        (e) => e.toString() == 'PaymentStatus.${map['status']}',
-        orElse: () => PaymentStatus.pending,
-      ),
-      method: map['method'] != null
-          ? PaymentMethod.values.firstWhere(
-              (e) => e.toString() == 'PaymentMethod.${map['method']}',
-              orElse: () => PaymentMethod.cash,
-            )
-          : null,
-      notes: map['notes'] as String?,
-      lessonIds: map['lessonIds'] != null
-          ? List<String>.from(map['lessonIds'])
-          : null,
-    );
+    id: map['id'] as String,
+    studentId: map['studentId'] as String,
+    studentName: map['studentName'] as String,
+    description: map['description'] as String,
+    amount: (map['amount'] as num).toDouble(),
+    paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0,
+    date: map['date'] as String,
+    dueDate: map['dueDate'] as String?,
+    status: PaymentStatus.values.firstWhere(
+      (e) => e.toString() == 'PaymentStatus.${map['status']}',
+      orElse: () => PaymentStatus.pending,
+    ),
+    method: map['method'] != null
+        ? PaymentMethod.values.firstWhere(
+            (e) => e.toString() == 'PaymentMethod.${map['method']}',
+            orElse: () => PaymentMethod.cash,
+          )
+        : null,
+    notes: map['notes'] as String?,
+    lessonIds: _parseLessonIds(map['lessonIds']),
+  );
+
+  /// lessonIds alanını güvenli bir şekilde parse eder
+  static List<String>? _parseLessonIds(dynamic lessonIds) {
+    if (lessonIds == null) return null;
+
+    try {
+      if (lessonIds is String) {
+        // JSON string ise çöz
+        final decoded = jsonDecode(lessonIds) as List;
+        return decoded.map((e) => e.toString()).toList();
+      } else if (lessonIds is List) {
+        // Zaten liste ise direkt kullan
+        return lessonIds.map((e) => e.toString()).toList();
+      }
+    } on Exception {
+      // JSON çözüm hatası durumunda null döndür
+    }
+
+    return null;
+  }
+
   final String id;
   final String studentId;
   final String studentName;
@@ -75,19 +96,19 @@ class PaymentModel { // İlişkili ders ID'leri
 
   /// Payment nesnesini Map objesine dönüştürür.
   Map<String, dynamic> toMap() => {
-      'id': id,
-      'studentId': studentId,
-      'studentName': studentName,
-      'description': description,
-      'amount': amount,
-      'paidAmount': paidAmount,
-      'date': date,
-      'dueDate': dueDate,
-      'status': status.toString().split('.').last,
-      'method': method?.toString().split('.').last,
-      'notes': notes,
-      'lessonIds': lessonIds,
-    };
+    'id': id,
+    'studentId': studentId,
+    'studentName': studentName,
+    'description': description,
+    'amount': amount,
+    'paidAmount': paidAmount,
+    'date': date,
+    'dueDate': dueDate,
+    'status': status.toString().split('.').last,
+    'method': method?.toString().split('.').last,
+    'notes': notes,
+    'lessonIds': lessonIds != null ? jsonEncode(lessonIds) : null,
+  };
 
   /// Güncellenmiş bir ödeme nesnesi oluşturur.
   PaymentModel copyWith({
@@ -104,19 +125,19 @@ class PaymentModel { // İlişkili ders ID'leri
     String? notes,
     List<String>? lessonIds,
   }) => PaymentModel(
-      id: id ?? this.id,
-      studentId: studentId ?? this.studentId,
-      studentName: studentName ?? this.studentName,
-      description: description ?? this.description,
-      amount: amount ?? this.amount,
-      paidAmount: paidAmount ?? this.paidAmount,
-      date: date ?? this.date,
-      dueDate: dueDate ?? this.dueDate,
-      status: status ?? this.status,
-      method: method ?? this.method,
-      notes: notes ?? this.notes,
-      lessonIds: lessonIds ?? this.lessonIds,
-    );
+    id: id ?? this.id,
+    studentId: studentId ?? this.studentId,
+    studentName: studentName ?? this.studentName,
+    description: description ?? this.description,
+    amount: amount ?? this.amount,
+    paidAmount: paidAmount ?? this.paidAmount,
+    date: date ?? this.date,
+    dueDate: dueDate ?? this.dueDate,
+    status: status ?? this.status,
+    method: method ?? this.method,
+    notes: notes ?? this.notes,
+    lessonIds: lessonIds ?? this.lessonIds,
+  );
 
   /// Ödeme durumunu hesaplar
   PaymentStatus calculateStatus() {
@@ -149,5 +170,6 @@ class PaymentModel { // İlişkili ders ID'leri
   }
 
   @override
-  String toString() => 'Payment(id: $id, studentName: $studentName, amount: $amount, paidAmount: $paidAmount, status: $status)';
+  String toString() =>
+      'Payment(id: $id, studentName: $studentName, amount: $amount, paidAmount: $paidAmount, status: $status)';
 }
