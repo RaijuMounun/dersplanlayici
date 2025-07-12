@@ -29,128 +29,155 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => _buildStudentsList();
-
-  Widget _buildStudentsList() => Consumer<StudentProvider>(
-      builder: (context, studentProvider, child) {
-        if (studentProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (studentProvider.error != null &&
-            studentProvider.error.toString().isNotEmpty) {
-          return Center(child: Text('Hata: ${studentProvider.error}'));
-        }
-
-        if (studentProvider.students.isEmpty) {
-          return _buildEmptyState();
-        }
-
-        // Responsive layout kullanarak ekran boyutuna göre farklı görünüm göster
-        return ResponsiveLayout(
-          mobile: _buildListView(studentProvider.students),
-          tablet: _buildGridView(studentProvider.students, 2),
-          desktop: _buildGridView(studentProvider.students, 3),
-        );
-      },
-    );
-
-  // Liste görünümü (mobil)
-  Widget _buildListView(List<Student> students) => ListView.builder(
-      padding: const EdgeInsets.all(AppDimensions.spacing16),
-      itemCount: students.length,
-      itemBuilder: (context, index) => _buildStudentCard(students[index]),
-    );
-
-  // Grid görünümü (tablet ve desktop)
-  Widget _buildGridView(List<Student> students, int crossAxisCount) => GridView.builder(
-      padding: const EdgeInsets.all(AppDimensions.spacing16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: AppDimensions.spacing12,
-        mainAxisSpacing: AppDimensions.spacing12,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: students.length,
-      itemBuilder: (context, index) => _buildStudentCard(students[index]),
-    );
-
-  // Öğrenci kartı
-  Widget _buildStudentCard(Student student) => StudentCard(
-      studentName: student.name,
-      studentGrade: student.grade,
-      phoneNumber: student.phone,
-      email: student.email,
-      onTap: () async {
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Öğrenciler'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            // Arama işlevi
+          },
+        ),
+      ],
+    ),
+    body: _buildStudentsList(),
+    floatingActionButton: FloatingActionButton(
+      onPressed: () async {
         final studentProvider = Provider.of<StudentProvider>(
           context,
           listen: false,
         );
-
-        // Go Router ile navigasyon
-        await context.push('/student/${student.id}');
-
-        if (mounted) {
-          await studentProvider.loadStudents();
-        }
+        await context.push('/add-student');
+        if (!mounted) return;
+        await studentProvider.loadStudents();
       },
-      onEditPressed: () async {
-        // Öğrenciyi bu scope'ta alıyoruz, böylece async gap sonrası tekrar context'e erişmek zorunda kalmıyoruz
-        final provider = Provider.of<StudentProvider>(context, listen: false);
+      backgroundColor: AppColors.primary,
+      child: const Icon(Icons.person_add, color: Colors.white),
+    ),
+  );
 
-        // Öğrenci düzenleme sayfasına yönlendir
-        await context.push('/student/${student.id}/edit');
+  Widget _buildStudentsList() => Consumer<StudentProvider>(
+    builder: (context, studentProvider, child) {
+      if (studentProvider.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        if (mounted) {
-          await provider.loadStudents();
-        }
-      },
-      onDeletePressed: () {
-        // Öğrenci silme işlemi
-        _showDeleteConfirmation(context, student);
-      },
-    );
+      if (studentProvider.error != null &&
+          studentProvider.error.toString().isNotEmpty) {
+        return Center(child: Text('Hata: ${studentProvider.error}'));
+      }
+
+      if (studentProvider.students.isEmpty) {
+        return _buildEmptyState();
+      }
+
+      // Responsive layout kullanarak ekran boyutuna göre farklı görünüm göster
+      return ResponsiveLayout(
+        mobile: _buildListView(studentProvider.students),
+        tablet: _buildGridView(studentProvider.students, 2),
+        desktop: _buildGridView(studentProvider.students, 3),
+      );
+    },
+  );
+
+  // Liste görünümü (mobil)
+  Widget _buildListView(List<Student> students) => ListView.builder(
+    padding: const EdgeInsets.all(AppDimensions.spacing16),
+    itemCount: students.length,
+    itemBuilder: (context, index) => _buildStudentCard(students[index]),
+  );
+
+  // Grid görünümü (tablet ve desktop)
+  Widget _buildGridView(List<Student> students, int crossAxisCount) =>
+      GridView.builder(
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: AppDimensions.spacing12,
+          mainAxisSpacing: AppDimensions.spacing12,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: students.length,
+        itemBuilder: (context, index) => _buildStudentCard(students[index]),
+      );
+
+  // Öğrenci kartı
+  Widget _buildStudentCard(Student student) => StudentCard(
+    studentName: student.name,
+    studentGrade: student.grade,
+    phoneNumber: student.phone,
+    email: student.email,
+    onTap: () async {
+      final studentProvider = Provider.of<StudentProvider>(
+        context,
+        listen: false,
+      );
+
+      // Go Router ile navigasyon
+      await context.push('/student/${student.id}');
+
+      if (mounted) {
+        await studentProvider.loadStudents();
+      }
+    },
+    onEditPressed: () async {
+      final localContext = context;
+      // Öğrenciyi bu scope'ta alıyoruz, böylece async gap sonrası tekrar context'e erişmek zorunda kalmıyoruz
+      final provider = Provider.of<StudentProvider>(context, listen: false);
+
+      // Öğrenci düzenleme sayfasına yönlendir
+      await localContext.push('/student/${student.id}/edit');
+
+      if (mounted) {
+        await provider.loadStudents();
+      }
+    },
+    onDeletePressed: () {
+      // Öğrenci silme işlemi
+      _showDeleteConfirmation(context, student);
+    },
+  );
 
   Widget _buildEmptyState() => Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.people,
-            size: ResponsiveUtils.deviceValue(
-              context: context,
-              mobile: 64.0,
-              tablet: 80.0,
-              desktop: 96.0,
-            ),
-            color: AppColors.textSecondary.withAlpha(128),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.people,
+          size: ResponsiveUtils.deviceValue(
+            context: context,
+            mobile: 64.0,
+            tablet: 80.0,
+            desktop: 96.0,
           ),
-          const SizedBox(height: AppDimensions.spacing16),
-          Text(
-            'Henüz öğrenci bulunmamaktadır',
-            style: TextStyle(
-              fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
-              color: AppColors.textSecondary,
-            ),
+          color: AppColors.textSecondary.withAlpha(128),
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        Text(
+          'Henüz öğrenci bulunmamaktadır',
+          style: TextStyle(
+            fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+            color: AppColors.textSecondary,
           ),
-          const SizedBox(height: AppDimensions.spacing24),
-          ElevatedButton.icon(
-            onPressed: () async {
-              await context.push('/add-student');
-
-              if (mounted) {
-                await Provider.of<StudentProvider>(
-                  context,
-                  listen: false,
-                ).loadStudents();
-              }
-            },
-            icon: const Icon(Icons.person_add),
-            label: const Text('Öğrenci Ekle'),
-          ),
-        ],
-      ),
-    );
+        ),
+        const SizedBox(height: AppDimensions.spacing24),
+        ElevatedButton.icon(
+          onPressed: () async {
+            final studentProvider = Provider.of<StudentProvider>(
+              context,
+              listen: false,
+            );
+            await context.push('/add-student');
+            if (!mounted) return;
+            await studentProvider.loadStudents();
+          },
+          icon: const Icon(Icons.person_add),
+          label: const Text('Öğrenci Ekle'),
+        ),
+      ],
+    ),
+  );
 
   void _showDeleteConfirmation(BuildContext context, Student student) {
     // Dialog boyutunu responsive yap
