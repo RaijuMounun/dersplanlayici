@@ -92,266 +92,287 @@ class _LessonsPageState extends State<LessonsPage>
       desktop: 64.0,
     );
 
-    return Column(
-      children: [
-        // Tab Bar - responsive boyutlar ile
-        SizedBox(
-          height: tabHeight,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
-            labelStyle: TextStyle(
-              fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
-              fontWeight: FontWeight.bold,
-            ),
-            unselectedLabelStyle: TextStyle(
-              fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
-            ),
-            tabs: const [
-              Tab(text: 'Gelecek'),
-              Tab(text: 'Tamamlanan'),
-              Tab(text: 'Tümü'),
-            ],
-          ),
-        ),
-
-        // Tab İçerikleri
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildLessonList(LessonFilterType.upcoming),
-              _buildLessonList(LessonFilterType.completed),
-              _buildLessonList(LessonFilterType.all),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLessonList(LessonFilterType filterType) => Consumer<LessonProvider>(
-      builder: (context, lessonProvider, child) {
-        // Veri yükleniyor mu kontrolü
-        if (lessonProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        // Filtreli ders listesini al
-        final lessons = _getFilteredLessons(lessonProvider, filterType);
-
-        // Ders yoksa boş durum mesajı göster
-        if (lessons.isEmpty) {
-          return _buildEmptyState(filterType);
-        }
-
-        // Seçim modu aktifse üst menü göster
-        return Column(
-          children: [
-            if (_isSelectionMode) _buildSelectionAppBar(lessons),
-
-            // Ders listesini göster - responsive layout kullan
-            Expanded(
-              child: ResponsiveLayout(
-                mobile: _buildMobileList(lessons),
-                tablet: _buildTabletList(lessons),
-                desktop: _buildDesktopList(lessons),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-  Widget _buildSelectionAppBar(List<Lesson> lessons) => Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacing16,
-        vertical: AppDimensions.spacing8,
-      ),
-      child: Row(
-        children: [
-          Text(
-            '${_selectedLessons.length} ders seçildi',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: () => _selectAll(lessons),
-            icon: Icon(
-              _selectedLessons.length == lessons.length
-                  ? Icons.deselect
-                  : Icons.select_all,
-              size: 20,
-            ),
-            label: Text(
-              _selectedLessons.length == lessons.length
-                  ? 'Tümünü Kaldır'
-                  : 'Tümünü Seç',
-            ),
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dersler'),
+        actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: 'Seçilenleri Sil',
-            onPressed: _selectedLessons.isNotEmpty
-                ? _showBulkDeleteConfirmation
-                : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            tooltip: 'Seçim Modunu Kapat',
-            onPressed: _toggleSelectionMode,
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // Arama işlevi
+            },
           ),
         ],
       ),
+      body: Column(
+        children: [
+          // Tab Bar - responsive boyutlar ile
+          SizedBox(
+            height: tabHeight,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              labelStyle: TextStyle(
+                fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
+                fontWeight: FontWeight.bold,
+              ),
+              unselectedLabelStyle: TextStyle(
+                fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
+              ),
+              tabs: const [
+                Tab(text: 'Gelecek'),
+                Tab(text: 'Tamamlanan'),
+                Tab(text: 'Tümü'),
+              ],
+            ),
+          ),
+
+          // Tab İçerikleri
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildLessonList(LessonFilterType.upcoming),
+                _buildLessonList(LessonFilterType.completed),
+                _buildLessonList(LessonFilterType.all),
+              ],
+            ),
+          ),
+        ],
+      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () async {
+      //     await context.push('/new-lesson');
+      //   },
+      //   backgroundColor: AppColors.primary,
+      //   child: const Icon(Icons.add, color: Colors.white),
+      // ),
     );
+  }
+
+  Widget _buildLessonList(LessonFilterType filterType) =>
+      Consumer<LessonProvider>(
+        builder: (context, lessonProvider, child) {
+          // Veri yükleniyor mu kontrolü
+          if (lessonProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Filtreli ders listesini al
+          final lessons = _getFilteredLessons(lessonProvider, filterType);
+
+          // Ders yoksa boş durum mesajı göster
+          if (lessons.isEmpty) {
+            return _buildEmptyState(filterType);
+          }
+
+          // Seçim modu aktifse üst menü göster
+          return Column(
+            children: [
+              if (_isSelectionMode) _buildSelectionAppBar(lessons),
+
+              // Ders listesini göster - responsive layout kullan
+              Expanded(
+                child: ResponsiveLayout(
+                  mobile: _buildMobileList(lessons),
+                  tablet: _buildTabletList(lessons),
+                  desktop: _buildDesktopList(lessons),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+  Widget _buildSelectionAppBar(List<Lesson> lessons) => Container(
+    color: AppColors.surface,
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppDimensions.spacing16,
+      vertical: AppDimensions.spacing8,
+    ),
+    child: Row(
+      children: [
+        Text(
+          '${_selectedLessons.length} ders seçildi',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const Spacer(),
+        TextButton.icon(
+          onPressed: () => _selectAll(lessons),
+          icon: Icon(
+            _selectedLessons.length == lessons.length
+                ? Icons.deselect
+                : Icons.select_all,
+            size: 20,
+          ),
+          label: Text(
+            _selectedLessons.length == lessons.length
+                ? 'Tümünü Kaldır'
+                : 'Tümünü Seç',
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete),
+          tooltip: 'Seçilenleri Sil',
+          onPressed: _selectedLessons.isNotEmpty
+              ? _showBulkDeleteConfirmation
+              : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'Seçim Modunu Kapat',
+          onPressed: _toggleSelectionMode,
+        ),
+      ],
+    ),
+  );
 
   // Mobil cihazlar için liste görünümü
   Widget _buildMobileList(List<Lesson> lessons) => Stack(
-      children: [
-        ListView.builder(
-          padding: const EdgeInsets.all(AppDimensions.spacing8),
-          itemCount: lessons.length,
-          itemBuilder: (context, index) => GestureDetector(
-              onLongPress: () {
-                if (!_isSelectionMode) {
-                  _toggleSelectionMode();
-                  _toggleLessonSelection(lessons[index].id);
-                }
-              },
-              child: _buildLessonItem(lessons[index]),
-            ),
+    children: [
+      ListView.builder(
+        padding: const EdgeInsets.all(AppDimensions.spacing8),
+        itemCount: lessons.length,
+        itemBuilder: (context, index) => GestureDetector(
+          onLongPress: () {
+            if (!_isSelectionMode) {
+              _toggleSelectionMode();
+              _toggleLessonSelection(lessons[index].id);
+            }
+          },
+          child: _buildLessonItem(lessons[index]),
         ),
-        if (!_isSelectionMode)
-          Positioned(
-            bottom: AppDimensions.spacing16,
-            right: AppDimensions.spacing16,
-            child: FloatingActionButton(
-              onPressed: () {
-                context.push('/new-lesson').then((_) {
-                  if (mounted) {
-                    context.read<LessonProvider>().loadLessons();
-                  }
-                });
-              },
-              child: const Icon(Icons.add),
-            ),
-          ),
-      ],
-    );
-
-  // Tablet cihazlar için liste görünümü - daha büyük paddingler
-  Widget _buildTabletList(List<Lesson> lessons) => Stack(
-      children: [
-        ListView.builder(
-          padding: const EdgeInsets.all(AppDimensions.spacing16),
-          itemCount: lessons.length,
-          itemBuilder: (context, index) => GestureDetector(
-              onLongPress: () {
-                if (!_isSelectionMode) {
-                  _toggleSelectionMode();
-                  _toggleLessonSelection(lessons[index].id);
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppDimensions.spacing8,
-                ),
-                child: _buildLessonItem(lessons[index]),
-              ),
-            ),
-        ),
-        if (!_isSelectionMode)
-          Positioned(
-            bottom: AppDimensions.spacing24,
-            right: AppDimensions.spacing24,
-            child: FloatingActionButton.extended(
-              onPressed: () {
-                context.push('/new-lesson').then((_) {
-                  if (mounted) {
-                    context.read<LessonProvider>().loadLessons();
-                  }
-                });
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Yeni Ders'),
-            ),
-          ),
-      ],
-    );
-
-  // Desktop cihazlar için liste görünümü - çift sütunlu
-  Widget _buildDesktopList(List<Lesson> lessons) => Stack(
-      children: [
-        GridView.builder(
-          padding: const EdgeInsets.all(AppDimensions.spacing16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3.0,
-            crossAxisSpacing: AppDimensions.spacing16,
-            mainAxisSpacing: AppDimensions.spacing16,
-          ),
-          itemCount: lessons.length,
-          itemBuilder: (context, index) => GestureDetector(
-              onLongPress: () {
-                if (!_isSelectionMode) {
-                  _toggleSelectionMode();
-                  _toggleLessonSelection(lessons[index].id);
-                }
-              },
-              child: _buildLessonItem(lessons[index]),
-            ),
-        ),
-        if (!_isSelectionMode)
-          Positioned(
-            bottom: AppDimensions.spacing24,
-            right: AppDimensions.spacing24,
-            child: FloatingActionButton.extended(
-              onPressed: () {
-                context.push('/new-lesson').then((_) {
-                  if (mounted) {
-                    context.read<LessonProvider>().loadLessons();
-                  }
-                });
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Yeni Ders'),
-            ),
-          ),
-      ],
-    );
-
-  // Ders liste öğesi
-  Widget _buildLessonItem(Lesson lesson) => LessonListItem(
-      lessonTitle: lesson.subject,
-      studentName: lesson.studentName,
-      startTime: _parseDateTime(lesson.date, lesson.startTime),
-      endTime: _parseDateTime(lesson.date, lesson.endTime),
-      isCompleted: lesson.status == LessonStatus.completed,
-      fee: lesson.fee,
-      isRecurring: lesson.recurringPatternId != null,
-      isSelected: _isSelectionMode && _selectedLessons.contains(lesson.id),
-      onTap: _isSelectionMode
-          ? () => _toggleLessonSelection(lesson.id)
-          : () => context.push('/lesson/${lesson.id}'),
-      onEditPressed: _isSelectionMode
-          ? null
-          : () {
-              context.push('/edit-lesson/${lesson.id}').then((_) {
+      ),
+      if (!_isSelectionMode)
+        Positioned(
+          bottom: AppDimensions.spacing16,
+          right: AppDimensions.spacing16,
+          child: FloatingActionButton(
+            onPressed: () {
+              context.push('/new-lesson').then((_) {
                 if (mounted) {
                   context.read<LessonProvider>().loadLessons();
                 }
               });
             },
-      onDeletePressed: _isSelectionMode
-          ? null
-          : () => _showDeleteConfirmation(lesson),
-      onMarkCompleted: _isSelectionMode
-          ? null
-          : () => _markLessonAsCompleted(lesson),
-    );
+            child: const Icon(Icons.add),
+          ),
+        ),
+    ],
+  );
+
+  // Tablet cihazlar için liste görünümü - daha büyük paddingler
+  Widget _buildTabletList(List<Lesson> lessons) => Stack(
+    children: [
+      ListView.builder(
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
+        itemCount: lessons.length,
+        itemBuilder: (context, index) => GestureDetector(
+          onLongPress: () {
+            if (!_isSelectionMode) {
+              _toggleSelectionMode();
+              _toggleLessonSelection(lessons[index].id);
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: AppDimensions.spacing8,
+            ),
+            child: _buildLessonItem(lessons[index]),
+          ),
+        ),
+      ),
+      if (!_isSelectionMode)
+        Positioned(
+          bottom: AppDimensions.spacing24,
+          right: AppDimensions.spacing24,
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              context.push('/new-lesson').then((_) {
+                if (mounted) {
+                  context.read<LessonProvider>().loadLessons();
+                }
+              });
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Yeni Ders'),
+          ),
+        ),
+    ],
+  );
+
+  // Desktop cihazlar için liste görünümü - çift sütunlu
+  Widget _buildDesktopList(List<Lesson> lessons) => Stack(
+    children: [
+      GridView.builder(
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 3.0,
+          crossAxisSpacing: AppDimensions.spacing16,
+          mainAxisSpacing: AppDimensions.spacing16,
+        ),
+        itemCount: lessons.length,
+        itemBuilder: (context, index) => GestureDetector(
+          onLongPress: () {
+            if (!_isSelectionMode) {
+              _toggleSelectionMode();
+              _toggleLessonSelection(lessons[index].id);
+            }
+          },
+          child: _buildLessonItem(lessons[index]),
+        ),
+      ),
+      if (!_isSelectionMode)
+        Positioned(
+          bottom: AppDimensions.spacing24,
+          right: AppDimensions.spacing24,
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              context.push('/new-lesson').then((_) {
+                if (mounted) {
+                  context.read<LessonProvider>().loadLessons();
+                }
+              });
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Yeni Ders'),
+          ),
+        ),
+    ],
+  );
+
+  // Ders liste öğesi
+  Widget _buildLessonItem(Lesson lesson) => LessonListItem(
+    lessonTitle: lesson.subject,
+    studentName: lesson.studentName,
+    startTime: _parseDateTime(lesson.date, lesson.startTime),
+    endTime: _parseDateTime(lesson.date, lesson.endTime),
+    isCompleted: lesson.status == LessonStatus.completed,
+    fee: lesson.fee,
+    isRecurring: lesson.recurringPatternId != null,
+    isSelected: _isSelectionMode && _selectedLessons.contains(lesson.id),
+    onTap: _isSelectionMode
+        ? () => _toggleLessonSelection(lesson.id)
+        : () => context.push('/lesson/${lesson.id}'),
+    onEditPressed: _isSelectionMode
+        ? null
+        : () {
+            context.push('/edit-lesson/${lesson.id}').then((_) {
+              if (mounted) {
+                context.read<LessonProvider>().loadLessons();
+              }
+            });
+          },
+    onDeletePressed: _isSelectionMode
+        ? null
+        : () => _showDeleteConfirmation(lesson),
+    onMarkCompleted: _isSelectionMode
+        ? null
+        : () => _markLessonAsCompleted(lesson),
+  );
 
   Widget _buildEmptyState(LessonFilterType filterType) {
     String message;
