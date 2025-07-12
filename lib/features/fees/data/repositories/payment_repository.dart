@@ -5,7 +5,6 @@ import 'package:ders_planlayici/services/database/database_service.dart';
 
 /// Ödeme işlemlerini yöneten repository sınıfı.
 class PaymentRepository {
-
   PaymentRepository(this._databaseService);
   final DatabaseService _databaseService;
 
@@ -13,7 +12,18 @@ class PaymentRepository {
   Future<List<PaymentModel>> getAllPayments() async {
     try {
       final payments = await _databaseService.getPayments();
-      return payments.map(PaymentModel.fromMap).toList();
+
+      final List<PaymentModel> result = [];
+      for (int i = 0; i < payments.length; i++) {
+        try {
+          final payment = PaymentModel.fromMap(payments[i]);
+          result.add(payment);
+        } on Exception {
+          // 
+        }
+      }
+
+      return result;
     } catch (e) {
       throw DatabaseException(
         message: 'Ödemeler yüklenirken bir hata oluştu: $e',
@@ -51,7 +61,8 @@ class PaymentRepository {
   /// Yeni bir ödeme ekler.
   Future<void> addPayment(PaymentModel payment) async {
     try {
-      await _databaseService.insertPayment(payment.toMap());
+      final paymentMap = payment.toMap();
+      await _databaseService.insertPayment(paymentMap);
     } catch (e) {
       throw DatabaseException(message: 'Ödeme eklenirken bir hata oluştu: $e');
     }

@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 
 /// Ödeme işlemlerini yöneten Provider sınıfı.
 class PaymentProvider extends ChangeNotifier {
-
   PaymentProvider(this._paymentRepository);
   final PaymentRepository _paymentRepository;
 
