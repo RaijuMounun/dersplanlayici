@@ -4,16 +4,6 @@ import '../theme/app_dimensions.dart';
 
 /// Uygulamada kullanılan liste öğesi widget'ı.
 class AppListItem extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final Widget? leading;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  final bool selected;
-  final bool hasBorder;
-  final bool hasRoundedCorners;
-  final EdgeInsetsGeometry? contentPadding;
-  final Color? backgroundColor;
 
   const AppListItem({
     super.key,
@@ -28,6 +18,16 @@ class AppListItem extends StatelessWidget {
     this.contentPadding,
     this.backgroundColor,
   });
+  final String title;
+  final String? subtitle;
+  final Widget? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool selected;
+  final bool hasBorder;
+  final bool hasRoundedCorners;
+  final EdgeInsetsGeometry? contentPadding;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +77,7 @@ class AppListItem extends StatelessWidget {
               children: [
                 if (leading != null) ...[
                   leading!,
-                  SizedBox(width: AppDimensions.spacing12),
+                  const SizedBox(width: AppDimensions.spacing12),
                 ],
                 Expanded(
                   child: Column(
@@ -91,7 +91,7 @@ class AppListItem extends StatelessWidget {
                         ),
                       ),
                       if (subtitle != null) ...[
-                        SizedBox(height: AppDimensions.spacing4),
+                        const SizedBox(height: AppDimensions.spacing4),
                         Text(
                           subtitle!,
                           style: theme.textTheme.bodyMedium?.copyWith(
@@ -103,7 +103,7 @@ class AppListItem extends StatelessWidget {
                   ),
                 ),
                 if (trailing != null) ...[
-                  SizedBox(width: AppDimensions.spacing12),
+                  const SizedBox(width: AppDimensions.spacing12),
                   trailing!,
                 ],
               ],

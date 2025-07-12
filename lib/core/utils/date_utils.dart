@@ -21,9 +21,7 @@ class DateUtils {
   }
 
   /// DateTime nesnesini "yyyy-MM-dd" formatında string'e dönüştürür.
-  static String toIsoDate(DateTime date) {
-    return DateFormat('yyyy-MM-dd').format(date);
-  }
+  static String toIsoDate(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
 
   /// İki tarih arasındaki gün farkını döndürür.
   static int daysBetween(DateTime from, DateTime to) {
@@ -41,27 +39,17 @@ class DateUtils {
   }
 
   /// Verilen tarihin hafta sonu olup olmadığını kontrol eder.
-  static bool isWeekend(DateTime date) {
-    return date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-  }
+  static bool isWeekend(DateTime date) => date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
   /// Verilen ayın ilk gününü döndürür.
-  static DateTime firstDayOfMonth(DateTime date) {
-    return DateTime(date.year, date.month, 1);
-  }
+  static DateTime firstDayOfMonth(DateTime date) => DateTime(date.year, date.month, 1);
 
   /// Verilen ayın son gününü döndürür.
-  static DateTime lastDayOfMonth(DateTime date) {
-    return DateTime(date.year, date.month + 1, 0);
-  }
+  static DateTime lastDayOfMonth(DateTime date) => DateTime(date.year, date.month + 1, 0);
 
   /// Verilen haftanın ilk gününü (Pazartesi) döndürür.
-  static DateTime firstDayOfWeek(DateTime date) {
-    return date.subtract(Duration(days: date.weekday - 1));
-  }
+  static DateTime firstDayOfWeek(DateTime date) => date.subtract(Duration(days: date.weekday - 1));
 
   /// Verilen haftanın son gününü (Pazar) döndürür.
-  static DateTime lastDayOfWeek(DateTime date) {
-    return date.add(Duration(days: 7 - date.weekday));
-  }
+  static DateTime lastDayOfWeek(DateTime date) => date.add(Duration(days: 7 - date.weekday));
 }

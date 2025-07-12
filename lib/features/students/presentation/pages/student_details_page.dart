@@ -13,9 +13,8 @@ import 'package:ders_planlayici/features/students/presentation/widgets/student_l
 import 'package:url_launcher/url_launcher.dart';
 
 class StudentDetailsPage extends StatefulWidget {
-  final String studentId;
-
   const StudentDetailsPage({super.key, required this.studentId});
+  final String studentId;
 
   @override
   State<StudentDetailsPage> createState() => _StudentDetailsPageState();
@@ -53,9 +52,9 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
 
       // Öğrencinin derslerini yükle
       if (_student != null) {
-        _loadStudentLessons();
+        await _loadStudentLessons();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -85,7 +84,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
         _lessons = List.from(lessonProvider.lessons);
         _lessonsLoading = false;
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         setState(() {
           _lessonsLoading = false;
@@ -101,301 +100,283 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_student != null ? _student!.name : 'Öğrenci Detayı'),
-        actions: [
-          if (_student != null) ...[
-            IconButton(
-              icon: const Icon(Icons.edit),
-              tooltip: 'Düzenle',
-              onPressed: () => _navigateToEdit(context),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              tooltip: 'Sil',
-              onPressed: () => _confirmDeleteStudent(context),
-            ),
-          ],
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: Text(_student != null ? _student!.name : 'Öğrenci Detayı'),
+      actions: [
+        if (_student != null) ...[
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: 'Düzenle',
+            onPressed: () => _navigateToEdit(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            tooltip: 'Sil',
+            onPressed: () => _confirmDeleteStudent(context),
+          ),
         ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _student == null
-          ? _buildStudentNotFound()
-          : ResponsiveLayout(
-              mobile: _buildMobileLayout(),
-              tablet: _buildTabletLayout(),
-              desktop: _buildDesktopLayout(),
-            ),
-      floatingActionButton: _student != null
-          ? _buildFloatingActionButton()
-          : null,
-      bottomNavigationBar: _student != null
-          ? BottomAppBar(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacing16,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildBottomBarButton(
-                      icon: Icons.add,
-                      label: 'Ders Ekle',
-                      onPressed: () =>
-                          context.push('/new-lesson?studentId=${_student!.id}'),
-                    ),
-                    _buildBottomBarButton(
-                      icon: Icons.payments,
-                      label: 'Ödeme Ekle',
-                      onPressed: () => context.push(
-                        '/add-payment?studentId=${_student!.id}',
-                      ),
-                    ),
-                    _buildBottomBarButton(
-                      icon: Icons.history,
-                      label: 'Ödeme Geçmişi',
-                      onPressed: () => context.push(
-                        '/fee-history?studentId=${_student!.id}',
-                      ),
-                    ),
-                  ],
-                ),
+      ],
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _student == null
+        ? _buildStudentNotFound()
+        : ResponsiveLayout(
+            mobile: _buildMobileLayout(),
+            tablet: _buildTabletLayout(),
+            desktop: _buildDesktopLayout(),
+          ),
+    floatingActionButton: _student != null
+        ? _buildFloatingActionButton()
+        : null,
+    bottomNavigationBar: _student != null
+        ? BottomAppBar(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing16,
               ),
-            )
-          : null,
-    );
-  }
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildBottomBarButton(
+                    icon: Icons.add,
+                    label: 'Ders Ekle',
+                    onPressed: () =>
+                        context.push('/new-lesson?studentId=${_student!.id}'),
+                  ),
+                  _buildBottomBarButton(
+                    icon: Icons.payments,
+                    label: 'Ödeme Ekle',
+                    onPressed: () =>
+                        context.push('/add-payment?studentId=${_student!.id}'),
+                  ),
+                  _buildBottomBarButton(
+                    icon: Icons.history,
+                    label: 'Ödeme Geçmişi',
+                    onPressed: () =>
+                        context.push('/fee-history?studentId=${_student!.id}'),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : null,
+  );
 
-  Widget _buildStudentNotFound() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: AppColors.error.withAlpha(150),
-          ),
-          const SizedBox(height: AppDimensions.spacing16),
-          const Text(
-            'Öğrenci bulunamadı',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.spacing8),
-          const Text('Aradığınız öğrenci silinmiş veya mevcut değil.'),
-          const SizedBox(height: AppDimensions.spacing24),
-          ElevatedButton.icon(
-            onPressed: () => context.go('/'),
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Öğrencilere Dön'),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildStudentNotFound() => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.error_outline,
+          size: 64,
+          color: AppColors.error.withAlpha(150),
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        const Text(
+          'Öğrenci bulunamadı',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: AppDimensions.spacing8),
+        const Text('Aradığınız öğrenci silinmiş veya mevcut değil.'),
+        const SizedBox(height: AppDimensions.spacing24),
+        ElevatedButton.icon(
+          onPressed: () => context.go('/'),
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Öğrencilere Dön'),
+        ),
+      ],
+    ),
+  );
 
   // Mobil görünüm
-  Widget _buildMobileLayout() {
-    return SingleChildScrollView(
+  Widget _buildMobileLayout() => SingleChildScrollView(
+    padding: const EdgeInsets.all(AppDimensions.spacing16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildStudentHeader(),
+        const SizedBox(height: AppDimensions.spacing24),
+        _buildContactInfo(),
+        const SizedBox(height: AppDimensions.spacing24),
+        _buildSubjectsInfo(),
+        if (_student?.notes != null && _student!.notes!.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.spacing24),
+          _buildNotesInfo(),
+        ],
+        const SizedBox(height: AppDimensions.spacing24),
+        _buildLessonsSection(),
+      ],
+    ),
+  );
+
+  // Tablet görünüm
+  Widget _buildTabletLayout() => SingleChildScrollView(
+    padding: const EdgeInsets.all(AppDimensions.spacing24),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildStudentHeader(),
+        const SizedBox(height: AppDimensions.spacing32),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildContactInfo()),
+            const SizedBox(width: AppDimensions.spacing24),
+            Expanded(child: _buildSubjectsInfo()),
+          ],
+        ),
+        if (_student?.notes != null && _student!.notes!.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.spacing24),
+          _buildNotesInfo(),
+        ],
+        const SizedBox(height: AppDimensions.spacing32),
+        _buildLessonsSection(),
+      ],
+    ),
+  );
+
+  // Masaüstü görünüm
+  Widget _buildDesktopLayout() => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Sol panel - Öğrenci bilgileri
+      Expanded(
+        flex: 2,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.spacing32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStudentHeader(),
+              const SizedBox(height: AppDimensions.spacing32),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildContactInfo()),
+                  const SizedBox(width: AppDimensions.spacing32),
+                  Expanded(child: _buildSubjectsInfo()),
+                ],
+              ),
+              if (_student?.notes != null && _student!.notes!.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.spacing32),
+                _buildNotesInfo(),
+              ],
+            ],
+          ),
+        ),
+      ),
+      // Sağ panel - Dersler listesi
+      Expanded(
+        flex: 3,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.spacing32),
+          child: _buildLessonsSection(),
+        ),
+      ),
+    ],
+  );
+
+  // Öğrenci başlık bilgisi
+  Widget _buildStudentHeader() => Card(
+    elevation: 2,
+    child: Padding(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: ResponsiveUtils.deviceValue(
+              context: context,
+              mobile: 30.0,
+              tablet: 40.0,
+              desktop: 50.0,
+            ),
+            backgroundColor: AppColors.primary,
+            child: Text(
+              _student!.name.isNotEmpty ? _student!.name[0].toUpperCase() : '',
+              style: TextStyle(
+                fontSize: ResponsiveUtils.deviceValue(
+                  context: context,
+                  mobile: 24.0,
+                  tablet: 32.0,
+                  desktop: 40.0,
+                ),
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _student!.name,
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.responsiveFontSize(context, 22),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _student!.grade,
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  // İletişim bilgisi kartı
+  Widget _buildContactInfo() => Card(
+    elevation: 2,
+    child: Padding(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStudentHeader(),
-          const SizedBox(height: AppDimensions.spacing24),
-          _buildContactInfo(),
-          const SizedBox(height: AppDimensions.spacing24),
-          _buildSubjectsInfo(),
-          if (_student?.notes != null && _student!.notes!.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.spacing24),
-            _buildNotesInfo(),
+          const Text(
+            'İletişim Bilgileri',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          if (_student!.parentName != null &&
+              _student!.parentName!.isNotEmpty) ...[
+            _buildInfoRow(
+              icon: Icons.person,
+              label: 'Veli',
+              value: _student!.parentName!,
+            ),
+            const Divider(height: 24),
           ],
-          const SizedBox(height: AppDimensions.spacing24),
-          _buildLessonsSection(),
+          if (_student!.phone != null && _student!.phone!.isNotEmpty) ...[
+            _buildInfoRow(
+              icon: Icons.phone,
+              label: 'Telefon',
+              value: _student!.phone!,
+              onTap: _callStudent,
+            ),
+            const Divider(height: 24),
+          ],
+          if (_student!.email != null && _student!.email!.isNotEmpty)
+            _buildInfoRow(
+              icon: Icons.email,
+              label: 'E-posta',
+              value: _student!.email!,
+              onTap: _sendEmail,
+            ),
         ],
       ),
-    );
-  }
-
-  // Tablet görünüm
-  Widget _buildTabletLayout() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.spacing24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildStudentHeader(),
-          const SizedBox(height: AppDimensions.spacing32),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildContactInfo()),
-              const SizedBox(width: AppDimensions.spacing24),
-              Expanded(child: _buildSubjectsInfo()),
-            ],
-          ),
-          if (_student?.notes != null && _student!.notes!.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.spacing24),
-            _buildNotesInfo(),
-          ],
-          const SizedBox(height: AppDimensions.spacing32),
-          _buildLessonsSection(),
-        ],
-      ),
-    );
-  }
-
-  // Masaüstü görünüm
-  Widget _buildDesktopLayout() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Sol panel - Öğrenci bilgileri
-        Expanded(
-          flex: 2,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.spacing32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStudentHeader(),
-                const SizedBox(height: AppDimensions.spacing32),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildContactInfo()),
-                    const SizedBox(width: AppDimensions.spacing32),
-                    Expanded(child: _buildSubjectsInfo()),
-                  ],
-                ),
-                if (_student?.notes != null && _student!.notes!.isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.spacing32),
-                  _buildNotesInfo(),
-                ],
-              ],
-            ),
-          ),
-        ),
-        // Sağ panel - Dersler listesi
-        Expanded(
-          flex: 3,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.spacing32),
-            child: _buildLessonsSection(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Öğrenci başlık bilgisi
-  Widget _buildStudentHeader() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: ResponsiveUtils.deviceValue(
-                context: context,
-                mobile: 30.0,
-                tablet: 40.0,
-                desktop: 50.0,
-              ),
-              backgroundColor: AppColors.primary,
-              child: Text(
-                _student!.name.isNotEmpty
-                    ? _student!.name[0].toUpperCase()
-                    : '',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.deviceValue(
-                    context: context,
-                    mobile: 24.0,
-                    tablet: 32.0,
-                    desktop: 40.0,
-                  ),
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _student!.name,
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.responsiveFontSize(context, 22),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _student!.grade,
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // İletişim bilgisi kartı
-  Widget _buildContactInfo() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'İletişim Bilgileri',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            if (_student!.parentName != null &&
-                _student!.parentName!.isNotEmpty) ...[
-              _buildInfoRow(
-                icon: Icons.person,
-                label: 'Veli',
-                value: _student!.parentName!,
-              ),
-              const Divider(height: 24),
-            ],
-            if (_student!.phone != null && _student!.phone!.isNotEmpty) ...[
-              _buildInfoRow(
-                icon: Icons.phone,
-                label: 'Telefon',
-                value: _student!.phone!,
-                onTap: () => _callStudent(),
-              ),
-              const Divider(height: 24),
-            ],
-            if (_student!.email != null && _student!.email!.isNotEmpty)
-              _buildInfoRow(
-                icon: Icons.email,
-                label: 'E-posta',
-                value: _student!.email!,
-                onTap: () => _sendEmail(),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+    ),
+  );
 
   // Ders bilgileri kartı
   Widget _buildSubjectsInfo() {
@@ -418,15 +399,20 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _student!.subjects!.map((subject) {
-                  return Chip(
-                    label: Text(subject, style: TextStyle(color: Colors.white)),
-                    backgroundColor: AppColors.primary,
-                  );
-                }).toList(),
+                children: _student!.subjects!
+                    .map(
+                      (subject) => Chip(
+                        label: Text(
+                          subject,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.primary,
+                      ),
+                    )
+                    .toList(),
               )
             else
-              Text(
+              const Text(
                 'Ders bilgisi girilmemiş',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -440,87 +426,89 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   }
 
   // Notlar kartı
-  Widget _buildNotesInfo() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Notlar',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            Text(_student!.notes ?? ''),
-          ],
-        ),
+  Widget _buildNotesInfo() => Card(
+    elevation: 2,
+    child: Padding(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Notlar',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          Text(_student!.notes ?? ''),
+        ],
       ),
-    );
-  }
+    ),
+  );
 
   // Dersler bölümü
-  Widget _buildLessonsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Dersler',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            if (!_lessonsLoading)
-              TextButton.icon(
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Ders Ekle'),
-                onPressed: () {
-                  context.push('/add-lesson?studentId=${_student!.id}');
-                },
-              ),
-          ],
-        ),
-        const SizedBox(height: AppDimensions.spacing12),
-        SizedBox(
-          height: 400, // Yüksekliği sayfaya göre ayarla
-          child: StudentLessonsWidget(
-            student: _student!,
-            lessons: _lessons,
-            isLoading: _lessonsLoading,
-            onRefresh: _loadStudentLessons,
-            onDeleteLesson: _deleteLesson,
+  Widget _buildLessonsSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Dersler',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
+          if (!_lessonsLoading)
+            TextButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Ders Ekle'),
+              onPressed: () {
+                context.push('/add-lesson?studentId=${_student!.id}');
+              },
+            ),
+        ],
+      ),
+      const SizedBox(height: AppDimensions.spacing12),
+      SizedBox(
+        height: 400, // Yüksekliği sayfaya göre ayarla
+        child: StudentLessonsWidget(
+          student: _student!,
+          lessons: _lessons,
+          isLoading: _lessonsLoading,
+          onRefresh: _loadStudentLessons,
+          onDeleteLesson: _deleteLesson,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 
   Future<void> _deleteLesson(Lesson lesson) async {
     try {
       final lessonProvider = context.read<LessonProvider>();
       await lessonProvider.deleteLesson(lesson.id);
+      await _loadStudentLessons(); // Dersleri yeniden yükle
 
+      // Başarı mesajını göstermek için mounted kontrolü ile callback
       if (mounted) {
-        _loadStudentLessons(); // Dersleri yeniden yükle
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ders başarıyla silindi'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        _showSuccessMessage('Ders başarıyla silindi');
       }
-    } catch (e) {
+    } on Exception catch (e) {
+      // Hata mesajını göstermek için mounted kontrolü ile callback
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ders silinirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        _showErrorMessage('Ders silinirken hata oluştu: $e');
       }
     }
+  }
+
+  // Başarı mesajı gösterme
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.success),
+    );
+  }
+
+  // Hata mesajı gösterme
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
+    );
   }
 
   // Bilgi satırı widgetı
@@ -529,42 +517,40 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     required String label,
     required String value,
     VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
+  }) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(8),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
                   ),
-                  Text(value, style: const TextStyle(fontSize: 16)),
-                ],
-              ),
+                ),
+                Text(value, style: const TextStyle(fontSize: 16)),
+              ],
             ),
-            if (onTap != null)
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: AppColors.textSecondary,
-              ),
-          ],
-        ),
+          ),
+          if (onTap != null)
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 
   // Telefon araması yap
   void _callStudent() {
@@ -583,7 +569,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
 
     try {
       launchUrl(Uri.parse(url));
-    } catch (e) {
+    } on Exception catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Arama yapılamadı: $e'),
@@ -610,7 +596,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
 
     try {
       launchUrl(Uri.parse(url));
-    } catch (e) {
+    } on Exception catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('E-posta gönderimi başlatılamadı: $e'),
@@ -622,11 +608,13 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
 
   // Düzenleme sayfasına yönlendir
   void _navigateToEdit(BuildContext context) {
-    context.push('/edit-student/${_student!.id}').then((_) {
-      if (mounted) {
-        _loadStudentDetails();
-      }
-    });
+    if (mounted) {
+      context.push('/edit-student/${_student!.id}').then((_) {
+        if (mounted) {
+          _loadStudentDetails();
+        }
+      });
+    }
   }
 
   // Öğrenci silme onayı
@@ -668,9 +656,11 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
           ),
         );
         // Ana sayfaya dön
-        context.go('/');
+        if (mounted) {
+          context.go('/');
+        }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -683,32 +673,30 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   }
 
   // Floating action button
-  Widget _buildFloatingActionButton() {
-    return FloatingActionButton(
-      onPressed: () {
-        // Yeni ders ekle
+  Widget _buildFloatingActionButton() => FloatingActionButton(
+    onPressed: () {
+      // Yeni ders ekle
+      if (mounted) {
         context.push('/new-lesson?studentId=${_student!.id}');
-      },
-      tooltip: 'Ders Ekle',
-      child: const Icon(Icons.add),
-    );
-  }
+      }
+    },
+    tooltip: 'Ders Ekle',
+    child: const Icon(Icons.add),
+  );
 
   Widget _buildBottomBarButton({
     required IconData icon,
     required String label,
     required VoidCallback onPressed,
-  }) {
-    return TextButton(
-      onPressed: onPressed,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 24, color: Colors.white),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white)),
-        ],
-      ),
-    );
-  }
+  }) => TextButton(
+    onPressed: onPressed,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 24, color: Colors.white),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(color: Colors.white)),
+      ],
+    ),
+  );
 }

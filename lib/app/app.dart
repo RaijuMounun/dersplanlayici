@@ -44,19 +44,19 @@ class _DersPlanlamaAppState extends State<DersPlanlamaApp> {
     try {
       // Servisleri başlat
       await _preferenceService.init();
-      _errorLogger.info('PreferenceService initialized', tag: 'App');
+      await _errorLogger.info('PreferenceService initialized', tag: 'App');
 
       // Database servislerini oluştur
       _databaseHelper = DatabaseHelper();
       _databaseService = DatabaseService(_databaseHelper);
       await _databaseService.initDatabase();
-      _errorLogger.info('DatabaseService initialized', tag: 'App');
+      await _errorLogger.info('DatabaseService initialized', tag: 'App');
 
       setState(() {
         _isInitialized = true;
       });
-    } catch (e, stackTrace) {
-      _errorLogger.error(
+    } on Exception catch (e, stackTrace) {
+      await _errorLogger.error(
         'Failed to initialize services',
         tag: 'App',
         error: e,

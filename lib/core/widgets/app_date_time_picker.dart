@@ -7,16 +7,6 @@ import '../utils/responsive_utils.dart';
 /// Tarih ve saat seçimi için özel widget.
 /// Tek bir bileşende hem tarih hem de saat seçimini birleştirir.
 class AppDateTimePicker extends StatefulWidget {
-  final DateTime? initialDateTime;
-  final DateTime? firstDate;
-  final DateTime? lastDate;
-  final ValueChanged<DateTime>? onDateTimeChanged;
-  final String? label;
-  final String? dateHint;
-  final String? timeHint;
-  final bool showBorder;
-  final bool enabled;
-  final bool required;
 
   const AppDateTimePicker({
     super.key,
@@ -31,6 +21,16 @@ class AppDateTimePicker extends StatefulWidget {
     this.enabled = true,
     this.required = false,
   });
+  final DateTime? initialDateTime;
+  final DateTime? firstDate;
+  final DateTime? lastDate;
+  final ValueChanged<DateTime>? onDateTimeChanged;
+  final String? label;
+  final String? dateHint;
+  final String? timeHint;
+  final bool showBorder;
+  final bool enabled;
+  final bool required;
 
   @override
   State<AppDateTimePicker> createState() => _AppDateTimePickerState();
@@ -63,7 +63,7 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
   @override
   Widget build(BuildContext context) {
     // Ekran boyutuna göre farklı layout kullan
-    bool isCompactMode = MediaQuery.of(context).size.width < 400;
+    final bool isCompactMode = MediaQuery.of(context).size.width < 400;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,8 +109,7 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
     );
   }
 
-  Widget _buildDatePicker(BuildContext context) {
-    return InkWell(
+  Widget _buildDatePicker(BuildContext context) => InkWell(
       onTap: widget.enabled ? _showDatePicker : null,
       child: InputDecorator(
         decoration: InputDecoration(
@@ -126,19 +125,19 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
           border: widget.showBorder
               ? OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.border),
                 )
               : InputBorder.none,
           enabledBorder: widget.showBorder
               ? OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.border),
                 )
               : InputBorder.none,
           focusedBorder: widget.showBorder
               ? OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
                 )
               : InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -156,10 +155,8 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
         ),
       ),
     );
-  }
 
-  Widget _buildTimePicker(BuildContext context) {
-    return InkWell(
+  Widget _buildTimePicker(BuildContext context) => InkWell(
       onTap: widget.enabled ? _showTimePicker : null,
       child: InputDecorator(
         decoration: InputDecoration(
@@ -175,19 +172,19 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
           border: widget.showBorder
               ? OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.border),
                 )
               : InputBorder.none,
           enabledBorder: widget.showBorder
               ? OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.border),
                 )
               : InputBorder.none,
           focusedBorder: widget.showBorder
               ? OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
                 )
               : InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -205,7 +202,6 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
         ),
       ),
     );
-  }
 
   Future<void> _showDatePicker() async {
     final DateTime firstDate =
@@ -218,10 +214,9 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
       initialDate: _selectedDateTime,
       firstDate: firstDate,
       lastDate: lastDate,
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
+      builder: (BuildContext context, Widget? child) => Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
               surface: AppColors.surface,
@@ -229,8 +224,7 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
             ),
           ),
           child: child!,
-        );
-      },
+        ),
     );
 
     if (pickedDate != null && pickedDate != _selectedDateTime) {
@@ -254,10 +248,9 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
+      builder: (BuildContext context, Widget? child) => Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
               surface: AppColors.surface,
@@ -265,8 +258,7 @@ class _AppDateTimePickerState extends State<AppDateTimePicker> {
             ),
           ),
           child: child!,
-        );
-      },
+        ),
     );
 
     if (pickedTime != null) {

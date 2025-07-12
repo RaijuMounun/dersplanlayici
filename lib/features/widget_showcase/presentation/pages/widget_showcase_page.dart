@@ -26,8 +26,7 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
   DateTime _selectedDate = DateTime.now();
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Widget Showcase')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -79,20 +78,16 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         ],
       ),
     );
-  }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
+  Widget _buildSectionTitle(String title) => Padding(
       padding: const EdgeInsets.only(
         top: AppDimensions.spacing24,
         bottom: AppDimensions.spacing16,
       ),
       child: Text(title, style: Theme.of(context).textTheme.titleLarge),
     );
-  }
 
-  Widget _buildButtonsSection() {
-    return Wrap(
+  Widget _buildButtonsSection() => Wrap(
       spacing: AppDimensions.spacing8,
       runSpacing: AppDimensions.spacing8,
       children: [
@@ -118,49 +113,45 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         ),
         AppButton(text: 'Icon Button', onPressed: () {}, icon: Icons.add),
         AppButton(text: 'Loading', onPressed: () {}, isLoading: true),
-        AppButton(text: 'Disabled', onPressed: null),
+        const AppButton(text: 'Disabled', onPressed: null),
       ],
     );
-  }
 
-  Widget _buildTextFieldsSection() {
-    return Column(
+  Widget _buildTextFieldsSection() => const Column(
       children: [
-        const AppTextField(
+        AppTextField(
           label: 'Standart Metin Alanı',
           hint: 'Bir şeyler yazın...',
         ),
         SizedBox(height: AppDimensions.spacing16),
-        const AppTextField(
+        AppTextField(
           label: 'Prefix Icon',
           hint: 'Arama...',
           prefixIcon: Icon(Icons.search),
         ),
         SizedBox(height: AppDimensions.spacing16),
-        const AppTextField(
+        AppTextField(
           label: 'Suffix Icon',
           hint: 'Şifre',
           obscureText: true,
           suffixIcon: Icon(Icons.visibility),
         ),
         SizedBox(height: AppDimensions.spacing16),
-        const AppTextField(
+        AppTextField(
           label: 'Hata Durumu',
           hint: 'Bir şeyler yazın...',
           errorText: 'Bu alan boş bırakılamaz',
         ),
         SizedBox(height: AppDimensions.spacing16),
-        const AppTextField(
+        AppTextField(
           label: 'Çok Satırlı',
           hint: 'Bir şeyler yazın...',
           maxLines: 3,
         ),
       ],
     );
-  }
 
-  Widget _buildDateTimePickerSection() {
-    return Column(
+  Widget _buildDateTimePickerSection() => Column(
       children: [
         AppDateTimePicker(
           initialDateTime: _selectedDate,
@@ -181,10 +172,8 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         ),
       ],
     );
-  }
 
-  Widget _buildRecurringPickerSection() {
-    return Column(
+  Widget _buildRecurringPickerSection() => Column(
       children: [
         AppRecurringPicker(
           initialValue: const RecurringInfo(
@@ -198,8 +187,8 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
           required: true,
         ),
         const SizedBox(height: AppDimensions.spacing16),
-        AppRecurringPicker(
-          initialValue: const RecurringInfo(
+        const AppRecurringPicker(
+          initialValue: RecurringInfo(
             type: RecurringType.monthly,
             dayOfMonth: 15,
           ),
@@ -208,7 +197,6 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         ),
       ],
     );
-  }
 
   Widget _buildStudentPickerSection() {
     // Örnek öğrenci listesi
@@ -269,13 +257,13 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         AppCard(
           child: Text('Basit Kart İçeriği', style: theme.textTheme.bodyLarge),
         ),
-        SizedBox(height: AppDimensions.spacing16),
+        const SizedBox(height: AppDimensions.spacing16),
         AppCard(
           onTap: () {},
           child: Column(
             children: [
               Text('Tıklanabilir Kart', style: theme.textTheme.titleMedium),
-              SizedBox(height: AppDimensions.spacing8),
+              const SizedBox(height: AppDimensions.spacing8),
               Text(
                 'Bu karta tıklayabilirsiniz.',
                 style: theme.textTheme.bodyMedium,
@@ -283,10 +271,10 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
             ],
           ),
         ),
-        SizedBox(height: AppDimensions.spacing16),
+        const SizedBox(height: AppDimensions.spacing16),
         AppCard(
           hasShadow: false,
-          borderSide: BorderSide(color: AppColors.primary),
+          borderSide: const BorderSide(color: AppColors.primary),
           child: Text(
             'Gölgesiz, Kenarlıklı Kart',
             style: theme.textTheme.bodyLarge,
@@ -296,8 +284,7 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
     );
   }
 
-  Widget _buildCalendarSection() {
-    return AppCalendar(
+  Widget _buildCalendarSection() => AppCalendar(
       initialDate: _selectedDate,
       onDateSelected: (date) {
         setState(() {
@@ -305,18 +292,16 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         });
       },
       events: {
-        DateTime(_selectedDate.year, _selectedDate.month, 15): ['Matematik'],
-        DateTime(_selectedDate.year, _selectedDate.month, 20): ['Fizik'],
-        DateTime(_selectedDate.year, _selectedDate.month, 25): [
+        DateTime(_selectedDate.year, _selectedDate.month, 15): const ['Matematik'],
+        DateTime(_selectedDate.year, _selectedDate.month, 20): const ['Fizik'],
+        DateTime(_selectedDate.year, _selectedDate.month, 25): const [
           'Kimya',
           'Biyoloji',
         ],
       },
     );
-  }
 
-  Widget _buildStudentCardSection() {
-    return Column(
+  Widget _buildStudentCardSection() => Column(
       children: [
         StudentCard(
           studentName: 'Ahmet Yılmaz',
@@ -329,7 +314,7 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
           onEditPressed: () {},
           onDeletePressed: () {},
         ),
-        SizedBox(height: AppDimensions.spacing16),
+        const SizedBox(height: AppDimensions.spacing16),
         StudentCard(
           studentName: 'Ayşe Demir',
           studentGrade: '11. Sınıf',
@@ -343,10 +328,8 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         ),
       ],
     );
-  }
 
-  Widget _buildLessonListItemSection() {
-    return Column(
+  Widget _buildLessonListItemSection() => Column(
       children: [
         LessonListItem(
           lessonTitle: 'Matematik',
@@ -358,7 +341,7 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
           onEditPressed: () {},
           onDeletePressed: () {},
         ),
-        SizedBox(height: AppDimensions.spacing8),
+        const SizedBox(height: AppDimensions.spacing8),
         LessonListItem(
           lessonTitle: 'Fizik',
           studentName: 'Ayşe Demir',
@@ -370,7 +353,7 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
           onEditPressed: () {},
           onDeletePressed: () {},
         ),
-        SizedBox(height: AppDimensions.spacing8),
+        const SizedBox(height: AppDimensions.spacing8),
         LessonListItem(
           lessonTitle: 'Kimya',
           studentName: 'Mehmet Kaya',
@@ -384,5 +367,4 @@ class _WidgetShowcasePageState extends State<WidgetShowcasePage> {
         ),
       ],
     );
-  }
 }

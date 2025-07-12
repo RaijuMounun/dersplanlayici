@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import '../../domain/models/student_model.dart';
 import '../../../../services/database/database_service.dart';
 import '../../../../core/error/app_exception.dart';
+import 'package:collection/collection.dart';
 
 /// Öğrenci verilerini yöneten Provider sınıfı.
 class StudentProvider extends ChangeNotifier {
+  StudentProvider(this._databaseService);
   final DatabaseService _databaseService;
 
   List<Student> _students = [];
@@ -20,8 +22,6 @@ class StudentProvider extends ChangeNotifier {
   /// Hata durumunu döndürür.
   AppException? get error => _error;
 
-  StudentProvider(this._databaseService);
-
   /// Tüm öğrencileri veritabanından yükler.
   Future<void> loadStudents({bool notify = true}) async {
     _setLoading(true, notify: notify);
@@ -29,16 +29,16 @@ class StudentProvider extends ChangeNotifier {
 
     try {
       final studentsData = await _databaseService.getStudents();
-      _students = studentsData.map((data) => Student.fromMap(data)).toList();
+      _students = studentsData.map(Student.fromMap).toList();
       if (notify) notifyListeners();
     } on AppException catch (e) {
       _error = e;
-      if (notify) notifyListeners();
-    } catch (e) {
+      notifyListeners();
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Öğrenciler yüklenirken bir hata oluştu: ${e.toString()}',
       );
-      if (notify) notifyListeners();
+      notifyListeners();
     } finally {
       _setLoading(false, notify: notify);
     }
@@ -55,7 +55,7 @@ class StudentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci eklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -76,7 +76,7 @@ class StudentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci güncellenirken bir hata oluştu: ${e.toString()}',
       );
@@ -97,7 +97,7 @@ class StudentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci silinirken bir hata oluştu: ${e.toString()}',
       );
@@ -108,13 +108,7 @@ class StudentProvider extends ChangeNotifier {
   }
 
   /// ID'ye göre öğrenci arar.
-  Student? getStudentById(String id) {
-    try {
-      return _students.firstWhere((student) => student.id == id);
-    } catch (e) {
-      return null;
-    }
-  }
+  Student? getStudentById(String id) => _students.firstWhereOrNull((student) => student.id == id);
 
   /// Adına göre öğrenci arar.
   List<Student> searchStudentsByName(String query) {
@@ -142,16 +136,14 @@ class StudentProvider extends ChangeNotifier {
       }
 
       final studentsData = await _databaseService.searchStudents(query);
-      final searchResults = studentsData
-          .map((data) => Student.fromMap(data))
-          .toList();
+      final searchResults = studentsData.map(Student.fromMap).toList();
 
       return searchResults;
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
       return [];
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Öğrenci araması yapılırken bir hata oluştu: ${e.toString()}',
       );

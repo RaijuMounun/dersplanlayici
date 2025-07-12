@@ -53,30 +53,35 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
     });
 
     try {
+      if (!mounted) return;
       final localContext = context;
+      // Provider'ları önceden al
+      final studentProvider = Provider.of<StudentProvider>(
+        localContext,
+        listen: false,
+      );
+      final lessonProvider = Provider.of<LessonProvider>(
+        localContext,
+        listen: false,
+      );
+      final paymentProvider = Provider.of<PaymentProvider>(
+        localContext,
+        listen: false,
+      );
+
       await LoadingIndicator.wrapWithLoading(
         context: localContext,
-        message: "Veriler yükleniyor...",
+        message: 'Veriler yükleniyor...',
         future: Future(() async {
+          if (!mounted) return null;
+          
           // Öğrencileri yükle
-          final studentProvider = Provider.of<StudentProvider>(
-            localContext,
-            listen: false,
-          );
           await studentProvider.loadStudents();
 
           // Dersleri yükle
-          final lessonProvider = Provider.of<LessonProvider>(
-            localContext,
-            listen: false,
-          );
           await lessonProvider.loadLessons();
 
           // Ödemeleri yükle
-          final paymentProvider = Provider.of<PaymentProvider>(
-            localContext,
-            listen: false,
-          );
           await paymentProvider.loadPayments();
 
           // Ödeme önerilerini oluştur
@@ -92,7 +97,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           };
         }),
       ).then((data) {
-        if (mounted) {
+        if (mounted && data != null) {
           setState(() {
             _students = data['students'] as List<Student>;
             _paymentSuggestions =
@@ -101,7 +106,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           });
         }
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -134,15 +139,19 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
     });
 
     try {
+      if (!mounted) return;
       final localContext = context;
+      // Provider'ı önceden al
+      final lessonProvider = Provider.of<LessonProvider>(
+        localContext,
+        listen: false,
+      );
+
       await LoadingIndicator.wrapWithLoading(
         context: localContext,
-        message: "Ücret hesaplanıyor...",
+        message: 'Ücret hesaplanıyor...',
         future: Future(() async {
-          final lessonProvider = Provider.of<LessonProvider>(
-            localContext,
-            listen: false,
-          );
+          if (!mounted) return null;
 
           // Öğrencinin derslerini al
           final lessons = lessonProvider.lessons
@@ -176,7 +185,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           return {'fee': fee, 'lessons': filteredLessons};
         }),
       ).then((data) {
-        if (mounted) {
+        if (mounted && data != null) {
           setState(() {
             _calculatedFee = data['fee'] as double;
             _calculatedLessons = data['lessons'] as List<Lesson>;
@@ -184,7 +193,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           });
         }
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -201,6 +210,8 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
 
   void _createPaymentFromSuggestion(Map<String, dynamic> suggestion) async {
     try {
+      if (!mounted) return;
+      
       // Ödeme oluşturma sayfasına yönlendir
       final lessonIds = suggestion['unbilledLessonIds'] as List<String>;
       final studentId = suggestion['studentId'] as String;
@@ -208,10 +219,12 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
       final description = suggestion['description'] as String;
 
       // Go router ile parametreleri gönder
-      context.push(
+      if (mounted) {
+      await context.push(
         '/add-payment?studentId=$studentId&amount=${amount.toStringAsFixed(2)}&description=$description&lessonIds=${lessonIds.join(",")}',
       );
-    } catch (e) {
+      }
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -246,10 +259,12 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           '${student.name} - $startDateFormatted - $endDateFormatted arası dersler';
 
       // Go router ile parametreleri gönder
+      if (mounted) {
       context.push(
         '/add-payment?studentId=$_selectedStudentId&amount=${_calculatedFee.toStringAsFixed(2)}&description=$description&lessonIds=${lessonIds.join(",")}',
       );
-    } catch (e) {
+      }
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -262,8 +277,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Otomatik Ücret Hesaplama'),
         actions: [
@@ -285,17 +299,12 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           ? const Center(child: CircularProgressIndicator())
           : TabBarView(
               controller: _tabController,
-              children: [
-                _buildSuggestionsTab(),
-                _buildDateRangeCalculationTab(),
-              ],
+            children: [_buildSuggestionsTab(), _buildDateRangeCalculationTab()],
             ),
     );
-  }
 
-  Widget _buildSuggestionsTab() {
-    return _paymentSuggestions.isEmpty
-        ? Center(
+  Widget _buildSuggestionsTab() => _paymentSuggestions.isEmpty
+        ? const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -304,16 +313,13 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
                   size: 64,
                   color: AppColors.textSecondary,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text(
                   'Tüm dersler için ödeme oluşturulmuş.',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: AppColors.textSecondary,
-                  ),
+                style: TextStyle(fontSize: 18, color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Ödenmemiş tamamlanmış ders bulunmuyor.',
                   style: TextStyle(fontSize: 14),
                 ),
@@ -328,10 +334,8 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
               return _buildSuggestionCard(suggestion);
             },
           );
-  }
 
-  Widget _buildDateRangeCalculationTab() {
-    return SingleChildScrollView(
+  Widget _buildDateRangeCalculationTab() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +361,6 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
         ],
       ),
     );
-  }
 
   Widget _buildSuggestionCard(Map<String, dynamic> suggestion) {
     final currencyFormatter = NumberFormat.currency(
@@ -402,19 +405,20 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
     );
   }
 
-  Widget _buildStudentDropdown() {
-    return DropdownButtonFormField<String>(
+  Widget _buildStudentDropdown() => DropdownButtonFormField<String>(
       value: _selectedStudentId,
       decoration: const InputDecoration(
         labelText: 'Öğrenci',
         border: OutlineInputBorder(),
       ),
-      items: _students.map((student) {
-        return DropdownMenuItem<String>(
+    items: _students
+        .map(
+          (student) => DropdownMenuItem<String>(
           value: student.id,
           child: Text(student.name),
-        );
-      }).toList(),
+          ),
+        )
+        .toList(),
       onChanged: (value) {
         setState(() {
           _selectedStudentId = value;
@@ -423,10 +427,8 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
         });
       },
     );
-  }
 
-  Widget _buildDateRangePicker() {
-    return Row(
+  Widget _buildDateRangePicker() => Row(
       children: [
         Expanded(
           child: InkWell(
@@ -479,10 +481,8 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
         ),
       ],
     );
-  }
 
-  Widget _buildCompletedLessonsSwitch() {
-    return SwitchListTile(
+  Widget _buildCompletedLessonsSwitch() => SwitchListTile(
       title: const Text('Sadece Tamamlanmış Dersleri Hesapla'),
       subtitle: const Text('Kapatırsanız, planlanan dersleri de dahil eder'),
       value: _onlyCompletedLessons,
@@ -492,7 +492,6 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
         });
       },
     );
-  }
 
   Widget _buildCalculationResult() {
     final currencyFormatter = NumberFormat.currency(

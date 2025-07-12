@@ -9,9 +9,8 @@ import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
 
 class EditPaymentPage extends StatefulWidget {
-  final String id;
-
   const EditPaymentPage({super.key, required this.id});
+  final String id;
 
   @override
   State<EditPaymentPage> createState() => _EditPaymentPageState();
@@ -19,7 +18,7 @@ class EditPaymentPage extends StatefulWidget {
 
 class _EditPaymentPageState extends State<EditPaymentPage> {
   bool _isLoading = true;
-  Payment? _payment;
+  PaymentModel? _payment;
 
   @override
   void initState() {
@@ -50,7 +49,7 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
           context.pop();
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -69,49 +68,47 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ödeme Detayları'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'Düzenle',
-            onPressed: () {
-              // Ödeme düzenleme sayfasına git
-              context.push('/add-payment?id=${widget.id}');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.payment),
-            tooltip: 'Ödeme İşlemleri',
-            onPressed: () {
-              // Ödeme işlemleri sayfasına git
-              context.push('/payment-transactions/${widget.id}');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: 'Sil',
-            onPressed: _confirmDelete,
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _payment == null
-          ? const Center(child: Text('Ödeme bulunamadı'))
-          : _buildPaymentDetails(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Yeni ödeme işlemi ekle
-          context.push('/payment-transaction/${widget.id}');
-        },
-        tooltip: 'Ödeme İşlemi Ekle',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Ödeme Detayları'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.edit),
+          tooltip: 'Düzenle',
+          onPressed: () {
+            // Ödeme düzenleme sayfasına git
+            context.push('/add-payment?id=${widget.id}');
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.payment),
+          tooltip: 'Ödeme İşlemleri',
+          onPressed: () {
+            // Ödeme işlemleri sayfasına git
+            context.push('/payment-transactions/${widget.id}');
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete),
+          tooltip: 'Sil',
+          onPressed: _confirmDelete,
+        ),
+      ],
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _payment == null
+        ? const Center(child: Text('Ödeme bulunamadı'))
+        : _buildPaymentDetails(),
+    floatingActionButton: FloatingActionButton(
+      onPressed: () {
+        // Yeni ödeme işlemi ekle
+        context.push('/payment-transaction/${widget.id}');
+      },
+      tooltip: 'Ödeme İşlemi Ekle',
+      child: const Icon(Icons.add),
+    ),
+  );
 
   Widget _buildPaymentDetails() {
     final currencyFormatter = NumberFormat.currency(
@@ -294,21 +291,23 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
           Card(
             child: InkWell(
               onTap: () {
-                context.push('/payment-transactions/${widget.id}');
+                if (mounted) {
+                  context.push('/payment-transactions/${widget.id}');
+                }
               },
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimensions.spacing16),
+              child: const Padding(
+                padding: EdgeInsets.all(AppDimensions.spacing16),
                 child: Row(
                   children: [
-                    const Icon(Icons.payment, size: 24),
-                    const SizedBox(width: AppDimensions.spacing16),
-                    const Expanded(
+                    Icon(Icons.payment, size: 24),
+                    SizedBox(width: AppDimensions.spacing16),
+                    Expanded(
                       child: Text(
                         'Ödeme İşlemlerini Görüntüle',
                         style: TextStyle(fontSize: 16),
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 16),
+                    Icon(Icons.arrow_forward_ios, size: 16),
                   ],
                 ),
               ),
@@ -319,18 +318,16 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.spacing8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
+  Widget _buildInfoRow(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: AppDimensions.spacing8),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    ),
+  );
 
   void _confirmDelete() {
     // Store context in a local variable to avoid using across async gaps
@@ -362,13 +359,19 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
 
   Future<void> _deletePayment() async {
     try {
+      if (!mounted) return;
       // Store context in a local variable
       final localContext = context;
+      // Provider'ı önceden al
+      final provider = Provider.of<PaymentProvider>(
+        localContext,
+        listen: false,
+      );
+
       await LoadingIndicator.wrapWithLoading(
         context: localContext,
-        message: "Ödeme siliniyor...",
+        message: 'Ödeme siliniyor...',
         future: Future(() async {
-          final provider = Provider.of<PaymentProvider>(localContext, listen: false);
           await provider.deletePayment(widget.id);
         }),
       );
@@ -382,7 +385,7 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
         );
         context.pop();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

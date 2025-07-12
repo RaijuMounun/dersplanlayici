@@ -10,13 +10,6 @@ enum LogLevel { debug, info, warning, error, critical }
 
 /// Log kaydı sınıfı
 class LogRecord {
-  final LogLevel level;
-  final String message;
-  final String? tag;
-  final DateTime timestamp;
-  final Object? error;
-  final StackTrace? stackTrace;
-  final Map<String, dynamic>? metadata;
 
   LogRecord({
     required this.level,
@@ -27,6 +20,13 @@ class LogRecord {
     this.stackTrace,
     this.metadata,
   }) : timestamp = timestamp ?? DateTime.now();
+  final LogLevel level;
+  final String message;
+  final String? tag;
+  final DateTime timestamp;
+  final Object? error;
+  final StackTrace? stackTrace;
+  final Map<String, dynamic>? metadata;
 
   /// LogRecord'u formatlanmış log stringi olarak temsil eder
   String toFormattedString() {
@@ -55,6 +55,13 @@ class LogRecord {
 
 /// Basitleştirilmiş dosya log hedefi
 class SimpleFileLogDestination {
+
+  SimpleFileLogDestination({
+    this.minLevel = LogLevel.info,
+    this.baseFileName = 'app_log',
+    this.maxSizeInBytes = 5 * 1024 * 1024, // 5 MB
+    this.maxFiles = 3,
+  });
   final LogLevel minLevel;
   final String baseFileName;
   final int maxSizeInBytes;
@@ -64,13 +71,6 @@ class SimpleFileLogDestination {
   IOSink? _logSink;
   int _currentFileSize = 0;
   bool _isInitialized = false;
-
-  SimpleFileLogDestination({
-    this.minLevel = LogLevel.info,
-    this.baseFileName = 'app_log',
-    this.maxSizeInBytes = 5 * 1024 * 1024, // 5 MB
-    this.maxFiles = 3,
-  });
 
   Future<void> _initialize() async {
     if (_isInitialized) return;
@@ -91,7 +91,7 @@ class SimpleFileLogDestination {
 
       _logSink = _currentLogFile!.openWrite(mode: FileMode.append);
       _isInitialized = true;
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint('Log dosyası başlatılamadı: $e');
     }
   }
@@ -109,7 +109,7 @@ class SimpleFileLogDestination {
       if (_currentFileSize >= maxSizeInBytes) {
         await _rotateLogFiles();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint('Log dosyasına yazarken hata: $e');
     }
   }
@@ -130,7 +130,7 @@ class SimpleFileLogDestination {
         if (await oldFile.exists()) {
           try {
             await oldFile.delete();
-          } catch (e) {
+          } on Exception catch (e) {
             debugPrint('Eski log dosyası silinemedi: $e');
           }
         }
@@ -142,7 +142,7 @@ class SimpleFileLogDestination {
           final backupFile = File('${logDir.path}/$baseFileName.0.log');
           await _currentLogFile!.copy(backupFile.path);
           await _currentLogFile!.delete();
-        } catch (e) {
+        } on Exception catch (e) {
           debugPrint('Log dosyası yedeklenemedi: $e');
           // Yedekleme başarısızsa, rotasyonu atla
           return;
@@ -153,14 +153,14 @@ class SimpleFileLogDestination {
       _currentLogFile = File('${logDir.path}/$baseFileName.log');
       _logSink = _currentLogFile!.openWrite(mode: FileMode.write);
       _currentFileSize = 0;
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint('Log dosyası rotasyonu başarısız: $e');
       // Rotasyon başarısızsa, mevcut dosyaya devam et
       try {
         if (_currentLogFile != null) {
           _logSink = _currentLogFile!.openWrite(mode: FileMode.append);
         }
-      } catch (e2) {
+      } on Exception catch (e2) {
         debugPrint('Log dosyası yeniden açılamadı: $e2');
       }
     }
@@ -169,7 +169,7 @@ class SimpleFileLogDestination {
   Future<void> flush() async {
     try {
       await _logSink?.flush();
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint('Log flush hatası: $e');
     }
   }
@@ -180,7 +180,7 @@ class SimpleFileLogDestination {
       await _logSink?.close();
       _logSink = null;
       _isInitialized = false;
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint('Log kapatma hatası: $e');
     }
   }
@@ -188,15 +188,14 @@ class SimpleFileLogDestination {
 
 /// Basitleştirilmiş hata yönetimi ve loglama sınıfı
 class ErrorLogger {
-  static final ErrorLogger _instance = ErrorLogger._internal();
   factory ErrorLogger() => _instance;
-
-  late final SimpleFileLogDestination _fileDestination;
-  bool _isInitialized = false;
 
   ErrorLogger._internal() {
     _fileDestination = SimpleFileLogDestination();
   }
+  static final ErrorLogger _instance = ErrorLogger._internal();
+
+  late final SimpleFileLogDestination _fileDestination;
 
   /// Debug seviyesinde log kaydı
   Future<void> debug(
@@ -324,7 +323,7 @@ class ErrorLogger {
     if (!kReleaseMode) {
       try {
         await _fileDestination.log(record);
-      } catch (e) {
+      } on Exception catch (e) {
         debugPrint('Dosya loglaması başarısız: $e');
       }
     }
@@ -334,7 +333,7 @@ class ErrorLogger {
   Future<void> dispose() async {
     try {
       await _fileDestination.close();
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint('ErrorLogger dispose hatası: $e');
     }
   }

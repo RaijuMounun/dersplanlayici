@@ -7,16 +7,18 @@ import 'package:intl/intl.dart';
 
 /// Ödeme işlemlerini yöneten Provider sınıfı.
 class PaymentProvider extends ChangeNotifier {
+
+  PaymentProvider(this._paymentRepository);
   final PaymentRepository _paymentRepository;
 
-  List<Payment> _payments = [];
+  List<PaymentModel> _payments = [];
   List<FeeSummary> _summaries = [];
   bool _isLoading = false;
   AppException? _error;
   String _filterStatus = '';
 
   /// Ödemeleri döndürür.
-  List<Payment> get payments => _payments;
+  List<PaymentModel> get payments => _payments;
 
   /// Ücret özetlerini döndürür.
   List<FeeSummary> get summaries => _summaries;
@@ -26,8 +28,6 @@ class PaymentProvider extends ChangeNotifier {
 
   /// Hata durumunu döndürür.
   AppException? get error => _error;
-
-  PaymentProvider(this._paymentRepository);
 
   /// Tüm ödemeleri yükler.
   Future<void> loadPayments({bool notify = true}) async {
@@ -40,7 +40,7 @@ class PaymentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödemeler yüklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -64,7 +64,7 @@ class PaymentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Öğrenci ödemeleri yüklenirken bir hata oluştu: ${e.toString()}',
@@ -92,7 +92,7 @@ class PaymentProvider extends ChangeNotifier {
       _error = e;
       if (notify) notifyListeners();
       return null;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Öğrenci ücret özeti yüklenirken bir hata oluştu: ${e.toString()}',
@@ -115,7 +115,7 @@ class PaymentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ücret özetleri yüklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -134,7 +134,7 @@ class PaymentProvider extends ChangeNotifier {
   }
 
   /// Filtrelenmiş ödemeleri döndürür.
-  List<Payment> get filteredPayments {
+  List<PaymentModel> get filteredPayments {
     if (_filterStatus.isEmpty) {
       return _payments;
     }
@@ -147,7 +147,7 @@ class PaymentProvider extends ChangeNotifier {
   }
 
   /// Ödeme ekler.
-  Future<void> addPayment(Payment payment, {bool notify = true}) async {
+  Future<void> addPayment(PaymentModel payment, {bool notify = true}) async {
     _setLoading(true, notify: notify);
     _error = null;
 
@@ -164,7 +164,7 @@ class PaymentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödeme eklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -175,7 +175,7 @@ class PaymentProvider extends ChangeNotifier {
   }
 
   /// Ödeme günceller.
-  Future<void> updatePayment(Payment payment, {bool notify = true}) async {
+  Future<void> updatePayment(PaymentModel payment, {bool notify = true}) async {
     _setLoading(true, notify: notify);
     _error = null;
 
@@ -192,7 +192,7 @@ class PaymentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödeme güncellenirken bir hata oluştu: ${e.toString()}',
       );
@@ -213,7 +213,7 @@ class PaymentProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödeme silinirken bir hata oluştu: ${e.toString()}',
       );
@@ -224,7 +224,7 @@ class PaymentProvider extends ChangeNotifier {
   }
 
   /// Ödeme oluşturma helper metodu
-  Payment createPayment({
+  PaymentModel createPayment({
     required String studentId,
     required String studentName,
     required String description,
@@ -238,7 +238,7 @@ class PaymentProvider extends ChangeNotifier {
     final now = DateTime.now();
     final today = DateFormat('yyyy-MM-dd').format(now);
 
-    return Payment(
+    return PaymentModel(
       studentId: studentId,
       studentName: studentName,
       description: description,
@@ -264,10 +264,10 @@ class PaymentProvider extends ChangeNotifier {
   }
 
   /// Belirli bir ID'ye sahip ödemeyi döndürür.
-  Payment? getPaymentById(String id) {
+  PaymentModel? getPaymentById(String id) {
     try {
       return _payments.firstWhere((payment) => payment.id == id);
-    } catch (e) {
+    } on Exception {
       return null;
     }
   }

@@ -1,14 +1,5 @@
 /// Öğrenci veya dönem bazlı ücret özetini temsil eden model sınıfı.
-class FeeSummary {
-  final String id; // Öğrenci ID'si veya dönem ID'si olabilir
-  final String name; // Öğrenci adı veya dönem adı olabilir
-  final double totalAmount; // Toplam ücret
-  final double paidAmount; // Ödenen miktar
-  final int totalLessons; // Toplam ders sayısı
-  final int completedLessons; // Tamamlanan ders sayısı
-  final int pendingPayments; // Bekleyen ödeme sayısı
-  final int overduePayments; // Gecikmiş ödeme sayısı
-  final DateTime lastUpdated; // Son güncelleme tarihi
+class FeeSummary { // Son güncelleme tarihi
 
   FeeSummary({
     required this.id,
@@ -22,6 +13,28 @@ class FeeSummary {
     required this.lastUpdated,
   });
 
+  /// Map objesinden FeeSummary nesnesine dönüştürür.
+  factory FeeSummary.fromMap(Map<String, dynamic> map) => FeeSummary(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      totalAmount: (map['totalAmount'] as num).toDouble(),
+      paidAmount: (map['paidAmount'] as num).toDouble(),
+      totalLessons: map['totalLessons'] as int,
+      completedLessons: map['completedLessons'] as int,
+      pendingPayments: map['pendingPayments'] as int,
+      overduePayments: map['overduePayments'] as int,
+      lastUpdated: DateTime.parse(map['lastUpdated'] as String),
+    );
+  final String id; // Öğrenci ID'si veya dönem ID'si olabilir
+  final String name; // Öğrenci adı veya dönem adı olabilir
+  final double totalAmount; // Toplam ücret
+  final double paidAmount; // Ödenen miktar
+  final int totalLessons; // Toplam ders sayısı
+  final int completedLessons; // Tamamlanan ders sayısı
+  final int pendingPayments; // Bekleyen ödeme sayısı
+  final int overduePayments; // Gecikmiş ödeme sayısı
+  final DateTime lastUpdated;
+
   /// Kalan borç miktarını hesaplar.
   double get remainingAmount => totalAmount - paidAmount;
 
@@ -33,24 +46,8 @@ class FeeSummary {
   double get completionPercentage =>
       totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
-  /// Map objesinden FeeSummary nesnesine dönüştürür.
-  factory FeeSummary.fromMap(Map<String, dynamic> map) {
-    return FeeSummary(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      totalAmount: (map['totalAmount'] as num).toDouble(),
-      paidAmount: (map['paidAmount'] as num).toDouble(),
-      totalLessons: map['totalLessons'] as int,
-      completedLessons: map['completedLessons'] as int,
-      pendingPayments: map['pendingPayments'] as int,
-      overduePayments: map['overduePayments'] as int,
-      lastUpdated: DateTime.parse(map['lastUpdated'] as String),
-    );
-  }
-
   /// FeeSummary nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, dynamic> toMap() => {
       'id': id,
       'name': name,
       'totalAmount': totalAmount,
@@ -61,7 +58,6 @@ class FeeSummary {
       'overduePayments': overduePayments,
       'lastUpdated': lastUpdated.toIso8601String(),
     };
-  }
 
   /// Güncellenmiş bir ücret özeti nesnesi oluşturur.
   FeeSummary copyWith({
@@ -74,8 +70,7 @@ class FeeSummary {
     int? pendingPayments,
     int? overduePayments,
     DateTime? lastUpdated,
-  }) {
-    return FeeSummary(
+  }) => FeeSummary(
       id: id ?? this.id,
       name: name ?? this.name,
       totalAmount: totalAmount ?? this.totalAmount,
@@ -86,10 +81,7 @@ class FeeSummary {
       overduePayments: overduePayments ?? this.overduePayments,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
-  }
 
   @override
-  String toString() {
-    return 'FeeSummary(id: $id, name: $name, totalAmount: $totalAmount, paidAmount: $paidAmount, remaining: $remainingAmount)';
-  }
+  String toString() => 'FeeSummary(id: $id, name: $name, totalAmount: $totalAmount, paidAmount: $paidAmount, remaining: $remainingAmount)';
 }

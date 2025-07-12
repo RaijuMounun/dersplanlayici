@@ -2,10 +2,10 @@ import 'package:ders_planlayici/core/data/database_helper.dart';
 import 'package:ders_planlayici/core/error/app_exception.dart' as app_exception;
 
 class HolidayRepository {
-  final DatabaseHelper _databaseHelper;
 
   HolidayRepository({DatabaseHelper? databaseHelper})
     : _databaseHelper = databaseHelper ?? DatabaseHelper();
+  final DatabaseHelper _databaseHelper;
 
   /// Tüm tatil günlerini getirir
   Future<List<Map<String, dynamic>>> getAllHolidays() async {

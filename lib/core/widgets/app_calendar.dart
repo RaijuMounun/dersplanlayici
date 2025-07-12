@@ -4,16 +4,6 @@ import '../theme/app_dimensions.dart';
 
 /// Uygulamada kullanılan basit takvim widget'ı.
 class AppCalendar extends StatelessWidget {
-  final DateTime initialDate;
-  final DateTime? firstDate;
-  final DateTime? lastDate;
-  final ValueChanged<DateTime>? onDateSelected;
-  final Map<DateTime, List<dynamic>>? events;
-  final bool showWeekends;
-  final Widget Function(DateTime date, List<dynamic> events)? eventBuilder;
-  final Color? selectedDateColor;
-  final Color? todayColor;
-  final Color? eventIndicatorColor;
 
   const AppCalendar({
     super.key,
@@ -28,6 +18,16 @@ class AppCalendar extends StatelessWidget {
     this.todayColor,
     this.eventIndicatorColor,
   });
+  final DateTime initialDate;
+  final DateTime? firstDate;
+  final DateTime? lastDate;
+  final ValueChanged<DateTime>? onDateSelected;
+  final Map<DateTime, List<dynamic>>? events;
+  final bool showWeekends;
+  final Widget Function(DateTime date, List<dynamic> events)? eventBuilder;
+  final Color? selectedDateColor;
+  final Color? todayColor;
+  final Color? eventIndicatorColor;
 
   @override
   Widget build(BuildContext context) {
@@ -100,15 +100,13 @@ class AppCalendar extends StatelessWidget {
             itemCount:
                 _getDaysInMonth(initialDate.year, initialDate.month) +
                 _getFirstDayOffset(initialDate.year, initialDate.month),
-            itemBuilder: (context, index) {
-              return _buildDayCell(
+            itemBuilder: (context, index) => _buildDayCell(
                 context,
                 index,
                 selectedColor,
                 today,
                 eventColor,
-              );
-            },
+              ),
           ),
         ),
       ],
@@ -238,9 +236,7 @@ class AppCalendar extends StatelessWidget {
     return months[month - 1];
   }
 
-  int _getDaysInMonth(int year, int month) {
-    return DateTime(year, month + 1, 0).day;
-  }
+  int _getDaysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
 
   int _getFirstDayOffset(int year, int month) {
     final firstDayOfMonth = DateTime(year, month, 1);
@@ -255,9 +251,7 @@ class AppCalendar extends StatelessWidget {
     return _isSameDay(date, now);
   }
 
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
+  bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
   void _onMonthChange(int month, int year) {
     if (month < 1) {

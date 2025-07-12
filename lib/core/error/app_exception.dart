@@ -1,15 +1,13 @@
 /// Uygulama içinde kullanılan temel exception sınıfı
 class AppException implements Exception {
+
+  const AppException({required this.message, this.code, this.details});
   final String message;
   final String? code;
   final dynamic details;
 
-  const AppException({required this.message, this.code, this.details});
-
   @override
-  String toString() {
-    return 'AppException: $message${code != null ? ' (Code: $code)' : ''}';
-  }
+  String toString() => 'AppException: $message${code != null ? ' (Code: $code)' : ''}';
 }
 
 /// Veritabanı işlemlerinde oluşan hataları temsil eder

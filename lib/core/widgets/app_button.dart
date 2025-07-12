@@ -9,15 +9,6 @@ enum AppButtonSize { small, medium, large }
 /// Uygulamada kullanılan standart buton widget'ı.
 /// Farklı tipte ve boyutta butonlar oluşturmak için kullanılır.
 class AppButton extends StatelessWidget {
-  final String text;
-  final VoidCallback? onPressed;
-  final AppButtonType type;
-  final AppButtonSize size;
-  final IconData? icon;
-  final bool isLoading;
-  final bool fullWidth;
-  final double? width;
-  final EdgeInsets? padding;
 
   const AppButton({
     super.key,
@@ -31,6 +22,15 @@ class AppButton extends StatelessWidget {
     this.width,
     this.padding,
   });
+  final String text;
+  final VoidCallback? onPressed;
+  final AppButtonType type;
+  final AppButtonSize size;
+  final IconData? icon;
+  final bool isLoading;
+  final bool fullWidth;
+  final double? width;
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class AppButton extends StatelessWidget {
     final textStyle = _getTextStyle();
     final innerPadding = padding ?? _getDefaultPadding();
 
-    Widget buttonChild = Row(
+    final Widget buttonChild = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -52,10 +52,10 @@ class AppButton extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(_getLoaderColor()),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
         ] else if (icon != null) ...[
           Icon(icon, size: _getIconSize()),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
         ],
         Text(text, style: textStyle),
       ],
@@ -117,7 +117,7 @@ class AppButton extends StatelessWidget {
       case AppButtonType.outline:
         return OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          side: BorderSide(color: AppColors.primary),
+          side: const BorderSide(color: AppColors.primary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radius8),
           ),
@@ -144,7 +144,7 @@ class AppButton extends StatelessWidget {
   }
 
   TextStyle _getTextStyle() {
-    final baseStyle = TextStyle(fontWeight: FontWeight.w500);
+    final baseStyle = const TextStyle(fontWeight: FontWeight.w500);
 
     switch (size) {
       case AppButtonSize.small:

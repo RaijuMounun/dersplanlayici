@@ -11,9 +11,9 @@ import 'package:ders_planlayici/features/students/presentation/providers/student
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 
 class FeeHistoryPage extends StatefulWidget {
-  final String? studentId;
 
   const FeeHistoryPage({super.key, this.studentId});
+  final String? studentId;
 
   @override
   State<FeeHistoryPage> createState() => _FeeHistoryPageState();
@@ -81,13 +81,13 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
 
       // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
       if (mounted) {
-        Future.microtask(() {
+        await Future.microtask(() {
           if (mounted) {
             paymentProvider.notifyListeners();
           }
         });
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Veriler yüklenirken hata oluştu: $e')),
@@ -103,8 +103,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Ödeme Geçmişi'),
         actions: [
@@ -123,10 +122,8 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
               desktop: _buildDesktopLayout(),
             ),
     );
-  }
 
-  Widget _buildMobileLayout() {
-    return Column(
+  Widget _buildMobileLayout() => Column(
       children: [
         _buildDateRangeSelector(),
         if (_selectedStudentId == null) _buildStudentSelector(),
@@ -134,10 +131,8 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
         Expanded(child: _buildPaymentHistoryList()),
       ],
     );
-  }
 
-  Widget _buildTabletLayout() {
-    return Column(
+  Widget _buildTabletLayout() => Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -158,10 +153,8 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildDesktopLayout() {
-    return Row(
+  Widget _buildDesktopLayout() => Row(
       children: [
         Expanded(
           flex: 1,
@@ -186,7 +179,6 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
         ),
       ],
     );
-  }
 
   Widget _buildDateRangeSelector() {
     final DateFormat formatter = DateFormat('dd/MM/yyyy');
@@ -302,12 +294,10 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                     value: null,
                     child: Text('Tüm Öğrenciler'),
                   ),
-                  ...studentProvider.students.map((student) {
-                    return DropdownMenuItem<String>(
+                  ...studentProvider.students.map((student) => DropdownMenuItem<String>(
                       value: student.id,
                       child: Text(student.name),
-                    );
-                  }),
+                    )),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -371,12 +361,10 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                     value: null,
                     child: Text('Tüm Öğrenciler'),
                   ),
-                  ...studentProvider.students.map((student) {
-                    return DropdownMenuItem<String>(
+                  ...studentProvider.students.map((student) => DropdownMenuItem<String>(
                       value: student.id,
                       child: Text(student.name),
-                    );
-                  }),
+                    )),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -428,8 +416,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     required String label,
     required DateTime selectedDate,
     required VoidCallback onTap,
-  }) {
-    return InkWell(
+  }) => InkWell(
       onTap: onTap,
       child: InputDecorator(
         decoration: InputDecoration(
@@ -445,10 +432,8 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildPaymentStatusFilters() {
-    return Wrap(
+  Widget _buildPaymentStatusFilters() => Wrap(
       spacing: AppDimensions.spacing8,
       children: [
         _buildFilterChip('', 'Tümü'),
@@ -459,7 +444,6 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
         _buildFilterChip('cancelled', 'İptal Edilmiş'),
       ],
     );
-  }
 
   Widget _buildFilterChip(String status, String label) {
     final paymentProvider = Provider.of<PaymentProvider>(context);
@@ -544,12 +528,12 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
               LinearProgressIndicator(
                 value: _feeSummary!.paymentPercentage / 100,
                 backgroundColor: AppColors.background,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
               ),
               const SizedBox(height: AppDimensions.spacing8),
               Text(
                 'Ödeme Oranı: %${_feeSummary!.paymentPercentage.toStringAsFixed(1)}',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppDimensions.spacing16),
               Row(
@@ -584,13 +568,12 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, Color color) {
-    return Column(
+  Widget _buildSummaryItem(String label, String value, Color color) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppDimensions.spacing4),
         Text(
@@ -603,7 +586,6 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
         ),
       ],
     );
-  }
 
   Widget _buildPaymentHistoryList() {
     final paymentProvider = Provider.of<PaymentProvider>(context);
@@ -622,7 +604,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     );
   }
 
-  List<Payment> _filterPaymentsByDate(List<Payment> payments) {
+  List<PaymentModel> _filterPaymentsByDate(List<PaymentModel> payments) {
     final startDateStr = DateFormat('yyyy-MM-dd').format(_startDate);
     final endDateStr = DateFormat('yyyy-MM-dd').format(_endDate);
 
@@ -633,7 +615,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     }).toList();
   }
 
-  Widget _buildPaymentCard(Payment payment) {
+  Widget _buildPaymentCard(PaymentModel payment) {
     final formattedDate = DateFormat(
       'dd/MM/yyyy',
     ).format(DateTime.parse(payment.date));
@@ -675,7 +657,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                         ),
                         Text(
                           payment.description,
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -705,7 +687,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
               const SizedBox(height: AppDimensions.spacing12),
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.calendar_today,
                     size: 16,
                     color: AppColors.textSecondary,
@@ -713,15 +695,15 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                   const SizedBox(width: AppDimensions.spacing4),
                   Text(
                     formattedDate,
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   if (payment.dueDate != null) ...[
                     const SizedBox(width: AppDimensions.spacing8),
-                    Icon(Icons.event, size: 16, color: AppColors.textSecondary),
+                    const Icon(Icons.event, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: AppDimensions.spacing4),
                     Text(
                       'Son Ödeme: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(payment.dueDate!))}',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                   const Spacer(),
@@ -735,7 +717,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                 const SizedBox(height: AppDimensions.spacing8),
                 Text(
                   payment.notes!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                   ),
@@ -750,8 +732,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
+  Widget _buildEmptyState() => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -761,7 +742,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
             color: AppColors.textSecondary.withAlpha(128),
           ),
           const SizedBox(height: AppDimensions.spacing16),
-          Text(
+          const Text(
             'Seçilen tarih aralığında ödeme kaydı bulunamadı',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
           ),
@@ -780,7 +761,6 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
         ],
       ),
     );
-  }
 
   Color _getStatusColor(PaymentStatus status) {
     switch (status) {

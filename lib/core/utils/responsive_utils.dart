@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class ResponsiveUtils {
   /// Ekran genişliğine göre cihaz türünü belirler
   static DeviceType getDeviceType(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
+    final double width = MediaQuery.of(context).size.width;
 
     if (width < 600) {
       return DeviceType.mobile;
@@ -16,9 +16,7 @@ class ResponsiveUtils {
   }
 
   /// Ekran yönünü belirler
-  static Orientation getOrientation(BuildContext context) {
-    return MediaQuery.of(context).orientation;
-  }
+  static Orientation getOrientation(BuildContext context) => MediaQuery.of(context).orientation;
 
   /// Cihaz türüne göre değer döndürür
   static T deviceValue<T>({
@@ -27,7 +25,7 @@ class ResponsiveUtils {
     T? tablet,
     T? desktop,
   }) {
-    DeviceType deviceType = getDeviceType(context);
+    final DeviceType deviceType = getDeviceType(context);
 
     switch (deviceType) {
       case DeviceType.mobile:
@@ -45,48 +43,40 @@ class ResponsiveUtils {
     required T portrait,
     required T landscape,
   }) {
-    Orientation orientation = getOrientation(context);
+    final Orientation orientation = getOrientation(context);
 
     return orientation == Orientation.portrait ? portrait : landscape;
   }
 
   /// Ekran genişliğine göre responsive değer döndürür
-  static double responsiveWidth(BuildContext context, double percentage) {
-    return MediaQuery.of(context).size.width * percentage;
-  }
+  static double responsiveWidth(BuildContext context, double percentage) => MediaQuery.of(context).size.width * percentage;
 
   /// Ekran yüksekliğine göre responsive değer döndürür
-  static double responsiveHeight(BuildContext context, double percentage) {
-    return MediaQuery.of(context).size.height * percentage;
-  }
+  static double responsiveHeight(BuildContext context, double percentage) => MediaQuery.of(context).size.height * percentage;
 
   /// Ekranın kısa kenarına göre responsive değer döndürür
-  static double responsiveSize(BuildContext context, double percentage) {
-    return MediaQuery.of(context).size.shortestSide * percentage;
-  }
+  static double responsiveSize(BuildContext context, double percentage) => MediaQuery.of(context).size.shortestSide * percentage;
 
   /// Ekranın genişliğine göre responsive font boyutu döndürür
   static double responsiveFontSize(BuildContext context, double size) {
-    double deviceWidth = MediaQuery.of(context).size.width;
+    final double deviceWidth = MediaQuery.of(context).size.width;
 
     // Baz genişlik (referans ekran genişliği)
     const double baseWidth = 375.0; // iPhone 8 genişliği
 
     // Min ve max font boyutları
-    double minSize = size * 0.8;
-    double maxSize = size * 1.2;
+    final double minSize = size * 0.8;
+    final double maxSize = size * 1.2;
 
     // Ekran genişliğine göre font boyutu hesapla
-    double calculatedSize = size * (deviceWidth / baseWidth);
+    final double calculatedSize = size * (deviceWidth / baseWidth);
 
     // Font boyutunu sınırla
     return calculatedSize.clamp(minSize, maxSize);
   }
 
   /// Ekranın güvenli alanını döndürür
-  static EdgeInsets safeAreaInsets(BuildContext context) {
-    return MediaQuery.of(context).padding;
-  }
+  static EdgeInsets safeAreaInsets(BuildContext context) => MediaQuery.of(context).padding;
 
   /// Güvenli alan olmadan kullanılabilir ekran boyutunu döndürür
   static Size safeScreenSize(BuildContext context) {

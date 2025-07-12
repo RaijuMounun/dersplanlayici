@@ -7,14 +7,7 @@ enum RecurringType {
 }
 
 /// Tekrarlanan ders desenini temsil eden model sınıfı.
-class RecurringPattern {
-  final String id;
-  final RecurringType type;
-  final int interval;
-  final String startDate;
-  final String? endDate;
-  final List<int>? daysOfWeek; // Haftanın günleri (1-7, 1: Pazartesi)
-  final int? dayOfMonth; // Ayın günü (1-31)
+class RecurringPattern { // Ayın günü (1-31)
 
   RecurringPattern({
     String? id,
@@ -27,8 +20,7 @@ class RecurringPattern {
   }) : id = id ?? const Uuid().v4();
 
   /// Map objesinden RecurringPattern nesnesine dönüştürür.
-  factory RecurringPattern.fromMap(Map<String, dynamic> map) {
-    return RecurringPattern(
+  factory RecurringPattern.fromMap(Map<String, dynamic> map) => RecurringPattern(
       id: map['id'] as String,
       type: RecurringType.values.firstWhere(
         (e) => e.toString() == 'RecurringType.${map['type']}',
@@ -40,16 +32,21 @@ class RecurringPattern {
       daysOfWeek: map['daysOfWeek'] != null
           ? (map['daysOfWeek'] as String)
                 .split(',')
-                .map((e) => int.parse(e))
+                .map(int.parse)
                 .toList()
           : null,
       dayOfMonth: map['dayOfMonth'] as int?,
     );
-  }
+  final String id;
+  final RecurringType type;
+  final int interval;
+  final String startDate;
+  final String? endDate;
+  final List<int>? daysOfWeek; // Haftanın günleri (1-7, 1: Pazartesi)
+  final int? dayOfMonth;
 
   /// RecurringPattern nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, dynamic> toMap() => {
       'id': id,
       'type': type.toString().split('.').last,
       'interval': interval,
@@ -58,7 +55,6 @@ class RecurringPattern {
       'daysOfWeek': daysOfWeek?.map((e) => e.toString()).join(','),
       'dayOfMonth': dayOfMonth,
     };
-  }
 
   /// Güncellenmiş bir tekrarlama deseni nesnesi oluşturur.
   RecurringPattern copyWith({
@@ -68,8 +64,7 @@ class RecurringPattern {
     String? endDate,
     List<int>? daysOfWeek,
     int? dayOfMonth,
-  }) {
-    return RecurringPattern(
+  }) => RecurringPattern(
       id: id,
       type: type ?? this.type,
       interval: interval ?? this.interval,
@@ -78,10 +73,7 @@ class RecurringPattern {
       daysOfWeek: daysOfWeek ?? this.daysOfWeek,
       dayOfMonth: dayOfMonth ?? this.dayOfMonth,
     );
-  }
 
   @override
-  String toString() {
-    return 'RecurringPattern(id: $id, type: $type, interval: $interval)';
-  }
+  String toString() => 'RecurringPattern(id: $id, type: $type, interval: $interval)';
 }

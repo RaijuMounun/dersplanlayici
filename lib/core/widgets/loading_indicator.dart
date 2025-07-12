@@ -4,10 +4,6 @@ import 'package:ders_planlayici/core/theme/app_colors.dart';
 /// Uygulama genelinde kullanılan yükleme göstergesi widget'ı.
 /// Bu widget, donma sorunlarını önlemek için özellikle tasarlanmıştır.
 class LoadingIndicator extends StatelessWidget {
-  final String? message;
-  final double size;
-  final Color color;
-  final bool isOverlay;
 
   const LoadingIndicator({
     super.key,
@@ -16,6 +12,10 @@ class LoadingIndicator extends StatelessWidget {
     this.color = AppColors.primary,
     this.isOverlay = false,
   });
+  final String? message;
+  final double size;
+  final Color color;
+  final bool isOverlay;
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +67,10 @@ class LoadingIndicator extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return PopScope(
+      builder: (BuildContext context) => PopScope(
           canPop: false,
           child: LoadingIndicator(message: message, isOverlay: true),
-        );
-      },
+        ),
     );
   }
 

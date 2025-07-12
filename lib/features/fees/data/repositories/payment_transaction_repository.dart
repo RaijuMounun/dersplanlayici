@@ -4,19 +4,19 @@ import 'package:ders_planlayici/services/database/database_service.dart';
 
 /// Ödeme işlemleri ile ilgili veri işlemlerini yöneten repository sınıfı.
 class PaymentTransactionRepository {
-  final DatabaseService _databaseService;
 
   PaymentTransactionRepository(this._databaseService);
+  final DatabaseService _databaseService;
 
   /// Belirli bir ödemeye ait tüm işlemleri getirir.
-  Future<List<PaymentTransaction>> getTransactionsByPaymentId(
+  Future<List<PaymentTransactionModel>> getTransactionsByPaymentId(
     String paymentId,
   ) async {
     try {
       final transactions = await _databaseService
           .getPaymentTransactionsByPaymentId(paymentId);
       return transactions
-          .map((map) => PaymentTransaction.fromMap(map))
+          .map(PaymentTransactionModel.fromMap)
           .toList();
     } catch (e) {
       throw DatabaseException(
@@ -26,11 +26,11 @@ class PaymentTransactionRepository {
   }
 
   /// Belirli bir işlemi ID'ye göre getirir.
-  Future<PaymentTransaction?> getTransactionById(String id) async {
+  Future<PaymentTransactionModel?> getTransactionById(String id) async {
     try {
       final transaction = await _databaseService.getPaymentTransactionById(id);
       if (transaction != null) {
-        return PaymentTransaction.fromMap(transaction);
+        return PaymentTransactionModel.fromMap(transaction);
       }
       return null;
     } catch (e) {
@@ -41,7 +41,7 @@ class PaymentTransactionRepository {
   }
 
   /// Yeni bir ödeme işlemi ekler.
-  Future<void> addTransaction(PaymentTransaction transaction) async {
+  Future<void> addTransaction(PaymentTransactionModel transaction) async {
     try {
       await _databaseService.insertPaymentTransaction(transaction.toMap());
     } catch (e) {
@@ -52,7 +52,7 @@ class PaymentTransactionRepository {
   }
 
   /// Bir ödeme işlemini günceller.
-  Future<void> updateTransaction(PaymentTransaction transaction) async {
+  Future<void> updateTransaction(PaymentTransactionModel transaction) async {
     try {
       await _databaseService.updatePaymentTransaction(transaction.toMap());
     } catch (e) {

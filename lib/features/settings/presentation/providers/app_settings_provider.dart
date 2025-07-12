@@ -5,14 +5,18 @@ import 'package:ders_planlayici/core/error/app_exception.dart';
 
 /// Uygulama ayarlarını yöneten provider sınıfı.
 class AppSettingsProvider extends ChangeNotifier {
+
+  AppSettingsProvider(this._settingsRepository) {
+    _loadSettings();
+  }
   final AppSettingsRepository _settingsRepository;
 
-  AppSettings _settings = AppSettings.defaultSettings();
+  AppSettingsModel _settings = AppSettingsModel.defaultSettings();
   bool _isLoading = false;
   AppException? _error;
 
   /// Mevcut ayarları döndürür.
-  AppSettings get settings => _settings;
+  AppSettingsModel get settings => _settings;
 
   /// Yükleme durumunu döndürür.
   bool get isLoading => _isLoading;
@@ -22,10 +26,6 @@ class AppSettingsProvider extends ChangeNotifier {
 
   /// Silmeden önce onay isteyip istememeyi belirleyen ayarı döndürür.
   bool get confirmBeforeDelete => _settings.confirmBeforeDelete;
-
-  AppSettingsProvider(this._settingsRepository) {
-    _loadSettings();
-  }
 
   /// Uygulama ayarlarını yükler.
   Future<void> _loadSettings() async {
@@ -38,7 +38,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ayarlar yüklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -60,7 +60,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Tema modu güncellenirken bir hata oluştu: ${e.toString()}',
       );
@@ -82,7 +82,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Bildirim zamanı güncellenirken bir hata oluştu: ${e.toString()}',
@@ -105,7 +105,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Silme onayı ayarı güncellenirken bir hata oluştu: ${e.toString()}',
@@ -128,7 +128,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Hafta sonu gösterme ayarı güncellenirken bir hata oluştu: ${e.toString()}',
@@ -151,7 +151,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Ders renklerini gösterme ayarı güncellenirken bir hata oluştu: ${e.toString()}',
@@ -174,7 +174,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Varsayılan ders süresi güncellenirken bir hata oluştu: ${e.toString()}',
@@ -197,7 +197,7 @@ class AppSettingsProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Varsayılan ders ücreti güncellenirken bir hata oluştu: ${e.toString()}',

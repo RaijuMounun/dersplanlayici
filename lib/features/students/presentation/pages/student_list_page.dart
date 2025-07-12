@@ -96,7 +96,7 @@ class _StudentListPageState extends State<StudentListPage> {
           _isSearching = false;
         });
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         setState(() {
           _isSearching = false;
@@ -175,8 +175,7 @@ class _StudentListPageState extends State<StudentListPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<StudentProvider>(
+  Widget build(BuildContext context) => Consumer<StudentProvider>(
       builder: (context, studentProvider, child) {
         if (studentProvider.isLoading || _isSearching) {
           return const Center(child: CircularProgressIndicator());
@@ -207,10 +206,8 @@ class _StudentListPageState extends State<StudentListPage> {
         );
       },
     );
-  }
 
-  Widget _buildSearchFilterBar() {
-    return Padding(
+  Widget _buildSearchFilterBar() => Padding(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: ResponsiveLayout(
         mobile: Column(
@@ -236,10 +233,8 @@ class _StudentListPageState extends State<StudentListPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildSearchField() {
-    return TextField(
+  Widget _buildSearchField() => TextField(
       controller: _searchController,
       decoration: InputDecoration(
         hintText: 'Öğrenci ara...',
@@ -254,9 +249,7 @@ class _StudentListPageState extends State<StudentListPage> {
         suffixIcon: _searchQuery.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear),
-                onPressed: () {
-                  _searchController.clear();
-                },
+                onPressed: _searchController.clear,
               )
             : null,
         border: OutlineInputBorder(
@@ -264,10 +257,8 @@ class _StudentListPageState extends State<StudentListPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildGradeFilter() {
-    return DropdownButtonFormField<String>(
+  Widget _buildGradeFilter() => DropdownButtonFormField<String>(
       value: _selectedGrade,
       decoration: InputDecoration(
         hintText: 'Sınıf Filtresi',
@@ -275,22 +266,18 @@ class _StudentListPageState extends State<StudentListPage> {
           borderRadius: BorderRadius.circular(AppDimensions.radius8),
         ),
       ),
-      items: _gradeOptions.map((grade) {
-        return DropdownMenuItem<String>(
+      items: _gradeOptions.map((grade) => DropdownMenuItem<String>(
           value: grade,
           child: Text(grade.isEmpty ? 'Tüm Sınıflar' : grade),
-        );
-      }).toList(),
+        )).toList(),
       onChanged: (value) {
         setState(() {
           _selectedGrade = value ?? '';
         });
       },
     );
-  }
 
-  Widget _buildSelectionAppBar(List<Student> students) {
-    return Container(
+  Widget _buildSelectionAppBar(List<Student> students) => Container(
       color: AppColors.surface,
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.spacing16,
@@ -321,7 +308,7 @@ class _StudentListPageState extends State<StudentListPage> {
             icon: const Icon(Icons.delete),
             tooltip: 'Seçilenleri Sil',
             onPressed: _selectedStudents.isNotEmpty
-                ? () => _showBulkDeleteConfirmation()
+                ? _showBulkDeleteConfirmation
                 : null,
           ),
           IconButton(
@@ -332,16 +319,13 @@ class _StudentListPageState extends State<StudentListPage> {
         ],
       ),
     );
-  }
 
-  Widget _buildMobileList(List<Student> students) {
-    return Stack(
+  Widget _buildMobileList(List<Student> students) => Stack(
       children: [
         ListView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing8),
           itemCount: students.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
+          itemBuilder: (context, index) => GestureDetector(
               onLongPress: () {
                 if (!_isSelectionMode) {
                   _toggleSelectionMode();
@@ -349,8 +333,7 @@ class _StudentListPageState extends State<StudentListPage> {
                 }
               },
               child: _buildStudentItem(students[index]),
-            );
-          },
+            ),
         ),
         if (!_isSelectionMode)
           Positioned(
@@ -370,16 +353,13 @@ class _StudentListPageState extends State<StudentListPage> {
           ),
       ],
     );
-  }
 
-  Widget _buildTabletList(List<Student> students) {
-    return Stack(
+  Widget _buildTabletList(List<Student> students) => Stack(
       children: [
         ListView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
           itemCount: students.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
+          itemBuilder: (context, index) => GestureDetector(
               onLongPress: () {
                 if (!_isSelectionMode) {
                   _toggleSelectionMode();
@@ -392,8 +372,7 @@ class _StudentListPageState extends State<StudentListPage> {
                 ),
                 child: _buildStudentItem(students[index]),
               ),
-            );
-          },
+            ),
         ),
         if (!_isSelectionMode)
           Positioned(
@@ -414,10 +393,8 @@ class _StudentListPageState extends State<StudentListPage> {
           ),
       ],
     );
-  }
 
-  Widget _buildDesktopList(List<Student> students) {
-    return Stack(
+  Widget _buildDesktopList(List<Student> students) => Stack(
       children: [
         GridView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -428,8 +405,7 @@ class _StudentListPageState extends State<StudentListPage> {
             mainAxisSpacing: AppDimensions.spacing16,
           ),
           itemCount: students.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
+          itemBuilder: (context, index) => GestureDetector(
               onLongPress: () {
                 if (!_isSelectionMode) {
                   _toggleSelectionMode();
@@ -437,8 +413,7 @@ class _StudentListPageState extends State<StudentListPage> {
                 }
               },
               child: _buildStudentItem(students[index]),
-            );
-          },
+            ),
         ),
         if (!_isSelectionMode)
           Positioned(
@@ -459,10 +434,8 @@ class _StudentListPageState extends State<StudentListPage> {
           ),
       ],
     );
-  }
 
-  Widget _buildStudentItem(Student student) {
-    return StudentListItem(
+  Widget _buildStudentItem(Student student) => StudentListItem(
       name: student.name,
       grade: student.grade,
       subjects: student.subjects,
@@ -484,10 +457,8 @@ class _StudentListPageState extends State<StudentListPage> {
           ? null
           : () => _showDeleteConfirmation(student),
     );
-  }
 
-  Widget _buildEmptyState() {
-    return Center(
+  Widget _buildEmptyState() => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -534,10 +505,8 @@ class _StudentListPageState extends State<StudentListPage> {
         ],
       ),
     );
-  }
 
-  Widget _buildNoResultsState() {
-    return Center(
+  Widget _buildNoResultsState() => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -581,7 +550,6 @@ class _StudentListPageState extends State<StudentListPage> {
         ],
       ),
     );
-  }
 
   void _showDeleteConfirmation(Student student) {
     final settingsProvider = Provider.of<AppSettingsProvider>(
@@ -632,7 +600,7 @@ class _StudentListPageState extends State<StudentListPage> {
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -695,7 +663,7 @@ class _StudentListPageState extends State<StudentListPage> {
         try {
           await context.read<StudentProvider>().deleteStudent(id);
           successCount++;
-        } catch (e) {
+        } on Exception {
           errorCount++;
         }
       }
@@ -716,7 +684,7 @@ class _StudentListPageState extends State<StudentListPage> {
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

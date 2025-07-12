@@ -132,30 +132,21 @@ class _LessonsPageState extends State<LessonsPage>
     );
   }
 
-  Widget _buildLessonList(LessonFilterType filterType) {
-    return Consumer<LessonProvider>(
+  Widget _buildLessonList(LessonFilterType filterType) => Consumer<LessonProvider>(
       builder: (context, lessonProvider, child) {
-        print('🔍 [LessonsPage] _buildLessonList çağrıldı - Tip: $filterType');
-        print('🔍 [LessonsPage] Loading durumu: ${lessonProvider.isLoading}');
-        print('🔍 [LessonsPage] Hata durumu: ${lessonProvider.error}');
-
         // Veri yükleniyor mu kontrolü
         if (lessonProvider.isLoading) {
-          print('🔍 [LessonsPage] Yükleme gösteriliyor');
           return const Center(child: CircularProgressIndicator());
         }
 
         // Filtreli ders listesini al
         final lessons = _getFilteredLessons(lessonProvider, filterType);
-        print('🔍 [LessonsPage] Filtrelenmiş ders sayısı: ${lessons.length}');
 
         // Ders yoksa boş durum mesajı göster
         if (lessons.isEmpty) {
-          print('🔍 [LessonsPage] Boş durum gösteriliyor');
           return _buildEmptyState(filterType);
         }
 
-        print('🔍 [LessonsPage] Ders listesi gösteriliyor');
         // Seçim modu aktifse üst menü göster
         return Column(
           children: [
@@ -173,10 +164,8 @@ class _LessonsPageState extends State<LessonsPage>
         );
       },
     );
-  }
 
-  Widget _buildSelectionAppBar(List<Lesson> lessons) {
-    return Container(
+  Widget _buildSelectionAppBar(List<Lesson> lessons) => Container(
       color: AppColors.surface,
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.spacing16,
@@ -207,7 +196,7 @@ class _LessonsPageState extends State<LessonsPage>
             icon: const Icon(Icons.delete),
             tooltip: 'Seçilenleri Sil',
             onPressed: _selectedLessons.isNotEmpty
-                ? () => _showBulkDeleteConfirmation()
+                ? _showBulkDeleteConfirmation
                 : null,
           ),
           IconButton(
@@ -218,17 +207,14 @@ class _LessonsPageState extends State<LessonsPage>
         ],
       ),
     );
-  }
 
   // Mobil cihazlar için liste görünümü
-  Widget _buildMobileList(List<Lesson> lessons) {
-    return Stack(
+  Widget _buildMobileList(List<Lesson> lessons) => Stack(
       children: [
         ListView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing8),
           itemCount: lessons.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
+          itemBuilder: (context, index) => GestureDetector(
               onLongPress: () {
                 if (!_isSelectionMode) {
                   _toggleSelectionMode();
@@ -236,8 +222,7 @@ class _LessonsPageState extends State<LessonsPage>
                 }
               },
               child: _buildLessonItem(lessons[index]),
-            );
-          },
+            ),
         ),
         if (!_isSelectionMode)
           Positioned(
@@ -256,17 +241,14 @@ class _LessonsPageState extends State<LessonsPage>
           ),
       ],
     );
-  }
 
   // Tablet cihazlar için liste görünümü - daha büyük paddingler
-  Widget _buildTabletList(List<Lesson> lessons) {
-    return Stack(
+  Widget _buildTabletList(List<Lesson> lessons) => Stack(
       children: [
         ListView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
           itemCount: lessons.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
+          itemBuilder: (context, index) => GestureDetector(
               onLongPress: () {
                 if (!_isSelectionMode) {
                   _toggleSelectionMode();
@@ -279,8 +261,7 @@ class _LessonsPageState extends State<LessonsPage>
                 ),
                 child: _buildLessonItem(lessons[index]),
               ),
-            );
-          },
+            ),
         ),
         if (!_isSelectionMode)
           Positioned(
@@ -300,11 +281,9 @@ class _LessonsPageState extends State<LessonsPage>
           ),
       ],
     );
-  }
 
   // Desktop cihazlar için liste görünümü - çift sütunlu
-  Widget _buildDesktopList(List<Lesson> lessons) {
-    return Stack(
+  Widget _buildDesktopList(List<Lesson> lessons) => Stack(
       children: [
         GridView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -315,8 +294,7 @@ class _LessonsPageState extends State<LessonsPage>
             mainAxisSpacing: AppDimensions.spacing16,
           ),
           itemCount: lessons.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
+          itemBuilder: (context, index) => GestureDetector(
               onLongPress: () {
                 if (!_isSelectionMode) {
                   _toggleSelectionMode();
@@ -324,8 +302,7 @@ class _LessonsPageState extends State<LessonsPage>
                 }
               },
               child: _buildLessonItem(lessons[index]),
-            );
-          },
+            ),
         ),
         if (!_isSelectionMode)
           Positioned(
@@ -345,11 +322,9 @@ class _LessonsPageState extends State<LessonsPage>
           ),
       ],
     );
-  }
 
   // Ders liste öğesi
-  Widget _buildLessonItem(Lesson lesson) {
-    return LessonListItem(
+  Widget _buildLessonItem(Lesson lesson) => LessonListItem(
       lessonTitle: lesson.subject,
       studentName: lesson.studentName,
       startTime: _parseDateTime(lesson.date, lesson.startTime),
@@ -377,7 +352,6 @@ class _LessonsPageState extends State<LessonsPage>
           ? null
           : () => _markLessonAsCompleted(lesson),
     );
-  }
 
   Widget _buildEmptyState(LessonFilterType filterType) {
     String message;
@@ -457,10 +431,6 @@ class _LessonsPageState extends State<LessonsPage>
     LessonFilterType filterType,
   ) {
     final now = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    print(
-      '🔍 [LessonsPage] Filtreleme yapılıyor - Tip: $filterType, Bugün: $now',
-    );
-    print('🔍 [LessonsPage] Toplam ders sayısı: ${provider.lessons.length}');
 
     List<Lesson> filteredLessons;
     switch (filterType) {
@@ -477,22 +447,15 @@ class _LessonsPageState extends State<LessonsPage>
                               0)),
             )
             .toList();
-        print('🔍 [LessonsPage] Gelecek dersler: ${filteredLessons.length}');
         break;
       case LessonFilterType.completed:
         filteredLessons = provider.lessons
             .where((lesson) => lesson.status == LessonStatus.completed)
             .toList();
-        print('🔍 [LessonsPage] Tamamlanan dersler: ${filteredLessons.length}');
         break;
       case LessonFilterType.all:
         filteredLessons = provider.lessons;
-        print('🔍 [LessonsPage] Tüm dersler: ${filteredLessons.length}');
         break;
-    }
-
-    if (filteredLessons.isNotEmpty) {
-      print('🔍 [LessonsPage] İlk ders: ${filteredLessons.first.toString()}');
     }
 
     return filteredLessons;
@@ -551,7 +514,7 @@ class _LessonsPageState extends State<LessonsPage>
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -577,7 +540,7 @@ class _LessonsPageState extends State<LessonsPage>
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -651,7 +614,7 @@ class _LessonsPageState extends State<LessonsPage>
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -31,13 +31,11 @@ class _PaymentListPageState extends State<PaymentListPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Apply filter from state if needed
-    if (_statusFilter.isNotEmpty) {
-      Future.microtask(() {
-        Provider.of<PaymentProvider>(
-          context,
-          listen: false,
-        ).filterByStatus(_statusFilter, notify: true);
-      });
+    if (_statusFilter.isNotEmpty && mounted) {
+      Provider.of<PaymentProvider>(
+        context,
+        listen: false,
+      ).filterByStatus(_statusFilter, notify: true);
     }
   }
 
@@ -48,6 +46,8 @@ class _PaymentListPageState extends State<PaymentListPage> {
   }
 
   Future<void> _loadPayments() async {
+    if (!mounted) return;
+
     final paymentProvider = Provider.of<PaymentProvider>(
       context,
       listen: false,
@@ -58,7 +58,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
     // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
     if (mounted) {
-      Future.microtask(() {
+      await Future.microtask(() {
         if (mounted) {
           // State güncellemelerini build dışında yap
           paymentProvider.notifyListeners();
@@ -71,193 +71,181 @@ class _PaymentListPageState extends State<PaymentListPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ödemeler'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'Ödeme Geçmişi',
-            onPressed: () {
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Ödemeler'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.history),
+          tooltip: 'Ödeme Geçmişi',
+          onPressed: () {
+            if (mounted) {
               context.push('/fee-history');
-            },
+            }
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Yenile',
+          onPressed: () {
+            setState(() {
+              _isLoading = true;
+            });
+            _loadPayments();
+          },
+        ),
+      ],
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : ResponsiveLayout(
+            mobile: _buildMobileLayout(),
+            tablet: _buildTabletLayout(),
+            desktop: _buildDesktopLayout(),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Yenile',
-            onPressed: () {
-              setState(() {
-                _isLoading = true;
-              });
-              _loadPayments();
-            },
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ResponsiveLayout(
-              mobile: _buildMobileLayout(),
-              tablet: _buildTabletLayout(),
-              desktop: _buildDesktopLayout(),
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
+    floatingActionButton: FloatingActionButton(
+      onPressed: () {
+        if (mounted) {
           context.push('/add-payment');
-        },
-        tooltip: 'Ödeme Ekle',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    return Column(
-      children: [
-        _buildSearchAndFilterBar(),
-        Expanded(child: _buildPaymentsList()),
-      ],
-    );
-  }
-
-  Widget _buildTabletLayout() {
-    return Column(
-      children: [
-        _buildSearchAndFilterBar(),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.spacing16),
-            child: _buildPaymentsList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.spacing16),
-            child: _buildFilterPanel(),
-          ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Column(
-            children: [
-              _buildSearchBar(),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.spacing16),
-                  child: _buildPaymentsList(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchAndFilterBar() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.spacing16),
-      child: Column(
-        children: [
-          _buildSearchBar(),
-          const SizedBox(height: AppDimensions.spacing12),
-          _buildFilterChips(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return TextField(
-      controller: _searchController,
-      decoration: InputDecoration(
-        hintText: 'Ödeme ara...',
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: _searchQuery.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  setState(() {
-                    _searchController.clear();
-                    _searchQuery = '';
-                  });
-                },
-              )
-            : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radius8),
-        ),
-      ),
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value;
-        });
+        }
       },
-    );
-  }
+      tooltip: 'Ödeme Ekle',
+      child: const Icon(Icons.add),
+    ),
+  );
 
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildFilterChip('', 'Tümü'),
-          const SizedBox(width: AppDimensions.spacing8),
-          _buildFilterChip('pending', 'Beklemede'),
-          const SizedBox(width: AppDimensions.spacing8),
-          _buildFilterChip('paid', 'Ödenmiş'),
-          const SizedBox(width: AppDimensions.spacing8),
-          _buildFilterChip('partiallyPaid', 'Kısmi Ödenmiş'),
-          const SizedBox(width: AppDimensions.spacing8),
-          _buildFilterChip('overdue', 'Gecikmiş'),
-        ],
+  Widget _buildMobileLayout() => Column(
+    children: [
+      _buildSearchAndFilterBar(),
+      Expanded(child: _buildPaymentsList()),
+    ],
+  );
+
+  Widget _buildTabletLayout() => Column(
+    children: [
+      _buildSearchAndFilterBar(),
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
+          child: _buildPaymentsList(),
+        ),
       ),
-    );
-  }
+    ],
+  );
 
-  Widget _buildFilterPanel() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
+  Widget _buildDesktopLayout() => Row(
+    children: [
+      Expanded(
+        flex: 1,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
+          child: _buildFilterPanel(),
+        ),
+      ),
+      Expanded(
+        flex: 3,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Filtreler',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            _buildSearchBar(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.spacing16),
+                child: _buildPaymentsList(),
+              ),
             ),
-            const SizedBox(height: AppDimensions.spacing16),
-            const Text(
-              'Ödeme Durumu',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.spacing8),
-            _buildFilterOption('', 'Tümü'),
-            _buildFilterOption('pending', 'Beklemede'),
-            _buildFilterOption('paid', 'Ödenmiş'),
-            _buildFilterOption('partiallyPaid', 'Kısmi Ödenmiş'),
-            _buildFilterOption('overdue', 'Gecikmiş'),
-            const SizedBox(height: AppDimensions.spacing24),
-            const Text(
-              'Öğrenci İstatistikleri',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.spacing8),
-            _buildStatCard(),
           ],
         ),
       ),
-    );
-  }
+    ],
+  );
+
+  Widget _buildSearchAndFilterBar() => Padding(
+    padding: const EdgeInsets.all(AppDimensions.spacing16),
+    child: Column(
+      children: [
+        _buildSearchBar(),
+        const SizedBox(height: AppDimensions.spacing12),
+        _buildFilterChips(),
+      ],
+    ),
+  );
+
+  Widget _buildSearchBar() => TextField(
+    controller: _searchController,
+    decoration: InputDecoration(
+      hintText: 'Ödeme ara...',
+      prefixIcon: const Icon(Icons.search),
+      suffixIcon: _searchQuery.isNotEmpty
+          ? IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                setState(() {
+                  _searchController.clear();
+                  _searchQuery = '';
+                });
+              },
+            )
+          : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radius8),
+      ),
+    ),
+    onChanged: (value) {
+      setState(() {
+        _searchQuery = value;
+      });
+    },
+  );
+
+  Widget _buildFilterChips() => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: [
+        _buildFilterChip('', 'Tümü'),
+        const SizedBox(width: AppDimensions.spacing8),
+        _buildFilterChip('pending', 'Beklemede'),
+        const SizedBox(width: AppDimensions.spacing8),
+        _buildFilterChip('paid', 'Ödenmiş'),
+        const SizedBox(width: AppDimensions.spacing8),
+        _buildFilterChip('partiallyPaid', 'Kısmi Ödenmiş'),
+        const SizedBox(width: AppDimensions.spacing8),
+        _buildFilterChip('overdue', 'Gecikmiş'),
+      ],
+    ),
+  );
+
+  Widget _buildFilterPanel() => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Filtreler',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          const Text(
+            'Ödeme Durumu',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          _buildFilterOption('', 'Tümü'),
+          _buildFilterOption('pending', 'Beklemede'),
+          _buildFilterOption('paid', 'Ödenmiş'),
+          _buildFilterOption('partiallyPaid', 'Kısmi Ödenmiş'),
+          _buildFilterOption('overdue', 'Gecikmiş'),
+          const SizedBox(height: AppDimensions.spacing24),
+          const Text(
+            'Öğrenci İstatistikleri',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          _buildStatCard(),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildFilterChip(String status, String label) {
     final isSelected = _statusFilter == status;
@@ -378,7 +366,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
     );
   }
 
-  List<Payment> _filterPayments(List<Payment> payments) {
+  List<PaymentModel> _filterPayments(List<PaymentModel> payments) {
     if (_searchQuery.isEmpty && _statusFilter.isEmpty) {
       return payments;
     }
@@ -403,7 +391,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
     }).toList();
   }
 
-  Widget _buildPaymentCard(Payment payment) {
+  Widget _buildPaymentCard(PaymentModel payment) {
     final formattedDate = DateFormat(
       'dd/MM/yyyy',
     ).format(DateTime.parse(payment.date));
@@ -445,7 +433,9 @@ class _PaymentListPageState extends State<PaymentListPage> {
                         ),
                         Text(
                           payment.description,
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -475,7 +465,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
               const SizedBox(height: AppDimensions.spacing12),
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.calendar_today,
                     size: 16,
                     color: AppColors.textSecondary,
@@ -483,15 +473,19 @@ class _PaymentListPageState extends State<PaymentListPage> {
                   const SizedBox(width: AppDimensions.spacing4),
                   Text(
                     formattedDate,
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   if (payment.dueDate != null) ...[
                     const SizedBox(width: AppDimensions.spacing8),
-                    Icon(Icons.event, size: 16, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.event,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: AppDimensions.spacing4),
                     Text(
                       'Son Ödeme: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(payment.dueDate!))}',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                   const Spacer(),
@@ -505,7 +499,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
                 const SizedBox(height: AppDimensions.spacing8),
                 Text(
                   payment.notes!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                   ),
@@ -543,7 +537,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
     );
   }
 
-  void _confirmDeletePayment(Payment payment) {
+  void _confirmDeletePayment(PaymentModel payment) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -582,7 +576,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
       // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
       if (mounted) {
-        Future.microtask(() {
+        await Future.microtask(() {
           if (mounted) {
             // State güncellemelerini build dışında yap
             provider.notifyListeners();
@@ -595,7 +589,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
           }
         });
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -607,51 +601,49 @@ class _PaymentListPageState extends State<PaymentListPage> {
     }
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.payments_outlined,
-            size: 64,
-            color: AppColors.textSecondary.withAlpha(128),
-          ),
-          const SizedBox(height: AppDimensions.spacing16),
-          Text(
+  Widget _buildEmptyState() => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.payments_outlined,
+          size: 64,
+          color: AppColors.textSecondary.withAlpha(128),
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        Text(
+          _searchQuery.isNotEmpty || _statusFilter.isNotEmpty
+              ? 'Arama kriterlerine uygun ödeme bulunamadı'
+              : 'Henüz ödeme kaydı bulunmuyor',
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+        ),
+        const SizedBox(height: AppDimensions.spacing24),
+        ElevatedButton.icon(
+          onPressed: () {
+            if (_searchQuery.isNotEmpty || _statusFilter.isNotEmpty) {
+              setState(() {
+                _searchQuery = '';
+                _statusFilter = '';
+                _searchController.clear();
+              });
+            } else {
+              context.push('/add-payment');
+            }
+          },
+          icon: Icon(
             _searchQuery.isNotEmpty || _statusFilter.isNotEmpty
-                ? 'Arama kriterlerine uygun ödeme bulunamadı'
-                : 'Henüz ödeme kaydı bulunmuyor',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                ? Icons.clear_all
+                : Icons.add,
           ),
-          const SizedBox(height: AppDimensions.spacing24),
-          ElevatedButton.icon(
-            onPressed: () {
-              if (_searchQuery.isNotEmpty || _statusFilter.isNotEmpty) {
-                setState(() {
-                  _searchQuery = '';
-                  _statusFilter = '';
-                  _searchController.clear();
-                });
-              } else {
-                context.push('/add-payment');
-              }
-            },
-            icon: Icon(
-              _searchQuery.isNotEmpty || _statusFilter.isNotEmpty
-                  ? Icons.clear_all
-                  : Icons.add,
-            ),
-            label: Text(
-              _searchQuery.isNotEmpty || _statusFilter.isNotEmpty
-                  ? 'Filtreleri Temizle'
-                  : 'Ödeme Ekle',
-            ),
+          label: Text(
+            _searchQuery.isNotEmpty || _statusFilter.isNotEmpty
+                ? 'Filtreleri Temizle'
+                : 'Ödeme Ekle',
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 
   Color _getStatusColor(PaymentStatus status) {
     switch (status) {

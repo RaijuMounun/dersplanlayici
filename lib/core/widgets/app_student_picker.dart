@@ -6,15 +6,6 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 
 /// Ders ekleme/düzenleme formlarında kullanılacak öğrenci seçim widget'ı.
 class AppStudentPicker extends StatefulWidget {
-  final String? initialSelectedId;
-  final List<Student> students;
-  final Function(String) onStudentSelected;
-  final String? label;
-  final String hint;
-  final bool enabled;
-  final bool required;
-  final bool showAddButton;
-  final VoidCallback? onAddPressed;
 
   const AppStudentPicker({
     super.key,
@@ -28,6 +19,15 @@ class AppStudentPicker extends StatefulWidget {
     this.showAddButton = false,
     this.onAddPressed,
   });
+  final String? initialSelectedId;
+  final List<Student> students;
+  final Function(String) onStudentSelected;
+  final String? label;
+  final String hint;
+  final bool enabled;
+  final bool required;
+  final bool showAddButton;
+  final VoidCallback? onAddPressed;
 
   @override
   State<AppStudentPicker> createState() => _AppStudentPickerState();
@@ -81,10 +81,8 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
 
     final lowerCaseQuery = query.toLowerCase();
     setState(() {
-      _filteredStudents = widget.students.where((student) {
-        return student.name.toLowerCase().contains(lowerCaseQuery) ||
-            student.grade.toLowerCase().contains(lowerCaseQuery);
-      }).toList();
+      _filteredStudents = widget.students.where((student) => student.name.toLowerCase().contains(lowerCaseQuery) ||
+            student.grade.toLowerCase().contains(lowerCaseQuery)).toList();
     });
   }
 
@@ -93,7 +91,7 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
     final selectedStudent = _selectedStudentId != null
         ? widget.students.firstWhere(
             (student) => student.id == _selectedStudentId,
-            orElse: () => Student(id: "0", name: "", grade: ""),
+            orElse: () => Student(id: '0', name: '', grade: ''),
           )
         : null;
 
@@ -135,15 +133,15 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
                   : AppColors.disabledBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                borderSide: BorderSide(color: AppColors.primary, width: 2),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.spacing12,
@@ -154,12 +152,12 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
               children: [
                 Expanded(
                   child: Text(
-                    selectedStudent != null && selectedStudent.id != "0"
+                    selectedStudent != null && selectedStudent.id != '0'
                         ? selectedStudent.name
                         : widget.hint,
                     style: TextStyle(
                       color:
-                          selectedStudent != null && selectedStudent.id != "0"
+                          selectedStudent != null && selectedStudent.id != '0'
                           ? Theme.of(context).textTheme.bodyLarge?.color
                           : AppColors.textHint,
                     ),
@@ -167,16 +165,16 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
                   ),
                 ),
                 if (selectedStudent != null &&
-                    selectedStudent.id != "0" &&
+                    selectedStudent.id != '0' &&
                     widget.enabled)
                   InkWell(
                     onTap: () {
                       setState(() {
                         _selectedStudentId = null;
                       });
-                      widget.onStudentSelected("");
+                      widget.onStudentSelected('');
                     },
-                    child: Icon(
+                    child: const Icon(
                       Icons.clear,
                       size: 18,
                       color: AppColors.textSecondary,
@@ -193,8 +191,7 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
   void _showStudentSelectionDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
+      builder: (context) => StatefulBuilder(
           builder: (context, setState) {
             // Dialog genişliği responsive olarak ayarlanır
             final dialogWidth = ResponsiveUtils.deviceValue<double>(
@@ -318,8 +315,7 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
               ],
             );
           },
-        );
-      },
+        ),
     );
   }
 

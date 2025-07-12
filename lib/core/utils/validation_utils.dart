@@ -54,7 +54,7 @@ class ValidationUtils {
       if (date.toString().substring(0, 10) != value) {
         return 'Geçerli bir tarih formatı giriniz (YYYY-MM-DD)';
       }
-    } catch (e) {
+    } on FormatException {
       return 'Geçerli bir tarih formatı giriniz (YYYY-MM-DD)';
     }
 

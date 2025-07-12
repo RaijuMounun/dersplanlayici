@@ -5,41 +5,6 @@ import '../theme/app_dimensions.dart';
 
 /// Uygulamada kullanılan standart metin giriş alanı widget'ı.
 class AppTextField extends StatelessWidget {
-  final String? label;
-  final String? hint;
-  final String? initialValue;
-  final TextEditingController? controller;
-  final FocusNode? focusNode;
-  final TextInputType keyboardType;
-  final TextInputAction textInputAction;
-  final bool obscureText;
-  final bool readOnly;
-  final bool enabled;
-  final bool autofocus;
-  final int? maxLines;
-  final int? minLines;
-  final int? maxLength;
-  final List<TextInputFormatter>? inputFormatters;
-  final ValueChanged<String>? onChanged;
-  final ValueChanged<String>? onSubmitted;
-  final VoidCallback? onTap;
-  final FormFieldValidator<String>? validator;
-  final Widget? prefix;
-  final Widget? suffix;
-  final Widget? prefixIcon;
-  final Widget? suffixIcon;
-  final EdgeInsets? contentPadding;
-  final bool filled;
-  final Color? fillColor;
-  final String? helperText;
-  final String? errorText;
-  final TextStyle? style;
-  final TextStyle? labelStyle;
-  final TextStyle? hintStyle;
-  final TextStyle? errorStyle;
-  final TextAlign textAlign;
-  final bool showCursor;
-  final bool required;
 
   const AppTextField({
     super.key,
@@ -79,6 +44,41 @@ class AppTextField extends StatelessWidget {
     this.showCursor = true,
     this.required = false,
   });
+  final String? label;
+  final String? hint;
+  final String? initialValue;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final TextInputType keyboardType;
+  final TextInputAction textInputAction;
+  final bool obscureText;
+  final bool readOnly;
+  final bool enabled;
+  final bool autofocus;
+  final int? maxLines;
+  final int? minLines;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onTap;
+  final FormFieldValidator<String>? validator;
+  final Widget? prefix;
+  final Widget? suffix;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final EdgeInsets? contentPadding;
+  final bool filled;
+  final Color? fillColor;
+  final String? helperText;
+  final String? errorText;
+  final TextStyle? style;
+  final TextStyle? labelStyle;
+  final TextStyle? hintStyle;
+  final TextStyle? errorStyle;
+  final TextAlign textAlign;
+  final bool showCursor;
+  final bool required;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +100,7 @@ class AppTextField extends StatelessWidget {
                 style: labelStyle ?? Theme.of(context).textTheme.titleSmall,
               ),
               if (required)
-                Text(' *', style: TextStyle(color: AppColors.error)),
+                const Text(' *', style: TextStyle(color: AppColors.error)),
             ],
           ),
           const SizedBox(height: 8),
@@ -141,23 +141,23 @@ class AppTextField extends StatelessWidget {
             errorStyle: errorStyle,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: BorderSide(color: AppColors.error),
+              borderSide: const BorderSide(color: AppColors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: BorderSide(color: AppColors.error, width: 2),
+              borderSide: const BorderSide(color: AppColors.error, width: 2),
             ),
           ),
         ),

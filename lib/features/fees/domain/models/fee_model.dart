@@ -15,20 +15,9 @@ enum PaymentType {
 }
 
 /// Ücret bilgilerini temsil eden model sınıfı.
-class Fee {
-  final String id;
-  final String studentId;
-  final String studentName;
-  final double amount;
-  final double? paidAmount;
-  final String date;
-  final PaymentStatus status;
-  final PaymentType? paymentType;
-  final String? paymentDate;
-  final String? notes;
-  final String? month; // Hangi aya ait (Ör: "2025-01")
+class FeeModel { // Hangi aya ait (Ör: "2025-01")
 
-  Fee({
+  FeeModel({
     String? id,
     required this.studentId,
     required this.studentName,
@@ -42,9 +31,8 @@ class Fee {
     this.month,
   }) : id = id ?? const Uuid().v4();
 
-  /// Map objesinden Fee nesnesine dönüştürür.
-  factory Fee.fromMap(Map<String, dynamic> map) {
-    return Fee(
+  /// Map objesinden FeeModel nesnesine dönüştürür.
+  factory FeeModel.fromMap(Map<String, dynamic> map) => FeeModel(
       id: map['id'] as String,
       studentId: map['studentId'] as String,
       studentName: map['studentName'] as String,
@@ -65,11 +53,20 @@ class Fee {
       notes: map['notes'] as String?,
       month: map['month'] as String?,
     );
-  }
+  final String id;
+  final String studentId;
+  final String studentName;
+  final double amount;
+  final double? paidAmount;
+  final String date;
+  final PaymentStatus status;
+  final PaymentType? paymentType;
+  final String? paymentDate;
+  final String? notes;
+  final String? month;
 
   /// Fee nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, dynamic> toMap() => {
       'id': id,
       'studentId': studentId,
       'studentName': studentName,
@@ -82,10 +79,9 @@ class Fee {
       'notes': notes,
       'month': month,
     };
-  }
 
   /// Güncellenmiş bir ücret nesnesi oluşturur.
-  Fee copyWith({
+  FeeModel copyWith({
     String? studentId,
     String? studentName,
     double? amount,
@@ -96,8 +92,7 @@ class Fee {
     String? paymentDate,
     String? notes,
     String? month,
-  }) {
-    return Fee(
+  }) => FeeModel(
       id: id,
       studentId: studentId ?? this.studentId,
       studentName: studentName ?? this.studentName,
@@ -110,10 +105,7 @@ class Fee {
       notes: notes ?? this.notes,
       month: month ?? this.month,
     );
-  }
 
   @override
-  String toString() {
-    return 'Fee(id: $id, studentName: $studentName, amount: $amount, status: $status)';
-  }
+  String toString() => 'FeeModel(id: $id, studentName: $studentName, amount: $amount, status: $status)';
 }

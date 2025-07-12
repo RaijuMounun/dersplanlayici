@@ -16,10 +16,10 @@ import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_p
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 
 class AddEditLessonPage extends StatefulWidget {
-  final String? lessonId;
-  final String? studentId;
 
   const AddEditLessonPage({super.key, this.lessonId, this.studentId});
+  final String? lessonId;
+  final String? studentId;
 
   @override
   State<AddEditLessonPage> createState() => _AddEditLessonPageState();
@@ -102,12 +102,12 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
           // Eğer tekrarlanan bir dersse
           if (lesson.recurringPatternId != null) {
             // Tekrarlama bilgisini getir
-            _loadRecurringPattern(lesson.recurringPatternId!);
+            await _loadRecurringPattern(lesson.recurringPatternId!);
           }
         } else {
           _errorMessage = 'Ders bulunamadı';
         }
-      } catch (e) {
+      } on Exception catch (e) {
         _errorMessage = 'Ders yüklenirken hata oluştu: $e';
       } finally {
         if (mounted) {
@@ -128,8 +128,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'Dersi Düzenle' : 'Yeni Ders Ekle'),
         actions: [
@@ -149,7 +148,6 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
       ),
       body: _buildBody(),
     );
-  }
 
   Widget _buildBody() {
     if (_isLoading) {
@@ -163,7 +161,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
           children: [
             Text(
               _errorMessage!,
-              style: TextStyle(color: AppColors.error),
+              style: const TextStyle(color: AppColors.error),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppDimensions.spacing16),
@@ -186,8 +184,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   }
 
   // Mobil için form tasarımı - Tek sütun
-  Widget _buildMobileForm() {
-    return SingleChildScrollView(
+  Widget _buildMobileForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Form(
         key: _formKey,
@@ -197,11 +194,9 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         ),
       ),
     );
-  }
 
   // Tablet için form tasarımı - Bazı alanlar yan yana
-  Widget _buildTabletForm() {
-    return SingleChildScrollView(
+  Widget _buildTabletForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing24),
       child: Center(
         child: SizedBox(
@@ -242,11 +237,9 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         ),
       ),
     );
-  }
 
   // Desktop için form tasarımı - Daha geniş ve çok alanlar yan yana
-  Widget _buildDesktopForm() {
-    return SingleChildScrollView(
+  Widget _buildDesktopForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing32),
       child: Center(
         child: SizedBox(
@@ -287,11 +280,9 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         ),
       ),
     );
-  }
 
   // Tüm form alanlarını bir liste olarak döndür (mobil görünüm için)
-  List<Widget> _buildFormFields() {
-    return [
+  List<Widget> _buildFormFields() => [
       _buildStudentField(),
       const SizedBox(height: AppDimensions.spacing16),
       _buildSubjectField(),
@@ -308,7 +299,6 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
       const SizedBox(height: AppDimensions.spacing24),
       _buildSubmitButton(),
     ];
-  }
 
   // Öğrenci seçim alanı
   Widget _buildStudentField() {
@@ -338,8 +328,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   }
 
   // Ders konusu alanı
-  Widget _buildSubjectField() {
-    return AppTextField(
+  Widget _buildSubjectField() => AppTextField(
       label: 'Ders Konusu',
       hint: 'Örn: Matematik, Fizik, İngilizce',
       controller: _subjectController,
@@ -351,11 +340,9 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         return null;
       },
     );
-  }
 
   // Tarih ve saat alanı
-  Widget _buildDateTimeField() {
-    return AppDateTimePicker(
+  Widget _buildDateTimeField() => AppDateTimePicker(
       label: 'Ders Tarihi ve Saati',
       required: true,
       initialDateTime: _lessonDate,
@@ -365,11 +352,9 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         });
       },
     );
-  }
 
   // Ücret alanı
-  Widget _buildFeeField() {
-    return AppTextField(
+  Widget _buildFeeField() => AppTextField(
       label: 'Ders Ücreti',
       hint: 'Örn: 100',
       controller: _feeController,
@@ -381,11 +366,9 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         });
       },
     );
-  }
 
   // Durum alanı
-  Widget _buildStatusField() {
-    return Column(
+  Widget _buildStatusField() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Durum', style: Theme.of(context).textTheme.titleSmall),
@@ -397,14 +380,14 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
             fillColor: AppColors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppDimensions.spacing12,
               vertical: AppDimensions.spacing8,
             ),
           ),
-          items: [
+          items: const [
             DropdownMenuItem(
               value: LessonStatus.scheduled,
               child: Text('Planlandı'),
@@ -432,11 +415,9 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         ),
       ],
     );
-  }
 
   /// Tekrarlanan ders özelliklerine göre tekrar seçimini yapılandırır.
-  Widget _buildRecurringPicker() {
-    return Column(
+  Widget _buildRecurringPicker() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppRecurringPicker(
@@ -488,17 +469,12 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         ],
       ],
     );
-  }
 
   /// Tekrar sayısına göre açıklama metni oluşturur
-  String _getOccurrencesText() {
-    return 'Seçilen tarihten itibaren $_recurringOccurrences adet ders oluşturulacak';
-  }
+  String _getOccurrencesText() => 'Seçilen tarihten itibaren $_recurringOccurrences adet ders oluşturulacak';
 
   /// Ders tekrarlanan bir ders mi kontrol eder
-  bool _isRecurring() {
-    return _recurringInfo.type != RecurringType.none;
-  }
+  bool _isRecurring() => _recurringInfo.type != RecurringType.none;
 
   /// Tekrarlanan ders serisi seçeneklerini gösterir
   void _showRecurringLessonOptions() {
@@ -595,7 +571,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
       );
 
       Navigator.of(context).pop(); // Form sayfasını kapat
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -614,24 +590,20 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   }
 
   // Notlar alanı
-  Widget _buildNotesField() {
-    return AppTextField(
+  Widget _buildNotesField() => AppTextField(
       label: 'Notlar',
       hint: 'Ders hakkında ekstra bilgiler...',
       controller: _notesController,
       maxLines: 3,
     );
-  }
 
   // Kaydet butonu
-  Widget _buildSubmitButton() {
-    return AppButton(
+  Widget _buildSubmitButton() => AppButton(
       text: _isEditMode ? 'Güncelle' : 'Kaydet',
       onPressed: _saveForm,
       icon: Icons.save,
       isLoading: _isLoading,
     );
-  }
 
   /// Formu kaydeder
   Future<void> _saveForm() async {
@@ -739,7 +711,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
           context.pop();
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
@@ -801,7 +773,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         );
         context.pop();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
@@ -859,10 +831,10 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
           _recurringOccurrences = 5; // Varsayılan değer, backend'den gelmiyorsa
         });
       }
-    } catch (e) {
+    } on Exception {
       // Hata durumunda sessiz bir şekilde devam et
       // ve en azından temel ders bilgilerini göster
-      debugPrint('Tekrarlama bilgisi yüklenemedi: $e');
+      // Log işlemi async olduğu için burada yapmıyoruz
     }
   }
 }

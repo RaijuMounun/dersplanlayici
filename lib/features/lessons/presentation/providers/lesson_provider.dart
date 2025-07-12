@@ -5,10 +5,13 @@ import '../../domain/services/recurring_lesson_service.dart';
 import '../../../../core/widgets/app_recurring_picker.dart' as ui;
 import '../../../../services/database/database_service.dart';
 import '../../../../core/error/app_exception.dart';
+import '../../../../core/error/error_logger.dart';
 import 'package:intl/intl.dart';
 
 /// Ders verilerini yöneten Provider sınıfı.
 class LessonProvider extends ChangeNotifier {
+
+  LessonProvider(this._databaseService);
   final DatabaseService _databaseService;
   final RecurringLessonService _recurringLessonService =
       RecurringLessonService();
@@ -36,8 +39,6 @@ class LessonProvider extends ChangeNotifier {
   /// Seçili tarihi döndürür.
   DateTime get selectedDate => _selectedDate;
 
-  LessonProvider(this._databaseService);
-
   /// Seçili tarihi ayarlar ve o tarihteki dersleri yükler.
   void setSelectedDate(DateTime date) {
     _selectedDate = date;
@@ -52,36 +53,51 @@ class LessonProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      print('🔍 [LessonProvider] Dersler yükleniyor...');
+      await ErrorLogger().info('Dersler yükleniyor...', tag: 'LessonProvider');
       final lessonsData = await _databaseService.getLessons();
-      print(
-        '🔍 [LessonProvider] Veritabanından ${lessonsData.length} ders alındı',
+      await ErrorLogger().info(
+        'Veritabanından ${lessonsData.length} ders alındı',
+        tag: 'LessonProvider',
       );
 
       if (lessonsData.isNotEmpty) {
-        print('🔍 [LessonProvider] İlk ders verisi: ${lessonsData.first}');
+        await ErrorLogger().debug(
+          'İlk ders verisi: ${lessonsData.first}',
+          tag: 'LessonProvider',
+        );
       }
 
       _lessons = lessonsData.map((data) {
         try {
           final lesson = Lesson.fromMap(data);
-          print('🔍 [LessonProvider] Ders oluşturuldu: ${lesson.toString()}');
           return lesson;
         } catch (e) {
-          print('❌ [LessonProvider] Ders oluşturma hatası: $e');
-          print('❌ [LessonProvider] Hatalı veri: $data');
           rethrow;
         }
       }).toList();
 
-      print('🔍 [LessonProvider] Toplam ${_lessons.length} ders yüklendi');
+      // Başarılı dersleri logla
+      for (final lesson in _lessons) {
+        await ErrorLogger().debug(
+          'Ders oluşturuldu: ${lesson.toString()}',
+          tag: 'LessonProvider',
+        );
+      }
+
+      await ErrorLogger().info(
+        'Toplam ${_lessons.length} ders yüklendi',
+        tag: 'LessonProvider',
+      );
       notifyListeners();
     } on AppException catch (e) {
-      print('❌ [LessonProvider] AppException: $e');
+      await ErrorLogger().error(
+        'AppException',
+        tag: 'LessonProvider',
+        error: e,
+      );
       _error = e;
       notifyListeners();
-    } catch (e) {
-      print('❌ [LessonProvider] Genel hata: $e');
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Dersler yüklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -101,12 +117,12 @@ class LessonProvider extends ChangeNotifier {
         startDate,
         endDate,
       );
-      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
+      _lessons = lessonsData.map(Lesson.fromMap).toList();
       notifyListeners();
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Tarih aralığındaki dersler yüklenirken bir hata oluştu: ${e.toString()}',
@@ -124,12 +140,12 @@ class LessonProvider extends ChangeNotifier {
 
     try {
       final lessonsData = await _databaseService.getLessonsByDate(date);
-      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
+      _lessons = lessonsData.map(Lesson.fromMap).toList();
       notifyListeners();
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Belirli tarihteki dersler yüklenirken bir hata oluştu: ${e.toString()}',
@@ -147,12 +163,12 @@ class LessonProvider extends ChangeNotifier {
 
     try {
       final lessonsData = await _databaseService.getLessonsByStudent(studentId);
-      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
+      _lessons = lessonsData.map(Lesson.fromMap).toList();
       notifyListeners();
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Öğrenciye ait dersler yüklenirken bir hata oluştu: ${e.toString()}',
@@ -169,7 +185,10 @@ class LessonProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      print('➕ [LessonProvider] Ders ekleniyor: ${lesson.toString()}');
+      await ErrorLogger().info(
+        'Ders ekleniyor: ${lesson.toString()}',
+        tag: 'LessonProvider',
+      );
 
       // Ders çakışması kontrolü
       final hasConflict = await _databaseService.checkLessonConflict(
@@ -179,26 +198,44 @@ class LessonProvider extends ChangeNotifier {
       );
 
       if (hasConflict) {
-        print('⚠️ [LessonProvider] Ders çakışması tespit edildi');
+        await ErrorLogger().warning(
+          'Ders çakışması tespit edildi',
+          tag: 'LessonProvider',
+        );
         throw const LessonConflictException(
           message: 'Bu saatlerde başka bir ders zaten planlanmış.',
         );
       }
 
-      print('💾 [LessonProvider] Veritabanına ders kaydediliyor...');
+      await ErrorLogger().info(
+        'Veritabanına ders kaydediliyor...',
+        tag: 'LessonProvider',
+      );
       await _databaseService.insertLesson(lesson.toMap());
-      print('✅ [LessonProvider] Ders başarıyla kaydedildi');
+      await ErrorLogger().info(
+        'Ders başarıyla kaydedildi',
+        tag: 'LessonProvider',
+      );
 
       // Dersler listesini yeniden yükle
-      print('🔄 [LessonProvider] Dersler listesi yeniden yükleniyor...');
+      await ErrorLogger().info(
+        'Dersler listesi yeniden yükleniyor...',
+        tag: 'LessonProvider',
+      );
       await loadLessons();
-      print('✅ [LessonProvider] Dersler listesi güncellendi');
+      await ErrorLogger().info(
+        'Dersler listesi güncellendi',
+        tag: 'LessonProvider',
+      );
     } on AppException catch (e) {
-      print('❌ [LessonProvider] AppException: $e');
+      await ErrorLogger().error(
+        'AppException',
+        tag: 'LessonProvider',
+        error: e,
+      );
       _error = e;
       notifyListeners();
-    } catch (e) {
-      print('❌ [LessonProvider] Genel hata: $e');
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ders eklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -233,7 +270,7 @@ class LessonProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ders güncellenirken bir hata oluştu: ${e.toString()}',
       );
@@ -254,7 +291,7 @@ class LessonProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ders silinirken bir hata oluştu: ${e.toString()}',
       );
@@ -280,7 +317,7 @@ class LessonProvider extends ChangeNotifier {
         try {
           await _databaseService.deleteLesson(id);
           successCount++;
-        } catch (e) {
+        } on Exception {
           errorCount++;
         }
       }
@@ -289,7 +326,7 @@ class LessonProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Dersler silinirken bir hata oluştu: ${e.toString()}',
       );
@@ -335,7 +372,7 @@ class LessonProvider extends ChangeNotifier {
       _error = e;
       notifyListeners();
       return {'success': 0, 'error': 0};
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Tekrarlanan dersler silinirken bir hata oluştu: ${e.toString()}',
@@ -415,7 +452,7 @@ class LessonProvider extends ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message:
             'Tekrarlanan dersler oluşturulurken hata oluştu: ${e.toString()}',
@@ -443,7 +480,7 @@ class LessonProvider extends ChangeNotifier {
       _error = e;
       notifyListeners();
       return null;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Tekrarlama deseni alınırken hata oluştu: ${e.toString()}',
       );
@@ -456,20 +493,16 @@ class LessonProvider extends ChangeNotifier {
   Lesson? getLessonById(String id) {
     try {
       return _lessons.firstWhere((lesson) => lesson.id == id);
-    } catch (e) {
+    } on Exception {
       return null;
     }
   }
 
   /// Belirli bir tarihteki ders sayısını döndürür.
-  int getLessonCountForDate(String date) {
-    return _lessons.where((lesson) => lesson.date == date).length;
-  }
+  int getLessonCountForDate(String date) => _lessons.where((lesson) => lesson.date == date).length;
 
   /// Duruma göre dersleri filtreler.
-  List<Lesson> filterByStatus(LessonStatus status) {
-    return _lessons.where((lesson) => lesson.status == status).toList();
-  }
+  List<Lesson> filterByStatus(LessonStatus status) => _lessons.where((lesson) => lesson.status == status).toList();
 
   /// Yükleme durumunu günceller.
   void _setLoading(bool loading) {

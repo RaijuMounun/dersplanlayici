@@ -10,9 +10,9 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 
 class AddEditStudentPage extends StatefulWidget {
-  final String? studentId;
 
   const AddEditStudentPage({super.key, this.studentId});
+  final String? studentId;
 
   @override
   State<AddEditStudentPage> createState() => _AddEditStudentPageState();
@@ -69,7 +69,7 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         } else {
           _errorMessage = 'Öğrenci bulunamadı';
         }
-      } catch (e) {
+      } on Exception catch (e) {
         _errorMessage = 'Öğrenci yüklenirken hata oluştu: $e';
       } finally {
         setState(() {
@@ -92,8 +92,7 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'Öğrenciyi Düzenle' : 'Yeni Öğrenci Ekle'),
         actions: [
@@ -107,7 +106,6 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
       ),
       body: _buildBody(),
     );
-  }
 
   Widget _buildBody() {
     if (_isLoading) {
@@ -121,7 +119,7 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
           children: [
             Text(
               _errorMessage!,
-              style: TextStyle(color: AppColors.error),
+              style: const TextStyle(color: AppColors.error),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppDimensions.spacing16),
@@ -144,8 +142,7 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
   }
 
   // Mobil için form tasarımı - Tek sütun
-  Widget _buildMobileForm() {
-    return SingleChildScrollView(
+  Widget _buildMobileForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Form(
         key: _formKey,
@@ -155,11 +152,9 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         ),
       ),
     );
-  }
 
   // Tablet için form tasarımı - Bazı alanlar yan yana
-  Widget _buildTabletForm() {
-    return SingleChildScrollView(
+  Widget _buildTabletForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing24),
       child: Center(
         child: SizedBox(
@@ -200,11 +195,9 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         ),
       ),
     );
-  }
 
   // Desktop için form tasarımı - Daha geniş ve çok alanlar yan yana
-  Widget _buildDesktopForm() {
-    return SingleChildScrollView(
+  Widget _buildDesktopForm() => SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.spacing32),
       child: Center(
         child: SizedBox(
@@ -250,11 +243,9 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         ),
       ),
     );
-  }
 
   // Tüm form alanlarını bir liste olarak döndür (mobil görünüm için)
-  List<Widget> _buildFormFields() {
-    return [
+  List<Widget> _buildFormFields() => [
       _buildNameField(),
       const SizedBox(height: AppDimensions.spacing16),
       _buildGradeField(),
@@ -271,11 +262,9 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
       const SizedBox(height: AppDimensions.spacing24),
       _buildSubmitButton(),
     ];
-  }
 
   // İsim alanı
-  Widget _buildNameField() {
-    return AppTextField(
+  Widget _buildNameField() => AppTextField(
       label: 'Öğrenci Adı',
       hint: 'Öğrencinin tam adı',
       controller: _nameController,
@@ -289,11 +278,9 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         return null;
       },
     );
-  }
 
   // Sınıf alanı
-  Widget _buildGradeField() {
-    return AppTextField(
+  Widget _buildGradeField() => AppTextField(
       label: 'Sınıf',
       hint: 'Örn: 10. Sınıf, Lise 2',
       controller: _gradeController,
@@ -307,22 +294,18 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         return null;
       },
     );
-  }
 
   // Veli adı alanı
-  Widget _buildParentNameField() {
-    return AppTextField(
+  Widget _buildParentNameField() => AppTextField(
       label: 'Veli Adı',
       hint: 'Velinin tam adı',
       controller: _parentNameController,
       textInputAction: TextInputAction.next,
       prefixIcon: const Icon(Icons.family_restroom),
     );
-  }
 
   // Telefon alanı
-  Widget _buildPhoneField() {
-    return AppTextField(
+  Widget _buildPhoneField() => AppTextField(
       label: 'Telefon',
       hint: 'Örn: 0532 123 4567',
       controller: _phoneController,
@@ -330,11 +313,9 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
       keyboardType: TextInputType.phone,
       prefixIcon: const Icon(Icons.phone),
     );
-  }
 
   // E-posta alanı
-  Widget _buildEmailField() {
-    return AppTextField(
+  Widget _buildEmailField() => AppTextField(
       label: 'E-posta',
       hint: 'Örn: ornek@email.com',
       controller: _emailController,
@@ -352,22 +333,18 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         return null;
       },
     );
-  }
 
   // Dersler alanı
-  Widget _buildSubjectsField() {
-    return AppTextField(
+  Widget _buildSubjectsField() => AppTextField(
       label: 'Dersler',
       hint: 'Virgülle ayırarak girin (Matematik, Fizik, ...)',
       controller: _subjectsController,
       textInputAction: TextInputAction.next,
       prefixIcon: const Icon(Icons.book),
     );
-  }
 
   // Notlar alanı
-  Widget _buildNotesField() {
-    return AppTextField(
+  Widget _buildNotesField() => AppTextField(
       label: 'Notlar',
       hint: 'Öğrenci hakkında ekstra bilgiler...',
       controller: _notesController,
@@ -375,17 +352,14 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
       textInputAction: TextInputAction.done,
       prefixIcon: const Icon(Icons.note),
     );
-  }
 
   // Kaydet butonu
-  Widget _buildSubmitButton() {
-    return AppButton(
+  Widget _buildSubmitButton() => AppButton(
       text: _isEditMode ? 'Güncelle' : 'Kaydet',
       onPressed: _saveStudent,
       icon: Icons.save,
       isLoading: _isLoading,
     );
-  }
 
   // Öğrenciyi kaydet
   Future<void> _saveStudent() async {
@@ -435,7 +409,7 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         );
         context.pop();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
@@ -495,7 +469,7 @@ class _AddEditStudentPageState extends State<AddEditStudentPage> {
         );
         context.pop();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),

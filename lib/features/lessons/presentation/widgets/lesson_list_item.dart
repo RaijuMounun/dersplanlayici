@@ -6,18 +6,6 @@ import 'package:intl/intl.dart';
 
 /// Ders listesi öğesi widget'ı.
 class LessonListItem extends StatelessWidget {
-  final String lessonTitle;
-  final String? studentName;
-  final DateTime? startTime;
-  final DateTime? endTime;
-  final bool isCompleted;
-  final double? fee;
-  final bool isRecurring;
-  final bool isSelected;
-  final VoidCallback? onTap;
-  final VoidCallback? onEditPressed;
-  final VoidCallback? onDeletePressed;
-  final VoidCallback? onMarkCompleted;
 
   const LessonListItem({
     super.key,
@@ -34,6 +22,18 @@ class LessonListItem extends StatelessWidget {
     this.onDeletePressed,
     this.onMarkCompleted,
   });
+  final String lessonTitle;
+  final String? studentName;
+  final DateTime? startTime;
+  final DateTime? endTime;
+  final bool isCompleted;
+  final double? fee;
+  final bool isRecurring;
+  final bool isSelected;
+  final VoidCallback? onTap;
+  final VoidCallback? onEditPressed;
+  final VoidCallback? onDeletePressed;
+  final VoidCallback? onMarkCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +76,7 @@ class LessonListItem extends StatelessWidget {
                     color: theme.scaffoldBackgroundColor,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.repeat,
                     color: AppColors.secondary,
                     size: AppDimensions.iconSizeSmall,
@@ -126,16 +126,16 @@ class LessonListItem extends StatelessWidget {
             ),
             child: Text(
               '${fee!.toStringAsFixed(2)} ₺',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppColors.secondary,
               ),
             ),
           ),
-        SizedBox(width: AppDimensions.spacing8),
+        const SizedBox(width: AppDimensions.spacing8),
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
+          icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
           onSelected: (value) {
             switch (value) {
               case 'edit':

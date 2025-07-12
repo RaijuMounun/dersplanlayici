@@ -1,137 +1,140 @@
-import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
+import 'package:uuid/uuid.dart';
 
-/// Takvimde gösterilecek etkinlik türlerini temsil eden enum.
-enum CalendarEventType {
-  lesson, // Ders
-  exam, // Sınav
-  holiday, // Tatil
-  appointment, // Randevu
-  other, // Diğer
-}
+/// Takvim olaylarını temsil eden model sınıfı.
+class CalendarEventModel {
 
-/// Takvim etkinliğini temsil eden model sınıfı.
-class CalendarEvent {
-  final String id;
-  final String title;
-  final String date;
-  final String startTime;
-  final String endTime;
-  final CalendarEventType type;
-  final Map<String, dynamic>? metadata;
-  final String? color;
-  final bool isAllDay;
-
-  CalendarEvent({
-    required this.id,
+  CalendarEventModel({
+    String? id,
     required this.title,
-    required this.date,
-    required this.startTime,
-    required this.endTime,
-    this.type = CalendarEventType.other,
-    this.metadata,
+    required this.description,
+    required this.startDate,
+    required this.endDate,
+    required this.eventType,
     this.color,
     this.isAllDay = false,
-  });
+    this.location,
+    this.attendees,
+    this.metadata,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
-  /// Lesson nesnesinden CalendarEvent nesnesi oluşturur.
-  factory CalendarEvent.fromLesson(Lesson lesson) {
-    String title = '${lesson.subject} - ${lesson.studentName}';
-    if (lesson.topic != null && lesson.topic!.isNotEmpty) {
-      title += ' (${lesson.topic})';
-    }
-
-    return CalendarEvent(
-      id: lesson.id,
-      title: title,
-      date: lesson.date,
-      startTime: lesson.startTime,
-      endTime: lesson.endTime,
-      type: CalendarEventType.lesson,
-      metadata: {
-        'lessonId': lesson.id,
-        'studentId': lesson.studentId,
-        'subject': lesson.subject,
-        'status': lesson.status.toString(),
-      },
-      color: _getColorForLessonStatus(lesson.status),
-      isAllDay: false,
-    );
-  }
-
-  /// Ders durumuna göre renk döndürür.
-  static String? _getColorForLessonStatus(LessonStatus status) {
-    switch (status) {
-      case LessonStatus.scheduled:
-        return '#4CAF50'; // Yeşil
-      case LessonStatus.completed:
-        return '#2196F3'; // Mavi
-      case LessonStatus.cancelled:
-        return '#F44336'; // Kırmızı
-      case LessonStatus.postponed:
-        return '#FF9800'; // Turuncu
-    }
-  }
-
-  /// Map objesinden CalendarEvent nesnesine dönüştürür.
-  factory CalendarEvent.fromMap(Map<String, dynamic> map) {
-    return CalendarEvent(
+  /// Map objesinden CalendarEventModel nesnesine dönüştürür.
+  factory CalendarEventModel.fromMap(Map<String, dynamic> map) => CalendarEventModel(
       id: map['id'] as String,
       title: map['title'] as String,
-      date: map['date'] as String,
-      startTime: map['startTime'] as String,
-      endTime: map['endTime'] as String,
-      type: CalendarEventType.values.firstWhere(
-        (e) => e.toString() == 'CalendarEventType.${map['type']}',
-        orElse: () => CalendarEventType.other,
-      ),
-      metadata: map['metadata'] as Map<String, dynamic>?,
+      description: map['description'] as String,
+      startDate: DateTime.parse(map['startDate'] as String),
+      endDate: DateTime.parse(map['endDate'] as String),
+      eventType: map['eventType'] as String,
       color: map['color'] as String?,
       isAllDay: map['isAllDay'] as bool? ?? false,
+      location: map['location'] as String?,
+      attendees: map['attendees'] != null
+          ? (map['attendees'] as String).split(',')
+          : null,
+      metadata: map['metadata'] != null
+          ? Map<String, dynamic>.from(map['metadata'] as Map)
+          : null,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      updatedAt: DateTime.parse(map['updatedAt'] as String),
     );
-  }
+  final String id;
+  final String title;
+  final String description;
+  final DateTime startDate;
+  final DateTime endDate;
+  final String eventType; // 'lesson', 'holiday', 'exam', 'other'
+  final String? color;
+  final bool isAllDay;
+  final String? location;
+  final List<String>? attendees;
+  final Map<String, dynamic>? metadata;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
-  /// CalendarEvent nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  /// CalendarEventModel nesnesini Map objesine dönüştürür.
+  Map<String, dynamic> toMap() => {
       'id': id,
       'title': title,
-      'date': date,
-      'startTime': startTime,
-      'endTime': endTime,
-      'type': type.toString().split('.').last,
-      'metadata': metadata,
+      'description': description,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate.toIso8601String(),
+      'eventType': eventType,
       'color': color,
       'isAllDay': isAllDay,
+      'location': location,
+      'attendees': attendees?.join(','),
+      'metadata': metadata,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
-  }
 
-  /// Güncellenmiş bir takvim etkinliği nesnesi oluşturur.
-  CalendarEvent copyWith({
+  /// Güncellenmiş bir takvim olayı nesnesi oluşturur.
+  CalendarEventModel copyWith({
     String? id,
     String? title,
-    String? date,
-    String? startTime,
-    String? endTime,
-    CalendarEventType? type,
-    Map<String, dynamic>? metadata,
+    String? description,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? eventType,
     String? color,
     bool? isAllDay,
-  }) {
-    return CalendarEvent(
+    String? location,
+    List<String>? attendees,
+    Map<String, dynamic>? metadata,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => CalendarEventModel(
       id: id ?? this.id,
       title: title ?? this.title,
-      date: date ?? this.date,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      type: type ?? this.type,
-      metadata: metadata ?? this.metadata,
+      description: description ?? this.description,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      eventType: eventType ?? this.eventType,
       color: color ?? this.color,
       isAllDay: isAllDay ?? this.isAllDay,
+      location: location ?? this.location,
+      attendees: attendees ?? this.attendees,
+      metadata: metadata ?? this.metadata,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? DateTime.now(),
     );
+
+  /// Olayın süresini dakika cinsinden döndürür.
+  int get durationInMinutes => endDate.difference(startDate).inMinutes;
+
+  /// Olayın bugün olup olmadığını kontrol eder.
+  bool get isToday {
+    final now = DateTime.now();
+    return startDate.year == now.year &&
+        startDate.month == now.month &&
+        startDate.day == now.day;
+  }
+
+  /// Olayın geçmişte olup olmadığını kontrol eder.
+  bool get isPast => endDate.isBefore(DateTime.now());
+
+  /// Olayın gelecekte olup olmadığını kontrol eder.
+  bool get isFuture => startDate.isAfter(DateTime.now());
+
+  /// Olayın şu anda devam edip etmediğini kontrol eder.
+  bool get isOngoing {
+    final now = DateTime.now();
+    return startDate.isBefore(now) && endDate.isAfter(now);
   }
 
   @override
-  String toString() {
-    return 'CalendarEvent(id: $id, title: $title, date: $date, type: $type)';
+  String toString() => 'CalendarEventModel(id: $id, title: $title, eventType: $eventType, startDate: $startDate)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CalendarEventModel && other.id == id;
   }
+
+  @override
+  int get hashCode => id.hashCode;
 }

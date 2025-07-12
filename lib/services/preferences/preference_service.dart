@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 
 /// Uygulama tercihlerini yönetmek için kullanılan servis sınıfı.
 ///
 /// Bu sınıf, SharedPreferences kullanarak uygulama ayarlarını
 /// kaydetmek ve okumak için kullanılır.
 class PreferenceService {
+  factory PreferenceService() => _instance;
+
+  PreferenceService._internal();
   static final PreferenceService _instance = PreferenceService._internal();
   static SharedPreferences? _preferences;
 
@@ -17,14 +19,9 @@ class PreferenceService {
   /// Preferences değişim stream'i
   Stream<String> get onPreferenceChanged => _preferenceChangedController.stream;
 
-  factory PreferenceService() => _instance;
-
-  PreferenceService._internal();
-
   /// Preference servisini başlatır
   Future<void> init() async {
     _preferences = await SharedPreferences.getInstance();
-    debugPrint('PreferenceService initialized');
   }
 
   /// Boolean değer kaydeder
@@ -93,34 +90,23 @@ class PreferenceService {
   }
 
   /// Obje kaydeder (JSON olarak)
-  Future<bool> setObject(String key, Map<String, dynamic> value) async {
-    return setString(key, jsonEncode(value));
-  }
+  Future<bool> setObject(String key, Map<String, dynamic> value) async =>
+      setString(key, jsonEncode(value));
 
   /// Boolean değer okur
-  bool? getBool(String key) {
-    return _preferences?.getBool(key);
-  }
+  bool? getBool(String key) => _preferences?.getBool(key);
 
   /// String değer okur
-  String? getString(String key) {
-    return _preferences?.getString(key);
-  }
+  String? getString(String key) => _preferences?.getString(key);
 
   /// Integer değer okur
-  int? getInt(String key) {
-    return _preferences?.getInt(key);
-  }
+  int? getInt(String key) => _preferences?.getInt(key);
 
   /// Double değer okur
-  double? getDouble(String key) {
-    return _preferences?.getDouble(key);
-  }
+  double? getDouble(String key) => _preferences?.getDouble(key);
 
   /// String listesi okur
-  List<String>? getStringList(String key) {
-    return _preferences?.getStringList(key);
-  }
+  List<String>? getStringList(String key) => _preferences?.getStringList(key);
 
   /// Obje okur (JSON'dan)
   Map<String, dynamic>? getObject(String key) {
@@ -129,31 +115,26 @@ class PreferenceService {
 
     try {
       return jsonDecode(jsonString) as Map<String, dynamic>;
-    } catch (e) {
-      debugPrint('Failed to decode JSON for key $key: $e');
+    } on Exception {
       return null;
     }
   }
 
   /// Belirtilen anahtar için varsayılan bir boolean değer döndürür
-  bool getBoolWithDefault(String key, bool defaultValue) {
-    return getBool(key) ?? defaultValue;
-  }
+  bool getBoolWithDefault(String key, bool defaultValue) =>
+      getBool(key) ?? defaultValue;
 
   /// Belirtilen anahtar için varsayılan bir string değer döndürür
-  String getStringWithDefault(String key, String defaultValue) {
-    return getString(key) ?? defaultValue;
-  }
+  String getStringWithDefault(String key, String defaultValue) =>
+      getString(key) ?? defaultValue;
 
   /// Belirtilen anahtar için varsayılan bir integer değer döndürür
-  int getIntWithDefault(String key, int defaultValue) {
-    return getInt(key) ?? defaultValue;
-  }
+  int getIntWithDefault(String key, int defaultValue) =>
+      getInt(key) ?? defaultValue;
 
   /// Belirtilen anahtar için varsayılan bir double değer döndürür
-  double getDoubleWithDefault(String key, double defaultValue) {
-    return getDouble(key) ?? defaultValue;
-  }
+  double getDoubleWithDefault(String key, double defaultValue) =>
+      getDouble(key) ?? defaultValue;
 
   /// Verilen anahtarı siler
   Future<bool> remove(String key) async {

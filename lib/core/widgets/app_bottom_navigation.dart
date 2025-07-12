@@ -4,15 +4,6 @@ import '../theme/app_dimensions.dart';
 
 /// Uygulama alt gezinme çubuğu widget'ı.
 class AppBottomNavigation extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-  final List<AppBottomNavigationItem> items;
-  final double? elevation;
-  final Color? backgroundColor;
-  final Color? selectedItemColor;
-  final Color? unselectedItemColor;
-  final double iconSize;
-  final bool showLabels;
 
   const AppBottomNavigation({
     super.key,
@@ -26,6 +17,15 @@ class AppBottomNavigation extends StatelessWidget {
     this.iconSize = 24,
     this.showLabels = true,
   });
+  final int currentIndex;
+  final Function(int) onTap;
+  final List<AppBottomNavigationItem> items;
+  final double? elevation;
+  final Color? backgroundColor;
+  final Color? selectedItemColor;
+  final Color? unselectedItemColor;
+  final double iconSize;
+  final bool showLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -115,13 +115,13 @@ class AppBottomNavigation extends StatelessWidget {
 
 /// Alt gezinme çubuğu öğe bilgilerini içeren sınıf.
 class AppBottomNavigationItem {
-  final String label;
-  final IconData icon;
-  final IconData? activeIcon;
 
   const AppBottomNavigationItem({
     required this.label,
     required this.icon,
     this.activeIcon,
   });
+  final String label;
+  final IconData icon;
+  final IconData? activeIcon;
 }

@@ -5,15 +5,15 @@ import 'package:ders_planlayici/services/database/database_service.dart';
 
 /// Ödeme işlemlerini yöneten repository sınıfı.
 class PaymentRepository {
-  final DatabaseService _databaseService;
 
   PaymentRepository(this._databaseService);
+  final DatabaseService _databaseService;
 
   /// Tüm ödemeleri getirir.
-  Future<List<Payment>> getAllPayments() async {
+  Future<List<PaymentModel>> getAllPayments() async {
     try {
       final payments = await _databaseService.getPayments();
-      return payments.map((map) => Payment.fromMap(map)).toList();
+      return payments.map(PaymentModel.fromMap).toList();
     } catch (e) {
       throw DatabaseException(
         message: 'Ödemeler yüklenirken bir hata oluştu: $e',
@@ -22,10 +22,10 @@ class PaymentRepository {
   }
 
   /// Öğrenciye ait ödemeleri getirir.
-  Future<List<Payment>> getPaymentsByStudent(String studentId) async {
+  Future<List<PaymentModel>> getPaymentsByStudent(String studentId) async {
     try {
       final payments = await _databaseService.getPaymentsByStudent(studentId);
-      return payments.map((map) => Payment.fromMap(map)).toList();
+      return payments.map(PaymentModel.fromMap).toList();
     } catch (e) {
       throw DatabaseException(
         message: 'Öğrenciye ait ödemeler yüklenirken bir hata oluştu: $e',
@@ -34,11 +34,11 @@ class PaymentRepository {
   }
 
   /// Belirli bir ödemeyi getirir.
-  Future<Payment?> getPaymentById(String id) async {
+  Future<PaymentModel?> getPaymentById(String id) async {
     try {
       final payment = await _databaseService.getPaymentById(id);
       if (payment != null) {
-        return Payment.fromMap(payment);
+        return PaymentModel.fromMap(payment);
       }
       return null;
     } catch (e) {
@@ -49,7 +49,7 @@ class PaymentRepository {
   }
 
   /// Yeni bir ödeme ekler.
-  Future<void> addPayment(Payment payment) async {
+  Future<void> addPayment(PaymentModel payment) async {
     try {
       await _databaseService.insertPayment(payment.toMap());
     } catch (e) {
@@ -58,7 +58,7 @@ class PaymentRepository {
   }
 
   /// Bir ödemeyi günceller.
-  Future<void> updatePayment(Payment payment) async {
+  Future<void> updatePayment(PaymentModel payment) async {
     try {
       await _databaseService.updatePayment(payment.toMap());
     } catch (e) {
@@ -83,7 +83,7 @@ class PaymentRepository {
       // Öğrenci bilgilerini al
       final studentData = await _databaseService.getStudentById(studentId);
       if (studentData == null) {
-        throw NotFoundException(message: 'Öğrenci bulunamadı');
+        throw const NotFoundException(message: 'Öğrenci bulunamadı');
       }
 
       // Öğrencinin derslerini al
@@ -150,7 +150,7 @@ class PaymentRepository {
       // Tüm öğrencileri al
       final students = await _databaseService.getStudents();
 
-      List<FeeSummary> summaries = [];
+      final List<FeeSummary> summaries = [];
 
       // Her öğrenci için ücret özeti oluştur
       for (var student in students) {

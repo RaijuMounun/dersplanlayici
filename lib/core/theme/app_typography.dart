@@ -162,7 +162,5 @@ class AppTypography {
   );
 
   // Koyu tema için metin stillerini elde etmek için yardımcı metod
-  static TextStyle withColor(TextStyle style, Color color) {
-    return style.copyWith(color: color);
-  }
+  static TextStyle withColor(TextStyle style, Color color) => style.copyWith(color: color);
 }

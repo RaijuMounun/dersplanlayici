@@ -16,19 +16,9 @@ enum NotificationTime {
 }
 
 /// Uygulama ayarlarını temsil eden model sınıfı.
-class AppSettings {
-  final ThemeMode themeMode;
-  final NotificationTime lessonNotificationTime;
-  final bool showWeekends;
-  final int defaultLessonDuration; // Dakika cinsinden
-  final double defaultLessonFee; // TL cinsinden
-  final String? currency; // Para birimi (TL, USD, EUR, vb.)
-  final String? defaultSubject; // Varsayılan ders konusu
-  final bool confirmBeforeDelete; // Silmeden önce onay iste
-  final bool showLessonColors; // Dersleri renklendir
-  final Map<String, dynamic>? additionalSettings; // Ek ayarlar
+class AppSettingsModel { // Ek ayarlar
 
-  AppSettings({
+  AppSettingsModel({
     this.themeMode = ThemeMode.system,
     this.lessonNotificationTime = NotificationTime.fifteenMinutes,
     this.showWeekends = true,
@@ -42,8 +32,7 @@ class AppSettings {
   });
 
   /// Varsayılan ayarlar.
-  factory AppSettings.defaultSettings() {
-    return AppSettings(
+  factory AppSettingsModel.defaultSettings() => AppSettingsModel(
       themeMode: ThemeMode.system,
       lessonNotificationTime: NotificationTime.fifteenMinutes,
       showWeekends: true,
@@ -54,11 +43,9 @@ class AppSettings {
       confirmBeforeDelete: true,
       showLessonColors: true,
     );
-  }
 
-  /// Map objesinden AppSettings nesnesine dönüştürür.
-  factory AppSettings.fromMap(Map<String, dynamic> map) {
-    return AppSettings(
+  /// Map objesinden AppSettingsModel nesnesine dönüştürür.
+  factory AppSettingsModel.fromMap(Map<String, dynamic> map) => AppSettingsModel(
       themeMode: ThemeMode.values.firstWhere(
         (e) => e.toString() == 'ThemeMode.${map['themeMode']}',
         orElse: () => ThemeMode.system,
@@ -77,11 +64,19 @@ class AppSettings {
       showLessonColors: map['showLessonColors'] as bool? ?? true,
       additionalSettings: map['additionalSettings'] as Map<String, dynamic>?,
     );
-  }
+  final ThemeMode themeMode;
+  final NotificationTime lessonNotificationTime;
+  final bool showWeekends;
+  final int defaultLessonDuration; // Dakika cinsinden
+  final double defaultLessonFee; // TL cinsinden
+  final String? currency; // Para birimi (TL, USD, EUR, vb.)
+  final String? defaultSubject; // Varsayılan ders konusu
+  final bool confirmBeforeDelete; // Silmeden önce onay iste
+  final bool showLessonColors; // Dersleri renklendir
+  final Map<String, dynamic>? additionalSettings;
 
-  /// AppSettings nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  /// AppSettingsModel nesnesini Map objesine dönüştürür.
+  Map<String, dynamic> toMap() => {
       'themeMode': themeMode.toString().split('.').last,
       'lessonNotificationTime': lessonNotificationTime
           .toString()
@@ -96,10 +91,9 @@ class AppSettings {
       'showLessonColors': showLessonColors,
       'additionalSettings': additionalSettings,
     };
-  }
 
   /// Güncellenmiş bir ayarlar nesnesi oluşturur.
-  AppSettings copyWith({
+  AppSettingsModel copyWith({
     ThemeMode? themeMode,
     NotificationTime? lessonNotificationTime,
     bool? showWeekends,
@@ -110,8 +104,7 @@ class AppSettings {
     bool? confirmBeforeDelete,
     bool? showLessonColors,
     Map<String, dynamic>? additionalSettings,
-  }) {
-    return AppSettings(
+  }) => AppSettingsModel(
       themeMode: themeMode ?? this.themeMode,
       lessonNotificationTime:
           lessonNotificationTime ?? this.lessonNotificationTime,
@@ -125,10 +118,7 @@ class AppSettings {
       showLessonColors: showLessonColors ?? this.showLessonColors,
       additionalSettings: additionalSettings ?? this.additionalSettings,
     );
-  }
 
   @override
-  String toString() {
-    return 'AppSettings(themeMode: $themeMode, lessonNotificationTime: $lessonNotificationTime)';
-  }
+  String toString() => 'AppSettingsModel(themeMode: $themeMode, lessonNotificationTime: $lessonNotificationTime)';
 }

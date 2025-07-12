@@ -7,9 +7,7 @@ class DateTimeUtils {
   DateTimeUtils._();
 
   /// Verilen DateTime nesnesini 'dd/MM/yyyy' formatında string'e dönüştürür.
-  static String formatDate(DateTime date) {
-    return DateFormat(AppConstants.dateFormat).format(date);
-  }
+  static String formatDate(DateTime date) => DateFormat(AppConstants.dateFormat).format(date);
 
   /// Verilen TimeOfDay nesnesini 'HH:mm' formatında string'e dönüştürür.
   static String formatTime(TimeOfDay time) {
@@ -19,9 +17,7 @@ class DateTimeUtils {
   }
 
   /// String formatındaki tarihi DateTime nesnesine dönüştürür.
-  static DateTime parseDate(String date) {
-    return DateFormat(AppConstants.dateFormat).parse(date);
-  }
+  static DateTime parseDate(String date) => DateFormat(AppConstants.dateFormat).parse(date);
 
   /// String formatındaki saati TimeOfDay nesnesine dönüştürür.
   static TimeOfDay parseTime(String time) {
@@ -37,9 +33,7 @@ class DateTimeUtils {
   }
 
   /// İki zaman arasındaki dakika farkını hesaplar.
-  static int minutesBetween(TimeOfDay from, TimeOfDay to) {
-    return (to.hour * 60 + to.minute) - (from.hour * 60 + from.minute);
-  }
+  static int minutesBetween(TimeOfDay from, TimeOfDay to) => (to.hour * 60 + to.minute) - (from.hour * 60 + from.minute);
 
   /// Verilen dakika sayısını saat:dakika formatına dönüştürür.
   static String minutesToHourMinuteFormat(int minutes) {
@@ -87,9 +81,7 @@ class DateTimeUtils {
   }
 
   /// Verilen tarihin aynı gün olup olmadığını kontrol eder.
-  static bool isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
+  static bool isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
   /// Verilen tarih aralığını ve tekrarlama desenine göre belirli bir tarih için ders olup olmadığını kontrol eder.
   static bool isLessonDay(
@@ -150,12 +142,10 @@ class DateTimeUtils {
     return showTimePicker(
       context: context,
       initialTime: initialTime,
-      builder: (context, child) {
-        return MediaQuery(
+      builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
           child: child!,
-        );
-      },
+        ),
     );
   }
 }

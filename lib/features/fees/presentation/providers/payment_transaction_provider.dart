@@ -7,17 +7,16 @@ import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 
 /// Ödeme işlemlerini yöneten provider sınıfı.
 class PaymentTransactionProvider with ChangeNotifier {
+  PaymentTransactionProvider(this._transactionRepository);
   final PaymentTransactionRepository _transactionRepository;
 
   bool _isLoading = false;
-  List<PaymentTransaction> _transactions = [];
-  AppException? _error;
   String? _currentPaymentId;
-
-  PaymentTransactionProvider(this._transactionRepository);
+  List<PaymentTransactionModel> _transactions = [];
+  AppException? _error;
 
   /// İşlemler listesi
-  List<PaymentTransaction> get transactions => _transactions;
+  List<PaymentTransactionModel> get transactions => _transactions;
 
   /// Yükleniyor mu?
   bool get isLoading => _isLoading;
@@ -26,12 +25,10 @@ class PaymentTransactionProvider with ChangeNotifier {
   AppException? get error => _error;
 
   /// Toplam ödenen tutar
-  double get totalAmount {
-    return _transactions.fold(
-      0,
-      (previous, transaction) => previous + transaction.amount,
-    );
-  }
+  double get totalAmount => _transactions.fold(
+    0,
+    (previous, transaction) => previous + transaction.amount,
+  );
 
   /// Belirli bir ödemeye ait işlemleri yükler
   Future<void> loadTransactionsByPaymentId(
@@ -50,7 +47,7 @@ class PaymentTransactionProvider with ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödeme işlemleri yüklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -77,7 +74,7 @@ class PaymentTransactionProvider with ChangeNotifier {
       final now = DateTime.now();
       final today = DateFormat('yyyy-MM-dd').format(now);
 
-      final transaction = PaymentTransaction(
+      final transaction = PaymentTransactionModel(
         paymentId: paymentId,
         amount: amount,
         date: date ?? today,
@@ -97,7 +94,7 @@ class PaymentTransactionProvider with ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödeme işlemi eklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -122,7 +119,7 @@ class PaymentTransactionProvider with ChangeNotifier {
     _error = null;
 
     try {
-      final transaction = PaymentTransaction(
+      final transaction = PaymentTransactionModel(
         id: id,
         paymentId: paymentId,
         amount: amount,
@@ -143,7 +140,7 @@ class PaymentTransactionProvider with ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödeme işlemi güncellenirken bir hata oluştu: ${e.toString()}',
       );
@@ -174,7 +171,7 @@ class PaymentTransactionProvider with ChangeNotifier {
     } on AppException catch (e) {
       _error = e;
       if (notify) notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = DatabaseException(
         message: 'Ödeme işlemi silinirken bir hata oluştu: ${e.toString()}',
       );

@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ders_planlayici/core/error/app_exception.dart';
+import 'package:ders_planlayici/core/error/error_logger.dart';
 
 /// Uygulamada oluşan hataları merkezi olarak yöneten sınıf.
 class ErrorHandler {
@@ -27,15 +28,13 @@ class ErrorHandler {
 
     // Debug modda ise konsola detaylı hata yazdır
     if (kDebugMode) {
-      print('------ ERROR ------');
-      print('Error: $error');
-      if (hint != null) {
-        print('Hint: $hint');
-      }
-      if (stackTrace != null) {
-        print('StackTrace: $stackTrace');
-      }
-      print('-------------------');
+      ErrorLogger().error(
+        'Hata oluştu',
+        tag: 'ErrorHandler',
+        error: error,
+        stackTrace: stackTrace,
+        metadata: hint != null ? {'hint': hint} : null,
+      );
     }
   }
 
@@ -94,12 +93,10 @@ class ErrorHandler {
     required String title,
     required String message,
     String? buttonText,
-  }) async {
-    return showDialog<void>(
+  }) async => showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
+      builder: (BuildContext dialogContext) => AlertDialog(
           title: Text(title),
           content: SingleChildScrollView(child: Text(message)),
           actions: <Widget>[
@@ -110,10 +107,8 @@ class ErrorHandler {
               },
             ),
           ],
-        );
-      },
+        ),
     );
-  }
 
   /// Tip için varsayılan değer döndürür
   static T _getDefaultValue<T>() {

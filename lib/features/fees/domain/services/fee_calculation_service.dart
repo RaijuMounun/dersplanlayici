@@ -1,6 +1,6 @@
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
-import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
+import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 
 /// Ücret hesaplama servis sınıfı.
 /// Bu sınıf, otomatik ücret hesaplama işlemlerini gerçekleştirir.
@@ -72,7 +72,7 @@ class FeeCalculationService {
   /// [payments] Öğrencinin tüm ödemeleri
   static double calculateUnbilledLessonFees({
     required List<Lesson> lessons,
-    required List<Payment> payments,
+    required List<PaymentModel> payments,
   }) {
     // Tamamlanmış dersleri filtrele
     final completedLessons = lessons
@@ -108,7 +108,7 @@ class FeeCalculationService {
   static List<Map<String, dynamic>> generatePaymentSuggestions({
     required List<Student> students,
     required List<Lesson> allLessons,
-    required List<Payment> allPayments,
+    required List<PaymentModel> allPayments,
   }) {
     final List<Map<String, dynamic>> suggestions = [];
 

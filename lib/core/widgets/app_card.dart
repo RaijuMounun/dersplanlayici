@@ -4,16 +4,6 @@ import '../theme/app_dimensions.dart';
 
 /// Uygulamada kullanılan standart kart widget'ı.
 class AppCard extends StatelessWidget {
-  final Widget child;
-  final Color? backgroundColor;
-  final double? elevation;
-  final EdgeInsetsGeometry? padding;
-  final EdgeInsetsGeometry? margin;
-  final BorderRadius? borderRadius;
-  final VoidCallback? onTap;
-  final BorderSide? borderSide;
-  final bool hasShadow;
-  final List<BoxShadow>? boxShadow;
 
   const AppCard({
     super.key,
@@ -28,6 +18,16 @@ class AppCard extends StatelessWidget {
     this.hasShadow = true,
     this.boxShadow,
   });
+  final Widget child;
+  final Color? backgroundColor;
+  final double? elevation;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final BorderRadius? borderRadius;
+  final VoidCallback? onTap;
+  final BorderSide? borderSide;
+  final bool hasShadow;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +51,10 @@ class AppCard extends StatelessWidget {
         boxShadow ??
         (hasShadow
             ? [
-                BoxShadow(
+                const BoxShadow(
                   color: AppColors.shadow,
                   blurRadius: 6,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ]
             : []);

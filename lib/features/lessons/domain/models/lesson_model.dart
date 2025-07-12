@@ -10,18 +10,6 @@ enum LessonStatus {
 
 /// Ders bilgilerini temsil eden model sınıfı.
 class Lesson {
-  final String id;
-  final String studentId;
-  final String studentName;
-  final String subject;
-  final String? topic;
-  final String date;
-  final String startTime;
-  final String endTime;
-  final LessonStatus status;
-  final String? notes;
-  final String? recurringPatternId;
-  final double fee;
 
   Lesson({
     String? id,
@@ -39,8 +27,7 @@ class Lesson {
   }) : id = id ?? const Uuid().v4();
 
   /// Map objesinden Lesson nesnesine dönüştürür.
-  factory Lesson.fromMap(Map<String, dynamic> map) {
-    return Lesson(
+  factory Lesson.fromMap(Map<String, dynamic> map) => Lesson(
       id: map['id'] as String,
       studentId: map['studentId'] as String,
       studentName: map['studentName'] as String,
@@ -57,11 +44,21 @@ class Lesson {
       recurringPatternId: map['recurringPatternId'] as String?,
       fee: (map['fee'] as num?)?.toDouble() ?? 0,
     );
-  }
+  final String id;
+  final String studentId;
+  final String studentName;
+  final String subject;
+  final String? topic;
+  final String date;
+  final String startTime;
+  final String endTime;
+  final LessonStatus status;
+  final String? notes;
+  final String? recurringPatternId;
+  final double fee;
 
   /// Lesson nesnesini Map objesine dönüştürür.
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, dynamic> toMap() => {
       'id': id,
       'studentId': studentId,
       'studentName': studentName,
@@ -75,7 +72,6 @@ class Lesson {
       'recurringPatternId': recurringPatternId,
       'fee': fee,
     };
-  }
 
   /// Güncellenmiş bir ders nesnesi oluşturur.
   Lesson copyWith({
@@ -91,8 +87,7 @@ class Lesson {
     String? notes,
     String? recurringPatternId,
     double? fee,
-  }) {
-    return Lesson(
+  }) => Lesson(
       id: id ?? this.id,
       studentId: studentId ?? this.studentId,
       studentName: studentName ?? this.studentName,
@@ -106,10 +101,7 @@ class Lesson {
       recurringPatternId: recurringPatternId ?? this.recurringPatternId,
       fee: fee ?? this.fee,
     );
-  }
 
   @override
-  String toString() {
-    return 'Lesson(id: $id, studentName: $studentName, subject: $subject, date: $date, startTime: $startTime)';
-  }
+  String toString() => 'Lesson(id: $id, studentName: $studentName, subject: $subject, date: $date, startTime: $startTime)';
 }
