@@ -357,6 +357,7 @@ class _StudentListPageState extends State<StudentListPage> {
             bottom: AppDimensions.spacing16,
             right: AppDimensions.spacing16,
             child: FloatingActionButton(
+              heroTag: 'student_list_fab',
               onPressed: () {
                 context.push('/add-student').then((_) {
                   if (mounted) {
@@ -399,6 +400,7 @@ class _StudentListPageState extends State<StudentListPage> {
             bottom: AppDimensions.spacing24,
             right: AppDimensions.spacing24,
             child: FloatingActionButton.extended(
+              heroTag: 'student_list_tablet_fab',
               onPressed: () {
                 context.push('/add-student').then((_) {
                   if (mounted) {
@@ -443,6 +445,7 @@ class _StudentListPageState extends State<StudentListPage> {
             bottom: AppDimensions.spacing24,
             right: AppDimensions.spacing24,
             child: FloatingActionButton.extended(
+              heroTag: 'student_list_desktop_fab',
               onPressed: () {
                 context.push('/add-student').then((_) {
                   if (mounted) {

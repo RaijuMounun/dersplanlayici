@@ -511,6 +511,17 @@ class DatabaseHelper {
         'Ders ekleniyor: ${lesson['subject']} - ${lesson['studentName']}',
       );
 
+      // Gerekli alanları kontrol et
+      developer.log('🔍 [DatabaseHelper] Ders verisi detayları:');
+      developer.log('  - ID: ${lesson['id']}');
+      developer.log('  - StudentID: ${lesson['studentId']}');
+      developer.log('  - StudentName: ${lesson['studentName']}');
+      developer.log('  - Subject: ${lesson['subject']}');
+      developer.log('  - Date: ${lesson['date']}');
+      developer.log('  - StartTime: ${lesson['startTime']}');
+      developer.log('  - EndTime: ${lesson['endTime']}');
+      developer.log('  - Status: ${lesson['status']}');
+
       // Tarih alanlarını ekle
       final now = DateTime.now().toIso8601String();
       lesson['createdAt'] = now;
@@ -527,8 +538,8 @@ class DatabaseHelper {
 
       return result;
     } catch (e) {
-      developer.log('Ders ekleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('❌ [DatabaseHelper] Ders ekleme hatası: $e');
+      developer.log('❌ [DatabaseHelper] Hata stack trace: ${StackTrace.current}');
       rethrow;
     }
   }
@@ -1012,14 +1023,21 @@ class DatabaseHelper {
       // JSON verilerini Map'e dönüştür
       final processedResult = result.map((event) {
         final Map<String, dynamic> processedEvent = Map.from(event);
-        if (processedEvent['metadata'] != null) {
+        if (processedEvent['metadata'] != null &&
+            processedEvent['metadata'] is String) {
           try {
-            processedEvent['metadata'] = jsonDecode(
-              processedEvent['metadata'] as String,
-            );
+            final metadataString = processedEvent['metadata'] as String;
+            if (metadataString.isNotEmpty) {
+              processedEvent['metadata'] = jsonDecode(metadataString);
+            } else {
+              processedEvent['metadata'] = <String, dynamic>{};
+            }
           } catch (e) {
             developer.log('Metadata JSON dönüştürme hatası: $e');
+            processedEvent['metadata'] = <String, dynamic>{};
           }
+        } else if (processedEvent['metadata'] == null) {
+          processedEvent['metadata'] = <String, dynamic>{};
         }
         // Boolean değerleri dönüştür
         processedEvent['isAllDay'] = processedEvent['isAllDay'] == 1;

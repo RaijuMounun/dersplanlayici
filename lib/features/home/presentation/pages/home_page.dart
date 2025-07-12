@@ -346,6 +346,7 @@ class _HomePageState extends State<HomePage> {
     switch (_selectedIndex) {
       case 0: // Takvim
         return FloatingActionButton(
+          heroTag: 'calendar_fab',
           onPressed: () {
             context.push('/new-lesson');
           },
@@ -354,6 +355,7 @@ class _HomePageState extends State<HomePage> {
         );
       case 1: // Dersler
         return FloatingActionButton(
+          heroTag: 'lessons_fab',
           onPressed: () {
             context.push('/new-lesson');
           },
@@ -362,6 +364,7 @@ class _HomePageState extends State<HomePage> {
         );
       case 2: // Öğrenciler
         return FloatingActionButton(
+          heroTag: 'students_fab',
           onPressed: () {
             context.push('/add-student');
           },
@@ -370,6 +373,7 @@ class _HomePageState extends State<HomePage> {
         );
       case 3: // Ödemeler
         return FloatingActionButton(
+          heroTag: 'payments_fab',
           onPressed: () {
             context.push('/add-payment');
           },

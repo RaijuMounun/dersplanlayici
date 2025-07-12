@@ -52,13 +52,36 @@ class LessonProvider extends ChangeNotifier {
     _error = null;
 
     try {
+      print('🔍 [LessonProvider] Dersler yükleniyor...');
       final lessonsData = await _databaseService.getLessons();
-      _lessons = lessonsData.map((data) => Lesson.fromMap(data)).toList();
+      print(
+        '🔍 [LessonProvider] Veritabanından ${lessonsData.length} ders alındı',
+      );
+
+      if (lessonsData.isNotEmpty) {
+        print('🔍 [LessonProvider] İlk ders verisi: ${lessonsData.first}');
+      }
+
+      _lessons = lessonsData.map((data) {
+        try {
+          final lesson = Lesson.fromMap(data);
+          print('🔍 [LessonProvider] Ders oluşturuldu: ${lesson.toString()}');
+          return lesson;
+        } catch (e) {
+          print('❌ [LessonProvider] Ders oluşturma hatası: $e');
+          print('❌ [LessonProvider] Hatalı veri: $data');
+          rethrow;
+        }
+      }).toList();
+
+      print('🔍 [LessonProvider] Toplam ${_lessons.length} ders yüklendi');
       notifyListeners();
     } on AppException catch (e) {
+      print('❌ [LessonProvider] AppException: $e');
       _error = e;
       notifyListeners();
     } catch (e) {
+      print('❌ [LessonProvider] Genel hata: $e');
       _error = DatabaseException(
         message: 'Dersler yüklenirken bir hata oluştu: ${e.toString()}',
       );
@@ -146,6 +169,8 @@ class LessonProvider extends ChangeNotifier {
     _error = null;
 
     try {
+      print('➕ [LessonProvider] Ders ekleniyor: ${lesson.toString()}');
+
       // Ders çakışması kontrolü
       final hasConflict = await _databaseService.checkLessonConflict(
         date: lesson.date,
@@ -154,17 +179,26 @@ class LessonProvider extends ChangeNotifier {
       );
 
       if (hasConflict) {
+        print('⚠️ [LessonProvider] Ders çakışması tespit edildi');
         throw const LessonConflictException(
           message: 'Bu saatlerde başka bir ders zaten planlanmış.',
         );
       }
 
+      print('💾 [LessonProvider] Veritabanına ders kaydediliyor...');
       await _databaseService.insertLesson(lesson.toMap());
+      print('✅ [LessonProvider] Ders başarıyla kaydedildi');
+
+      // Dersler listesini yeniden yükle
+      print('🔄 [LessonProvider] Dersler listesi yeniden yükleniyor...');
       await loadLessons();
+      print('✅ [LessonProvider] Dersler listesi güncellendi');
     } on AppException catch (e) {
+      print('❌ [LessonProvider] AppException: $e');
       _error = e;
       notifyListeners();
     } catch (e) {
+      print('❌ [LessonProvider] Genel hata: $e');
       _error = DatabaseException(
         message: 'Ders eklenirken bir hata oluştu: ${e.toString()}',
       );

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'package:flutter/foundation.dart';
 
 /// Önbellek giriş sınıfı
 class CacheEntry<T> {

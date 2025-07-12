@@ -7,12 +7,14 @@ plugins {
 
 android {
     namespace = "com.raijumounun.dersplanlayici"
-    compileSdk = 34 // Android 14
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 35 // Android 15
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // Core library desugaring için gerekli
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -22,7 +24,7 @@ android {
     defaultConfig {
         applicationId = "com.raijumounun.dersplanlayici"
         minSdk = 21 // Android 5.0 Lollipop
-        targetSdk = 34 // Android 14
+        targetSdk = 35 // Android 15
         versionCode = 1
         versionName = "1.0.0"
     }
@@ -32,8 +34,6 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
     }
 }
@@ -45,4 +45,6 @@ flutter {
 dependencies {
     implementation("androidx.window:window:1.0.0")
     implementation("androidx.window:window-java:1.0.0")
+    // Core library desugaring için gerekli
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

@@ -45,7 +45,7 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           // Takvim görünümü
           _buildCalendarView(),
-
+      
           // Günlük ders listesi
           Expanded(child: _buildDailyLessonsList()),
         ],

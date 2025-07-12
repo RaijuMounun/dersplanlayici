@@ -35,7 +35,7 @@
         "editor.wordBasedSuggestions": "off"
     },
     "dart.lineLength": 80,
-    "dart.flutterSdkPath": ".fvm/flutter_sdk",
+    "dart.flutterSdkPath": "C:\\Users\\erenk\\dev\\flutter",
     "search.exclude": {
         "**/.fvm": true,
         "**/*.freezed.dart": true,

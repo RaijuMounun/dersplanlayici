@@ -135,19 +135,27 @@ class _LessonsPageState extends State<LessonsPage>
   Widget _buildLessonList(LessonFilterType filterType) {
     return Consumer<LessonProvider>(
       builder: (context, lessonProvider, child) {
+        print('🔍 [LessonsPage] _buildLessonList çağrıldı - Tip: $filterType');
+        print('🔍 [LessonsPage] Loading durumu: ${lessonProvider.isLoading}');
+        print('🔍 [LessonsPage] Hata durumu: ${lessonProvider.error}');
+
         // Veri yükleniyor mu kontrolü
         if (lessonProvider.isLoading) {
+          print('🔍 [LessonsPage] Yükleme gösteriliyor');
           return const Center(child: CircularProgressIndicator());
         }
 
         // Filtreli ders listesini al
         final lessons = _getFilteredLessons(lessonProvider, filterType);
+        print('🔍 [LessonsPage] Filtrelenmiş ders sayısı: ${lessons.length}');
 
         // Ders yoksa boş durum mesajı göster
         if (lessons.isEmpty) {
+          print('🔍 [LessonsPage] Boş durum gösteriliyor');
           return _buildEmptyState(filterType);
         }
 
+        print('🔍 [LessonsPage] Ders listesi gösteriliyor');
         // Seçim modu aktifse üst menü göster
         return Column(
           children: [
@@ -449,10 +457,15 @@ class _LessonsPageState extends State<LessonsPage>
     LessonFilterType filterType,
   ) {
     final now = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    print(
+      '🔍 [LessonsPage] Filtreleme yapılıyor - Tip: $filterType, Bugün: $now',
+    );
+    print('🔍 [LessonsPage] Toplam ders sayısı: ${provider.lessons.length}');
 
+    List<Lesson> filteredLessons;
     switch (filterType) {
       case LessonFilterType.upcoming:
-        return provider.lessons
+        filteredLessons = provider.lessons
             .where(
               (lesson) =>
                   lesson.status != LessonStatus.completed &&
@@ -464,13 +477,25 @@ class _LessonsPageState extends State<LessonsPage>
                               0)),
             )
             .toList();
+        print('🔍 [LessonsPage] Gelecek dersler: ${filteredLessons.length}');
+        break;
       case LessonFilterType.completed:
-        return provider.lessons
+        filteredLessons = provider.lessons
             .where((lesson) => lesson.status == LessonStatus.completed)
             .toList();
+        print('🔍 [LessonsPage] Tamamlanan dersler: ${filteredLessons.length}');
+        break;
       case LessonFilterType.all:
-        return provider.lessons;
+        filteredLessons = provider.lessons;
+        print('🔍 [LessonsPage] Tüm dersler: ${filteredLessons.length}');
+        break;
     }
+
+    if (filteredLessons.isNotEmpty) {
+      print('🔍 [LessonsPage] İlk ders: ${filteredLessons.first.toString()}');
+    }
+
+    return filteredLessons;
   }
 
   // Tarih ve saat bilgilerini DateTime objesine çevirir

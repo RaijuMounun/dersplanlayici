@@ -5,6 +5,7 @@ Bu dosya, özel ders veren öğretmenlerin ders planlama uygulamasını kullanı
 ## Takvim ve Ders Planlama
 
 ### Ana Ekran / Takvim Görünümü
+
 1. **Günlük Ders Görünümü**
    - Öğretmen olarak, günün derslerini kronolojik sırada görmek istiyorum ki günlük programımı kolayca takip edebileyim.
    - Öğretmen olarak, seçtiğim gündeki dersleri açıkça görmek istiyorum ki o günün planını anlayabileyim.
@@ -18,6 +19,7 @@ Bu dosya, özel ders veren öğretmenlerin ders planlama uygulamasını kullanı
    - Öğretmen olarak, takvimde derslerin saatlerini ve öğrenci isimlerini görmek istiyorum ki günün akışını hızlıca anlayabileyim.
 
 ### Ders Ekleme ve Düzenleme
+
 1. **Yeni Ders Ekleme**
    - Öğretmen olarak, mevcut öğrencilerimden birini seçerek yeni ders eklemek istiyorum ki programıma kolayca ders ekleyebileyim.
    - Öğretmen olarak, dersin tarih, başlangıç ve bitiş saatini belirlemek istiyorum ki programımı net şekilde planlayabileyim.
@@ -59,7 +61,7 @@ Bu dosya, özel ders veren öğretmenlerin ders planlama uygulamasını kullanı
 2. **Borç Yönetimi**
    - Öğretmen olarak, bir öğrencinin borcunu güncelleyebilmek istiyorum ki ödeme yaptığında kaydedebilmek istiyorum.
    - Öğretmen olarak, ödeme alındığında öğrenci borcunu sıfırlayabilmek istiyorum ki ödeme durumunu temiz tutabilmek istiyorum.
-   - Öğretmen olarak, işlenen dersin otomatik olarak borç olarak eklenmesini istiyorum ki her dersten sonra manuel olarak borç eklemek zorunda kalmayayım. 
+   - Öğretmen olarak, işlenen dersin otomatik olarak borç olarak eklenmesini istiyorum ki her dersten sonra manuel olarak borç eklemek zorunda kalmayayım.
 
 3. **Ücret Geçmişi**
    - Öğretmen olarak, öğrencilerin ödeme geçmişini görebilmek istiyorum ki geçmiş ödemeleri takip edebileyim.
@@ -89,4 +91,4 @@ Bu dosya, özel ders veren öğretmenlerin ders planlama uygulamasını kullanı
    - Öğretmen olarak, öğrenci bazlı ders istatistiklerini görebilmek istiyorum ki hangi öğrencilerle ne kadar çalıştığımı bileyim.
 
 3. **Veri Yedekleme**
-   - Öğretmen olarak, verilerimi yedekleyebilmek istiyorum ki telefon değişimi veya uygulama sorunlarında verilerim korunsun. 
+   - Öğretmen olarak, verilerimi yedekleyebilmek istiyorum ki telefon değişimi veya uygulama sorunlarında verilerim korunsun.

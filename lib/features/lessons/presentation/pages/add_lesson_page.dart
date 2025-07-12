@@ -387,7 +387,6 @@ class _AddLessonPageState extends State<AddLessonPage> {
       try {
         // Ders nesnesini oluştur
         final lesson = Lesson(
-          id: '', // ID repository tarafından atanacak
           studentId: _selectedStudentId!,
           studentName: _selectedStudentName!,
           subject: _selectedSubject!,

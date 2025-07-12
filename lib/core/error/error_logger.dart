@@ -28,24 +28,6 @@ class LogRecord {
     this.metadata,
   }) : timestamp = timestamp ?? DateTime.now();
 
-  /// LogRecord'u map olarak temsil eder
-  Map<String, dynamic> toMap() {
-    return {
-      'level': level.toString().split('.').last,
-      'message': message,
-      'tag': tag,
-      'timestamp': timestamp.toIso8601String(),
-      'error': error?.toString(),
-      'stackTrace': stackTrace?.toString(),
-      'metadata': metadata,
-    };
-  }
-
-  /// LogRecord'u JSON string olarak temsil eder
-  String toJson() {
-    return jsonEncode(toMap());
-  }
-
   /// LogRecord'u formatlanmış log stringi olarak temsil eder
   String toFormattedString() {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
@@ -71,51 +53,8 @@ class LogRecord {
   }
 }
 
-/// Log hedef arayüzü
-abstract class LogDestination {
-  Future<void> log(LogRecord record);
-  Future<void> flush();
-  Future<void> close();
-}
-
-/// Konsol log hedefi
-class ConsoleLogDestination implements LogDestination {
-  final LogLevel minLevel;
-
-  ConsoleLogDestination({this.minLevel = LogLevel.debug});
-
-  @override
-  Future<void> log(LogRecord record) async {
-    if (record.level.index < minLevel.index) return;
-
-    final message = record.toFormattedString();
-
-    switch (record.level) {
-      case LogLevel.debug:
-      case LogLevel.info:
-        debugPrint(message);
-        break;
-      case LogLevel.warning:
-      case LogLevel.error:
-      case LogLevel.critical:
-        debugPrint('\x1B[31m$message\x1B[0m'); // Kırmızı renk
-        break;
-    }
-  }
-
-  @override
-  Future<void> flush() async {
-    // Konsol için flush işlemi yok
-  }
-
-  @override
-  Future<void> close() async {
-    // Konsol için kapama işlemi yok
-  }
-}
-
-/// Dosya log hedefi
-class FileLogDestination implements LogDestination {
+/// Basitleştirilmiş dosya log hedefi
+class SimpleFileLogDestination {
   final LogLevel minLevel;
   final String baseFileName;
   final int maxSizeInBytes;
@@ -124,126 +63,139 @@ class FileLogDestination implements LogDestination {
   File? _currentLogFile;
   IOSink? _logSink;
   int _currentFileSize = 0;
+  bool _isInitialized = false;
 
-  FileLogDestination({
+  SimpleFileLogDestination({
     this.minLevel = LogLevel.info,
     this.baseFileName = 'app_log',
     this.maxSizeInBytes = 5 * 1024 * 1024, // 5 MB
-    this.maxFiles = 5,
+    this.maxFiles = 3,
   });
 
   Future<void> _initialize() async {
-    if (_currentLogFile != null) return;
+    if (_isInitialized) return;
 
-    final directory = await path_provider.getApplicationDocumentsDirectory();
-    final logDir = Directory('${directory.path}/logs');
+    try {
+      final directory = await path_provider.getApplicationDocumentsDirectory();
+      final logDir = Directory('${directory.path}/logs');
 
-    if (!await logDir.exists()) {
-      await logDir.create(recursive: true);
+      if (!await logDir.exists()) {
+        await logDir.create(recursive: true);
+      }
+
+      _currentLogFile = File('${logDir.path}/$baseFileName.log');
+
+      if (await _currentLogFile!.exists()) {
+        _currentFileSize = await _currentLogFile!.length();
+      }
+
+      _logSink = _currentLogFile!.openWrite(mode: FileMode.append);
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Log dosyası başlatılamadı: $e');
     }
-
-    _currentLogFile = File('${logDir.path}/$baseFileName.log');
-
-    if (await _currentLogFile!.exists()) {
-      _currentFileSize = await _currentLogFile!.length();
-    }
-
-    _logSink = _currentLogFile!.openWrite(mode: FileMode.append);
   }
 
-  @override
   Future<void> log(LogRecord record) async {
     if (record.level.index < minLevel.index) return;
+    if (!_isInitialized) await _initialize();
+    if (_logSink == null) return;
 
-    await _initialize();
+    try {
+      final logLine = '${record.toFormattedString()}\n';
+      _logSink!.write(logLine);
+      _currentFileSize += logLine.length;
 
-    final logLine = '${record.toFormattedString()}\n';
-    _logSink!.write(logLine);
-
-    _currentFileSize += logLine.length;
-
-    if (_currentFileSize >= maxSizeInBytes) {
-      await _rotateLogFiles();
+      if (_currentFileSize >= maxSizeInBytes) {
+        await _rotateLogFiles();
+      }
+    } catch (e) {
+      debugPrint('Log dosyasına yazarken hata: $e');
     }
   }
 
   Future<void> _rotateLogFiles() async {
-    await flush();
+    try {
+      // Önce mevcut sink'i kapat
+      await flush();
+      await _logSink?.close();
+      _logSink = null;
 
-    // Eski log dosyalarını kontrol et ve sil
-    final directory = await path_provider.getApplicationDocumentsDirectory();
-    final logDir = Directory('${directory.path}/logs');
+      final directory = await path_provider.getApplicationDocumentsDirectory();
+      final logDir = Directory('${directory.path}/logs');
 
-    for (int i = maxFiles - 1; i >= 0; i--) {
-      final oldFile = File('${logDir.path}/$baseFileName.$i.log');
-
-      if (await oldFile.exists()) {
-        if (i == maxFiles - 1) {
-          await oldFile.delete();
-        } else {
-          final newFile = File('${logDir.path}/$baseFileName.${i + 1}.log');
-          await oldFile.rename(newFile.path);
+      // Eski log dosyalarını sil (güvenli şekilde)
+      for (int i = maxFiles - 1; i >= 0; i--) {
+        final oldFile = File('${logDir.path}/$baseFileName.$i.log');
+        if (await oldFile.exists()) {
+          try {
+            await oldFile.delete();
+          } catch (e) {
+            debugPrint('Eski log dosyası silinemedi: $e');
+          }
         }
       }
+
+      // Mevcut log dosyasını .0.log olarak kaydet (güvenli şekilde)
+      if (_currentLogFile != null && await _currentLogFile!.exists()) {
+        try {
+          final backupFile = File('${logDir.path}/$baseFileName.0.log');
+          await _currentLogFile!.copy(backupFile.path);
+          await _currentLogFile!.delete();
+        } catch (e) {
+          debugPrint('Log dosyası yedeklenemedi: $e');
+          // Yedekleme başarısızsa, rotasyonu atla
+          return;
+        }
+      }
+
+      // Yeni log dosyası oluştur
+      _currentLogFile = File('${logDir.path}/$baseFileName.log');
+      _logSink = _currentLogFile!.openWrite(mode: FileMode.write);
+      _currentFileSize = 0;
+    } catch (e) {
+      debugPrint('Log dosyası rotasyonu başarısız: $e');
+      // Rotasyon başarısızsa, mevcut dosyaya devam et
+      try {
+        if (_currentLogFile != null) {
+          _logSink = _currentLogFile!.openWrite(mode: FileMode.append);
+        }
+      } catch (e2) {
+        debugPrint('Log dosyası yeniden açılamadı: $e2');
+      }
     }
-
-    // Mevcut log dosyasını .0.log olarak kaydet
-    final backupFile = File('${logDir.path}/$baseFileName.0.log');
-    await _currentLogFile!.rename(backupFile.path);
-
-    // Yeni log dosyası oluştur
-    _currentLogFile = File('${logDir.path}/$baseFileName.log');
-    _logSink = _currentLogFile!.openWrite(mode: FileMode.write);
-    _currentFileSize = 0;
   }
 
-  @override
   Future<void> flush() async {
-    await _logSink?.flush();
+    try {
+      await _logSink?.flush();
+    } catch (e) {
+      debugPrint('Log flush hatası: $e');
+    }
   }
 
-  @override
   Future<void> close() async {
-    await flush();
-    await _logSink?.close();
-    _logSink = null;
+    try {
+      await flush();
+      await _logSink?.close();
+      _logSink = null;
+      _isInitialized = false;
+    } catch (e) {
+      debugPrint('Log kapatma hatası: $e');
+    }
   }
 }
 
-/// Hata yönetimi ve loglama sınıfı
-///
-/// Bu sınıf, uygulamanın farklı bölümlerinden gelen hataları ve
-/// log mesajlarını işlemek ve farklı hedeflere yönlendirmek için kullanılır.
+/// Basitleştirilmiş hata yönetimi ve loglama sınıfı
 class ErrorLogger {
   static final ErrorLogger _instance = ErrorLogger._internal();
-
-  final List<LogDestination> _destinations = [];
-  final StreamController<LogRecord> _logStreamController =
-      StreamController<LogRecord>.broadcast();
-
-  // Log mesajlarını dinlemek için stream
-  Stream<LogRecord> get onLog => _logStreamController.stream;
-
   factory ErrorLogger() => _instance;
 
+  late final SimpleFileLogDestination _fileDestination;
+  bool _isInitialized = false;
+
   ErrorLogger._internal() {
-    // Varsayılan olarak konsol hedefini ekle
-    addDestination(ConsoleLogDestination());
-
-    // Yayın modunda değilse dosya hedefini ekle
-    if (!kReleaseMode) {
-      addDestination(FileLogDestination());
-    }
-  }
-
-  /// Log hedefi ekler
-  void addDestination(LogDestination destination) {
-    _destinations.add(destination);
-  }
-
-  /// Log hedefi kaldırır
-  void removeDestination(LogDestination destination) {
-    _destinations.remove(destination);
+    _fileDestination = SimpleFileLogDestination();
   }
 
   /// Debug seviyesinde log kaydı
@@ -354,40 +306,36 @@ class ErrorLogger {
       metadata: metadata,
     );
 
-    _logStreamController.add(record);
-
-    for (final destination in _destinations) {
-      try {
-        await destination.log(record);
-      } catch (e) {
-        debugPrint('Log hedefine yazarken hata oluştu: $e');
-      }
+    // Konsol loglaması
+    final consoleMessage = record.toFormattedString();
+    switch (level) {
+      case LogLevel.debug:
+      case LogLevel.info:
+        debugPrint(consoleMessage);
+        break;
+      case LogLevel.warning:
+      case LogLevel.error:
+      case LogLevel.critical:
+        debugPrint('\x1B[31m$consoleMessage\x1B[0m'); // Kırmızı renk
+        break;
     }
-  }
 
-  /// Tüm log hedeflerini temizler
-  Future<void> flush() async {
-    for (final destination in _destinations) {
+    // Dosya loglaması (sadece debug modda)
+    if (!kReleaseMode) {
       try {
-        await destination.flush();
+        await _fileDestination.log(record);
       } catch (e) {
-        debugPrint('Log hedefini temizlerken hata oluştu: $e');
+        debugPrint('Dosya loglaması başarısız: $e');
       }
     }
   }
 
   /// Servis kapatılırken kaynakları serbest bırakır
   Future<void> dispose() async {
-    await flush();
-
-    for (final destination in _destinations) {
-      try {
-        await destination.close();
-      } catch (e) {
-        debugPrint('Log hedefini kapatırken hata oluştu: $e');
-      }
+    try {
+      await _fileDestination.close();
+    } catch (e) {
+      debugPrint('ErrorLogger dispose hatası: $e');
     }
-
-    await _logStreamController.close();
   }
 }

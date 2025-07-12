@@ -187,9 +187,28 @@ class DatabaseService {
   /// Yeni ders ekler.
   Future<int> insertLesson(Map<String, dynamic> lesson) async {
     try {
+      print('🔍 [DatabaseService] insertLesson çağrıldı');
+      print('🔍 [DatabaseService] Ders verisi: $lesson');
+
       final db = await _databaseHelper.database;
-      return await db.insert('lessons', lesson);
+      print('🔍 [DatabaseService] Veritabanı bağlantısı alındı');
+
+      // Tarih alanlarını ekle
+      final now = DateTime.now().toIso8601String();
+      lesson['createdAt'] = now;
+      lesson['updatedAt'] = now;
+
+      print(
+        '🔍 [DatabaseService] Tarih alanları eklendi: createdAt=$now, updatedAt=$now',
+      );
+
+      final result = await db.insert('lessons', lesson);
+      print('🔍 [DatabaseService] Ders başarıyla eklendi, sonuç: $result');
+
+      return result;
     } catch (e) {
+      print('❌ [DatabaseService] Ders ekleme hatası: $e');
+      print('❌ [DatabaseService] Hata stack trace: ${StackTrace.current}');
       throw const DatabaseException(message: 'Ders eklenirken hata oluştu');
     }
   }
@@ -198,6 +217,10 @@ class DatabaseService {
   Future<int> updateLesson(Map<String, dynamic> lesson) async {
     try {
       final db = await _databaseHelper.database;
+
+      // Güncelleme tarihini ekle
+      lesson['updatedAt'] = DateTime.now().toIso8601String();
+
       return await db.update(
         'lessons',
         lesson,
