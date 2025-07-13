@@ -112,72 +112,66 @@ class AppStyles {
     ),
   );
 
-  // Input stilleri
-  static InputDecorationTheme get inputDecorationTheme => InputDecorationTheme(
-    filled: true,
-    fillColor: AppColors.surface,
-    contentPadding: const EdgeInsets.symmetric(
-      vertical: AppDimensions.spacing16,
-      horizontal: AppDimensions.spacing16,
-    ),
-    border: OutlineInputBorder(
-      borderRadius: AppDimensions.borderRadius8,
-      borderSide: const BorderSide(
-        color: AppColors.border,
-        width: AppDimensions.borderWidth1,
-      ),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: AppDimensions.borderRadius8,
-      borderSide: const BorderSide(
-        color: AppColors.border,
-        width: AppDimensions.borderWidth1,
-      ),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: AppDimensions.borderRadius8,
-      borderSide: const BorderSide(
-        color: AppColors.primary,
-        width: AppDimensions.borderWidth2,
-      ),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderRadius: AppDimensions.borderRadius8,
-      borderSide: const BorderSide(
-        color: AppColors.error,
-        width: AppDimensions.borderWidth1,
-      ),
-    ),
-    focusedErrorBorder: OutlineInputBorder(
-      borderRadius: AppDimensions.borderRadius8,
-      borderSide: const BorderSide(
-        color: AppColors.error,
-        width: AppDimensions.borderWidth2,
-      ),
-    ),
-    hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 16),
-    labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
-    errorStyle: const TextStyle(color: AppColors.error, fontSize: 12),
-  );
+  // Input stilleri - Bu metod context gerektirdiği için ayrı bir metod olarak tanımlanmalı
+  static InputDecorationTheme getInputDecorationTheme(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
 
-  static InputDecorationTheme get darkInputDecorationTheme =>
-      inputDecorationTheme.copyWith(
-        fillColor: AppColors.surfaceDark,
-        border: OutlineInputBorder(
-          borderRadius: AppDimensions.borderRadius8,
-          borderSide: const BorderSide(
-            color: AppColors.borderDark,
-            width: AppDimensions.borderWidth1,
-          ),
+    return InputDecorationTheme(
+      filled: true,
+      fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: AppDimensions.spacing16,
+        horizontal: AppDimensions.spacing16,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: AppDimensions.borderRadius8,
+        borderSide: BorderSide(
+          color: isDark ? AppColors.borderDark : AppColors.border,
+          width: AppDimensions.borderWidth1,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppDimensions.borderRadius8,
-          borderSide: const BorderSide(
-            color: AppColors.borderDark,
-            width: AppDimensions.borderWidth1,
-          ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: AppDimensions.borderRadius8,
+        borderSide: BorderSide(
+          color: isDark ? AppColors.borderDark : AppColors.border,
+          width: AppDimensions.borderWidth1,
         ),
-      );
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: AppDimensions.borderRadius8,
+        borderSide: const BorderSide(
+          color: AppColors.primary,
+          width: AppDimensions.borderWidth2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: AppDimensions.borderRadius8,
+        borderSide: const BorderSide(
+          color: AppColors.error,
+          width: AppDimensions.borderWidth1,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: AppDimensions.borderRadius8,
+        borderSide: const BorderSide(
+          color: AppColors.primary,
+          width: AppDimensions.borderWidth2,
+        ),
+      ),
+      hintStyle: TextStyle(
+        color: isDark ? AppColors.getTextHint(context) : AppColors.textHint,
+        fontSize: 16,
+      ),
+      labelStyle: TextStyle(
+        color: isDark
+            ? AppColors.getTextSecondary(context)
+            : AppColors.textSecondary,
+        fontSize: 16,
+      ),
+      errorStyle: const TextStyle(color: AppColors.error, fontSize: 12),
+    );
+  }
 
   // Bottom Navigation Bar stilleri
   static BottomNavigationBarThemeData get bottomNavigationBarTheme =>
@@ -227,10 +221,7 @@ class AppStyles {
     unselectedLabelColor: AppColors.textSecondary,
     indicatorColor: AppColors.primary,
     labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-    unselectedLabelStyle: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-    ),
+    unselectedLabelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
     indicatorSize: TabBarIndicatorSize.tab,
   );
 

@@ -332,13 +332,7 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
       label: 'Ders Konusu',
       hint: 'Örn: Matematik, Fizik, İngilizce',
       controller: _subjectController,
-      required: true,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Ders konusu gereklidir';
-        }
-        return null;
-      },
+      required: false,
     );
 
   // Tarih ve saat alanı
