@@ -232,7 +232,7 @@ class _CalendarPageState extends State<CalendarPage> {
             child: ElevatedButton.icon(
               onPressed: () async {
                 // Ders ekleme sayfasına yönlendir
-                await context.push('/add-lesson');
+                await context.push('/new-lesson');
 
                 if (mounted) {
                   final lessonProvider = Provider.of<LessonProvider>(
