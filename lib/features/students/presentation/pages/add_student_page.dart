@@ -8,6 +8,8 @@ import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 import 'package:ders_planlayici/core/widgets/loading_indicator.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
+import 'package:ders_planlayici/core/utils/phone_input_formatter.dart';
+import 'package:flutter/services.dart';
 
 class AddStudentPage extends StatefulWidget {
   const AddStudentPage({super.key, this.studentId});
@@ -297,12 +299,15 @@ class _AddStudentPageState extends State<AddStudentPage> {
       labelText: 'Öğrenci Adı',
       border: const OutlineInputBorder(),
       filled: true,
-      fillColor: AppColors.inputBackground,
-      prefixIcon: const Icon(Icons.person, color: AppColors.textSecondary),
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
-      hintStyle: const TextStyle(color: AppColors.textHint),
+      fillColor: AppColors.getInputBackground(context),
+      prefixIcon: Icon(
+        Icons.person,
+        color: AppColors.getTextSecondary(context),
+      ),
+      labelStyle: TextStyle(color: AppColors.getTextSecondary(context)),
+      hintStyle: TextStyle(color: AppColors.getTextHint(context)),
     ),
-    style: const TextStyle(color: AppColors.textPrimary),
+    style: TextStyle(color: AppColors.getTextPrimary(context)),
     textInputAction: TextInputAction.next,
     validator: (value) {
       if (value == null || value.trim().isEmpty) {
@@ -318,12 +323,15 @@ class _AddStudentPageState extends State<AddStudentPage> {
       labelText: 'Veli Adı',
       border: const OutlineInputBorder(),
       filled: true,
-      fillColor: AppColors.inputBackground,
-      prefixIcon: const Icon(Icons.family_restroom, color: AppColors.textSecondary),
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
-      hintStyle: const TextStyle(color: AppColors.textHint),
+      fillColor: AppColors.getInputBackground(context),
+      prefixIcon: Icon(
+        Icons.family_restroom,
+        color: AppColors.getTextSecondary(context),
+      ),
+      labelStyle: TextStyle(color: AppColors.getTextSecondary(context)),
+      hintStyle: TextStyle(color: AppColors.getTextHint(context)),
     ),
-    style: const TextStyle(color: AppColors.textPrimary),
+    style: TextStyle(color: AppColors.getTextPrimary(context)),
     textInputAction: TextInputAction.next,
     validator: (value) {
       if (value == null || value.trim().isEmpty) {
@@ -339,23 +347,29 @@ class _AddStudentPageState extends State<AddStudentPage> {
       labelText: 'Telefon',
       border: const OutlineInputBorder(),
       filled: true,
-      fillColor: AppColors.inputBackground,
-      prefixIcon: const Icon(Icons.phone, color: AppColors.textSecondary),
+      fillColor: AppColors.getInputBackground(context),
+      prefixIcon: Icon(Icons.phone, color: AppColors.getTextSecondary(context)),
       prefixText: '+90 ',
       hintText: '5XX XXX XX XX',
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
-      hintStyle: const TextStyle(color: AppColors.textHint),
-      prefixStyle: const TextStyle(color: AppColors.textSecondary),
+      labelStyle: TextStyle(color: AppColors.getTextSecondary(context)),
+      hintStyle: TextStyle(color: AppColors.getTextHint(context)),
+      prefixStyle: TextStyle(color: AppColors.getTextSecondary(context)),
     ),
-    style: const TextStyle(color: AppColors.textPrimary),
+    style: TextStyle(color: AppColors.getTextPrimary(context)),
     keyboardType: TextInputType.phone,
     textInputAction: TextInputAction.next,
+    inputFormatters: [
+      PhoneInputFormatter(),
+      LengthLimitingTextInputFormatter(
+        13,
+      ), // 5xx xxx xx xx (13 karakter, boşluk dahil)
+    ],
     validator: (value) {
       if (value != null && value.isNotEmpty) {
-        // Basit bir telefon numarası doğrulama
-        final phoneRegex = RegExp(r'^[0-9]{10}$');
-        if (!phoneRegex.hasMatch(value.replaceAll(RegExp(r'\s+'), ''))) {
-          return 'Geçerli bir telefon numarası girin';
+        // 5xx xxx xx xx formatı kontrolü
+        final phoneRegex = RegExp(r'^5\d{2} \d{3} \d{2} \d{2}\$');
+        if (!phoneRegex.hasMatch(value)) {
+          return 'Telefon numarası 5XX XXX XX XX formatında olmalı';
         }
       }
       return null;
@@ -368,17 +382,30 @@ class _AddStudentPageState extends State<AddStudentPage> {
       labelText: 'Sınıf',
       border: const OutlineInputBorder(),
       filled: true,
-      fillColor: AppColors.inputBackground,
-      prefixIcon: const Icon(Icons.school, color: AppColors.textSecondary),
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
+      fillColor: AppColors.getInputBackground(context),
+      prefixIcon: Icon(
+        Icons.school,
+        color: AppColors.getTextSecondary(context),
+      ),
+      labelStyle: TextStyle(color: AppColors.getTextSecondary(context)),
     ),
-    style: const TextStyle(color: AppColors.textPrimary),
-    dropdownColor: AppColors.inputBackground,
-    icon: const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
-    items: _availableGrades.map((grade) => DropdownMenuItem<String>(
-        value: grade,
-        child: Text(grade, style: const TextStyle(color: AppColors.textPrimary)),
-      )).toList(),
+    style: TextStyle(color: AppColors.getTextPrimary(context)),
+    dropdownColor: AppColors.getInputBackground(context),
+    icon: Icon(
+      Icons.arrow_drop_down,
+      color: AppColors.getTextSecondary(context),
+    ),
+    items: _availableGrades
+        .map(
+          (grade) => DropdownMenuItem<String>(
+            value: grade,
+            child: Text(
+              grade,
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
+            ),
+          ),
+        )
+        .toList(),
     onChanged: (value) {
       if (value != null) {
         setState(() {
@@ -412,9 +439,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         width: double.infinity,
         padding: const EdgeInsets.all(AppDimensions.spacing12),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.formBorder),
+          border: Border.all(color: AppColors.getFormBorder(context)),
           borderRadius: BorderRadius.circular(AppDimensions.radius8),
-          color: AppColors.inputBackground,
+          color: AppColors.getInputBackground(context),
         ),
         child: Wrap(
           spacing: AppDimensions.spacing8,
@@ -425,7 +452,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
               label: Text(
                 subject,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  color: isSelected
+                      ? Colors.white
+                      : AppColors.getTextPrimary(context),
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: ResponsiveUtils.responsiveFontSize(context, 14),
                 ),
@@ -440,11 +469,13 @@ class _AddStudentPageState extends State<AddStudentPage> {
                   }
                 });
               },
-              backgroundColor: AppColors.inputBackground,
+              backgroundColor: AppColors.getInputBackground(context),
               selectedColor: AppColors.primary,
               checkmarkColor: Colors.white,
               side: BorderSide(
-                color: isSelected ? AppColors.primary : AppColors.formBorder,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.getFormBorder(context),
                 width: 1,
               ),
               shape: RoundedRectangleBorder(
@@ -465,12 +496,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
       labelText: 'Notlar',
       border: const OutlineInputBorder(),
       filled: true,
-      fillColor: AppColors.inputBackground,
-      prefixIcon: const Icon(Icons.note, color: AppColors.textSecondary),
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
-      hintStyle: const TextStyle(color: AppColors.textHint),
+      fillColor: AppColors.getInputBackground(context),
+      prefixIcon: Icon(Icons.note, color: AppColors.getTextSecondary(context)),
+      labelStyle: TextStyle(color: AppColors.getTextSecondary(context)),
+      hintStyle: TextStyle(color: AppColors.getTextHint(context)),
     ),
-    style: const TextStyle(color: AppColors.textPrimary),
+    style: TextStyle(color: AppColors.getTextPrimary(context)),
     maxLines: 3,
     textInputAction: TextInputAction.done,
   );
