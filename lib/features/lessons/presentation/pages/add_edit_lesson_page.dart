@@ -375,14 +375,11 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
         const SizedBox(height: AppDimensions.spacing8),
         DropdownButtonFormField<LessonStatus>(
           value: _status,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             filled: true,
-            fillColor: AppColors.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
+            fillColor: null, // Tema rengini kullan
+            border: null, // Tema border'ını kullan
+            contentPadding: EdgeInsets.symmetric(
               horizontal: AppDimensions.spacing12,
               vertical: AppDimensions.spacing8,
             ),
