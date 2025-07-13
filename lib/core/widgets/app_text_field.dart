@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';
 
 /// Uygulamada kullanılan standart metin giriş alanı widget'ı.
@@ -109,6 +108,7 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final defaultContentPadding =
         widget.contentPadding ??
         const EdgeInsets.symmetric(
@@ -124,11 +124,10 @@ class _AppTextFieldState extends State<AppTextField> {
             children: [
               Text(
                 widget.label!,
-                style:
-                    widget.labelStyle ?? Theme.of(context).textTheme.titleSmall,
+                style: widget.labelStyle ?? theme.textTheme.titleSmall,
               ),
               if (widget.required)
-                const Text(' *', style: TextStyle(color: AppColors.error)),
+                Text(' *', style: TextStyle(color: theme.colorScheme.error)),
             ],
           ),
           const SizedBox(height: 8),
@@ -163,13 +162,13 @@ class _AppTextFieldState extends State<AppTextField> {
           validator: widget.validator,
           textAlign: widget.textAlign,
           showCursor: widget.showCursor,
-          style: widget.style,
+          style: widget.style ?? theme.textTheme.bodyMedium,
           decoration: InputDecoration(
             hintText: widget.hint,
             helperText: widget.helperText,
             errorText: widget.errorText,
             filled: widget.filled,
-            fillColor: widget.fillColor ?? AppColors.surface,
+            fillColor: widget.fillColor,
             contentPadding: defaultContentPadding,
             prefix: widget.prefix,
             suffix: widget.suffix,
@@ -177,26 +176,12 @@ class _AppTextFieldState extends State<AppTextField> {
             suffixIcon: widget.suffixIcon,
             hintStyle: widget.hintStyle,
             errorStyle: widget.errorStyle,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.error),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.error, width: 2),
-            ),
+            // Tema renklerini kullan - sabit renkler yerine
+            border: null,
+            enabledBorder: null,
+            focusedBorder: null,
+            errorBorder: null,
+            focusedErrorBorder: null,
           ),
         ),
       ],
