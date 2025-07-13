@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:ders_planlayici/features/home/presentation/pages/home_page.dart';
 import 'package:ders_planlayici/features/students/presentation/pages/add_student_page.dart';
 import 'package:ders_planlayici/features/students/presentation/pages/student_details_page.dart';
-import 'package:ders_planlayici/features/lessons/presentation/pages/add_lesson_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/lesson_details_page.dart';
 import 'package:ders_planlayici/features/lessons/presentation/pages/add_edit_lesson_page.dart';
 import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_page.dart';
@@ -55,17 +54,17 @@ class AppRouter {
             },
           ),
 
-          // Ders ekleme sayfası (Eski sayfa)
+          // Ders ekleme sayfası (Birleştirilmiş - hem ekleme hem düzenleme)
           GoRoute(
             path: 'add-lesson',
             name: RouteNames.addLesson,
             builder: (context, state) {
               final studentId = state.uri.queryParameters['studentId'];
-              return AddLessonPage(studentId: studentId);
+              return AddEditLessonPage(studentId: studentId);
             },
           ),
 
-          // Yeni ders ekleme sayfası
+          // Yeni ders ekleme sayfası (Ana sayfa)
           GoRoute(
             path: 'new-lesson',
             name: 'newLesson',

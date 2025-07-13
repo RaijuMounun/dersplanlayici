@@ -143,7 +143,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
                     icon: Icons.add,
                     label: 'Ders Ekle',
                     onPressed: () =>
-                        context.push('/new-lesson?studentId=${_student!.id}'),
+                        context.push('/add-lesson?studentId=${_student!.id}'),
                   ),
                   _buildBottomBarButton(
                     icon: Icons.payments,
@@ -677,7 +677,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     onPressed: () {
       // Yeni ders ekle
       if (mounted) {
-        context.push('/new-lesson?studentId=${_student!.id}');
+        context.push('/add-lesson?studentId=${_student!.id}');
       }
     },
     tooltip: 'Ders Ekle',
