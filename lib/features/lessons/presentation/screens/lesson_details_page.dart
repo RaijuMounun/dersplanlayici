@@ -10,6 +10,7 @@ import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/lessons/domain/services/recurring_lesson_service.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 /// Ders detaylarını gösteren sayfa.
 class LessonDetailsPage extends StatefulWidget {
@@ -47,7 +48,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
       await lessonProvider.loadLessons();
 
       if (!mounted) return;
-      final lesson = lessonProvider.getLessonById(widget.lessonId);
+      final lesson = await lessonProvider.getLessonById(widget.lessonId);
 
       setState(() {
         _lesson = lesson;
@@ -175,7 +176,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
         const Text('Aradığınız ders silinmiş veya mevcut değil.'),
         const SizedBox(height: AppDimensions.spacing24),
         ElevatedButton.icon(
-          onPressed: () => context.go('/'),
+          onPressed: () => context.goNamed(RouteNames.home),
           icon: const Icon(Icons.arrow_back),
           label: const Text('Derslere Dön'),
         ),
@@ -444,7 +445,10 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 TextButton(
-                  onPressed: () => context.push('/student/${student.id}'),
+                  onPressed: () => context.pushNamed(
+                    RouteNames.studentDetails,
+                    pathParameters: {'id': student.id},
+                  ),
                   child: const Text('Profili Görüntüle'),
                 ),
               ],
@@ -589,11 +593,13 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
 
   // Düzenleme sayfasına yönlendir
   void _navigateToEdit(BuildContext context) {
-    context.push('/edit-lesson/${_lesson!.id}').then((_) {
-      if (mounted) {
-        _loadLessonDetails();
-      }
-    });
+    context
+        .pushNamed(RouteNames.editLesson, pathParameters: {'id': _lesson!.id})
+        .then((_) {
+          if (mounted) {
+            _loadLessonDetails();
+          }
+        });
   }
 
   // Ders silme onayı
@@ -678,7 +684,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
 
       // Ana sayfaya dön
       if (mounted) {
-        context.go('/');
+        context.goNamed(RouteNames.lessons);
       }
     } on Exception catch (e) {
       if (mounted) {
@@ -723,7 +729,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
 
       // Ana sayfaya dön
       if (mounted) {
-        context.go('/');
+        context.goNamed(RouteNames.lessons);
       }
     } on Exception catch (e) {
       if (mounted) {

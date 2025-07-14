@@ -165,20 +165,19 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
         context: localContext,
         message: _isEdit ? 'İşlem güncelleniyor...' : 'İşlem kaydediliyor...',
         future: Future(() async {
-          if (_isEdit && widget.transactionId != null) {
+          if (_isEdit && _transaction != null) {
             // İşlemi güncelle
-            await transactionProvider.updateTransaction(
-              id: widget.transactionId!,
-              paymentId: widget.paymentId,
+            final updatedTransaction = _transaction!.copyWith(
               amount: amount,
               method: _paymentMethod,
               date: date,
               notes: notes.isNotEmpty ? notes : null,
               receiptNo: receiptNo.isNotEmpty ? receiptNo : null,
             );
+            await transactionProvider.updateTransaction(updatedTransaction);
           } else {
             // Yeni işlem ekle
-            await transactionProvider.addTransaction(
+            final newTransaction = PaymentTransactionModel(
               paymentId: widget.paymentId,
               amount: amount,
               method: _paymentMethod,
@@ -186,6 +185,7 @@ class _PaymentTransactionPageState extends State<PaymentTransactionPage> {
               notes: notes.isNotEmpty ? notes : null,
               receiptNo: receiptNo.isNotEmpty ? receiptNo : null,
             );
+            await transactionProvider.addTransaction(newTransaction);
           }
 
           // Ödeme bilgilerini yenile

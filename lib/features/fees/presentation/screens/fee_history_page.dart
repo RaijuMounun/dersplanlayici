@@ -9,9 +9,9 @@ import 'package:ders_planlayici/features/fees/domain/models/fee_summary_model.da
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class FeeHistoryPage extends StatefulWidget {
-
   const FeeHistoryPage({super.key, this.studentId});
   final String? studentId;
 
@@ -37,17 +37,7 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Apply filter from state if needed
-    if (_selectedStatus.isNotEmpty) {
-      Future.microtask(() {
-        if (mounted) {
-          Provider.of<PaymentProvider>(
-            context,
-            listen: false,
-          ).filterByStatus(_selectedStatus, notify: true);
-        }
-      });
-    }
+    // This logic is now handled by rebuilding with the new state
   }
 
   Future<void> _loadData() async {
@@ -63,29 +53,16 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     try {
       if (_selectedStudentId != null) {
         // Öğrenci belirtilmişse sadece o öğrencinin ödemelerini getir
-        await paymentProvider.loadPaymentsByStudent(
-          _selectedStudentId!,
-          notify: false,
-        );
+        await paymentProvider.loadPaymentsByStudent(_selectedStudentId!);
         // Öğrenci özeti de yükle
         _feeSummary = await paymentProvider.loadStudentFeeSummary(
           _selectedStudentId!,
-          notify: false,
         );
       } else {
         // Tüm ödemeleri getir
-        await paymentProvider.loadPayments(notify: false);
+        await paymentProvider.loadPayments();
         // Tüm öğrenci özetlerini yükle
-        await paymentProvider.loadAllStudentFeeSummaries(notify: false);
-      }
-
-      // Build dışında güvenli bir şekilde state güncellemesi yapmak için Future.microtask kullan
-      if (mounted) {
-        await Future.microtask(() {
-          if (mounted) {
-            paymentProvider.notifyListeners();
-          }
-        });
+        await paymentProvider.loadAllStudentFeeSummaries();
       }
     } on Exception catch (e) {
       if (mounted) {
@@ -104,81 +81,81 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(
-        title: const Text('Ödeme Geçmişi'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Yenile',
-            onPressed: _loadData,
+    appBar: AppBar(
+      title: const Text('Ödeme Geçmişi'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Yenile',
+          onPressed: _loadData,
+        ),
+      ],
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : ResponsiveLayout(
+            mobile: _buildMobileLayout(),
+            tablet: _buildTabletLayout(),
+            desktop: _buildDesktopLayout(),
           ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ResponsiveLayout(
-              mobile: _buildMobileLayout(),
-              tablet: _buildTabletLayout(),
-              desktop: _buildDesktopLayout(),
-            ),
-    );
+  );
 
   Widget _buildMobileLayout() => Column(
-      children: [
-        _buildDateRangeSelector(),
-        if (_selectedStudentId == null) _buildStudentSelector(),
-        if (_feeSummary != null) _buildFeeSummaryCard(),
-        Expanded(child: _buildPaymentHistoryList()),
-      ],
-    );
+    children: [
+      _buildDateRangeSelector(),
+      if (_selectedStudentId == null) _buildStudentSelector(),
+      if (_feeSummary != null) _buildFeeSummaryCard(),
+      Expanded(child: _buildPaymentHistoryList()),
+    ],
+  );
 
   Widget _buildTabletLayout() => Column(
-      children: [
-        Padding(
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
+        child: Row(
+          children: [
+            Expanded(child: _buildDateRangeSelector()),
+            if (_selectedStudentId == null)
+              Expanded(child: _buildStudentSelector()),
+          ],
+        ),
+      ),
+      if (_feeSummary != null) _buildFeeSummaryCard(),
+      Expanded(
+        child: Padding(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
-          child: Row(
-            children: [
-              Expanded(child: _buildDateRangeSelector()),
-              if (_selectedStudentId == null)
-                Expanded(child: _buildStudentSelector()),
-            ],
-          ),
+          child: _buildPaymentHistoryList(),
         ),
-        if (_feeSummary != null) _buildFeeSummaryCard(),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.spacing16),
-            child: _buildPaymentHistoryList(),
-          ),
-        ),
-      ],
-    );
+      ),
+    ],
+  );
 
   Widget _buildDesktopLayout() => Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.spacing16),
-            child: _buildFilterPanel(),
-          ),
+    children: [
+      Expanded(
+        flex: 1,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
+          child: _buildFilterPanel(),
         ),
-        Expanded(
-          flex: 3,
-          child: Column(
-            children: [
-              if (_feeSummary != null) _buildFeeSummaryCard(),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.spacing16),
-                  child: _buildPaymentHistoryList(),
-                ),
+      ),
+      Expanded(
+        flex: 3,
+        child: Column(
+          children: [
+            if (_feeSummary != null) _buildFeeSummaryCard(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.spacing16),
+                child: _buildPaymentHistoryList(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
-    );
+      ),
+    ],
+  );
 
   Widget _buildDateRangeSelector() {
     final DateFormat formatter = DateFormat('dd/MM/yyyy');
@@ -294,10 +271,12 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                     value: null,
                     child: Text('Tüm Öğrenciler'),
                   ),
-                  ...studentProvider.students.map((student) => DropdownMenuItem<String>(
+                  ...studentProvider.students.map(
+                    (student) => DropdownMenuItem<String>(
                       value: student.id,
                       child: Text(student.name),
-                    )),
+                    ),
+                  ),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -361,10 +340,12 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                     value: null,
                     child: Text('Tüm Öğrenciler'),
                   ),
-                  ...studentProvider.students.map((student) => DropdownMenuItem<String>(
+                  ...studentProvider.students.map(
+                    (student) => DropdownMenuItem<String>(
                       value: student.id,
                       child: Text(student.name),
-                    )),
+                    ),
+                  ),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -417,36 +398,35 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     required DateTime selectedDate,
     required VoidCallback onTap,
   }) => InkWell(
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(DateFormat('dd/MM/yyyy').format(selectedDate)),
-            const Icon(Icons.calendar_today, size: 16),
-          ],
-        ),
+    onTap: onTap,
+    child: InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
       ),
-    );
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(DateFormat('dd/MM/yyyy').format(selectedDate)),
+          const Icon(Icons.calendar_today, size: 16),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildPaymentStatusFilters() => Wrap(
-      spacing: AppDimensions.spacing8,
-      children: [
-        _buildFilterChip('', 'Tümü'),
-        _buildFilterChip('pending', 'Beklemede'),
-        _buildFilterChip('paid', 'Ödenmiş'),
-        _buildFilterChip('partiallyPaid', 'Kısmi Ödenmiş'),
-        _buildFilterChip('overdue', 'Gecikmiş'),
-        _buildFilterChip('cancelled', 'İptal Edilmiş'),
-      ],
-    );
+    spacing: AppDimensions.spacing8,
+    children: [
+      _buildFilterChip('', 'Tümü'),
+      _buildFilterChip('pending', 'Beklemede'),
+      _buildFilterChip('paid', 'Ödenmiş'),
+      _buildFilterChip('partiallyPaid', 'Kısmi Ödenmiş'),
+      _buildFilterChip('overdue', 'Gecikmiş'),
+      _buildFilterChip('cancelled', 'İptal Edilmiş'),
+    ],
+  );
 
   Widget _buildFilterChip(String status, String label) {
-    final paymentProvider = Provider.of<PaymentProvider>(context);
     final isSelected = _selectedStatus == status;
 
     return FilterChip(
@@ -455,13 +435,6 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
       onSelected: (selected) {
         setState(() {
           _selectedStatus = selected ? status : '';
-        });
-
-        // Use Future.microtask to avoid build-time state change
-        Future.microtask(() {
-          if (mounted) {
-            paymentProvider.filterByStatus(_selectedStatus, notify: true);
-          }
         });
       },
       backgroundColor: AppColors.background,
@@ -528,7 +501,9 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
               LinearProgressIndicator(
                 value: _feeSummary!.paymentPercentage / 100,
                 backgroundColor: AppColors.background,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.success,
+                ),
               ),
               const SizedBox(height: AppDimensions.spacing8),
               Text(
@@ -569,27 +544,29 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
   }
 
   Widget _buildSummaryItem(String label, String value, Color color) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+      ),
+      const SizedBox(height: AppDimensions.spacing4),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: color,
         ),
-        const SizedBox(height: AppDimensions.spacing4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
-    );
+      ),
+    ],
+  );
 
   Widget _buildPaymentHistoryList() {
     final paymentProvider = Provider.of<PaymentProvider>(context);
-    final filteredPayments = _filterPaymentsByDate(paymentProvider.payments);
+    final filteredPayments = _getFilteredAndSortedPayments(
+      paymentProvider.payments,
+    );
 
     if (filteredPayments.isEmpty) {
       return _buildEmptyState();
@@ -604,15 +581,28 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
     );
   }
 
-  List<PaymentModel> _filterPaymentsByDate(List<PaymentModel> payments) {
+  List<PaymentModel> _getFilteredAndSortedPayments(
+    List<PaymentModel> payments,
+  ) {
     final startDateStr = DateFormat('yyyy-MM-dd').format(_startDate);
     final endDateStr = DateFormat('yyyy-MM-dd').format(_endDate);
 
-    return payments.where((payment) {
+    var filtered = payments.where((payment) {
       final paymentDate = payment.date;
       return paymentDate.compareTo(startDateStr) >= 0 &&
           paymentDate.compareTo(endDateStr) <= 0;
-    }).toList();
+    });
+
+    if (_selectedStatus.isNotEmpty) {
+      final status = PaymentStatus.values.firstWhere(
+        (e) => e.toString().split('.').last == _selectedStatus,
+        orElse: () => PaymentStatus.pending,
+      );
+      filtered = filtered.where((payment) => payment.status == status);
+    }
+
+    final sorted = filtered.toList()..sort((a, b) => b.date.compareTo(a.date));
+    return sorted;
   }
 
   Widget _buildPaymentCard(PaymentModel payment) {
@@ -634,9 +624,11 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
       ),
       child: InkWell(
         onTap: () {
-          context.push('/edit-payment/${payment.id}');
+          context.pushNamed(
+            RouteNames.editPayment,
+            pathParameters: {'id': payment.id},
+          );
         },
-        borderRadius: BorderRadius.circular(AppDimensions.radius8),
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
           child: Column(
@@ -657,7 +649,9 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                         ),
                         Text(
                           payment.description,
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -699,7 +693,11 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
                   ),
                   if (payment.dueDate != null) ...[
                     const SizedBox(width: AppDimensions.spacing8),
-                    const Icon(Icons.event, size: 16, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.event,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: AppDimensions.spacing4),
                     Text(
                       'Son Ödeme: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(payment.dueDate!))}',
@@ -733,34 +731,34 @@ class _FeeHistoryPageState extends State<FeeHistoryPage> {
   }
 
   Widget _buildEmptyState() => Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.payments_outlined,
-            size: 64,
-            color: AppColors.textSecondary.withAlpha(128),
-          ),
-          const SizedBox(height: AppDimensions.spacing16),
-          const Text(
-            'Seçilen tarih aralığında ödeme kaydı bulunamadı',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
-          ),
-          const SizedBox(height: AppDimensions.spacing24),
-          ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _startDate = DateTime.now().subtract(const Duration(days: 30));
-                _endDate = DateTime.now();
-              });
-              _loadData();
-            },
-            icon: const Icon(Icons.refresh),
-            label: const Text('Filtreleri Sıfırla'),
-          ),
-        ],
-      ),
-    );
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.payments_outlined,
+          size: 64,
+          color: AppColors.textSecondary.withAlpha(128),
+        ),
+        const SizedBox(height: AppDimensions.spacing16),
+        const Text(
+          'Seçilen tarih aralığında ödeme kaydı bulunamadı',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+        ),
+        const SizedBox(height: AppDimensions.spacing24),
+        ElevatedButton.icon(
+          onPressed: () {
+            setState(() {
+              _startDate = DateTime.now().subtract(const Duration(days: 30));
+              _endDate = DateTime.now();
+            });
+            _loadData();
+          },
+          icon: const Icon(Icons.refresh),
+          label: const Text('Filtreleri Sıfırla'),
+        ),
+      ],
+    ),
+  );
 
   Color _getStatusColor(PaymentStatus status) {
     switch (status) {

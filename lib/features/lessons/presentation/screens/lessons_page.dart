@@ -9,6 +9,7 @@ import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 /// Dersler listesini gösteren ana sayfa.
 class LessonsPage extends StatefulWidget {
@@ -29,12 +30,12 @@ class _LessonsPageState extends State<LessonsPage>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
 
-    // Dersleri yükle
-    Future.microtask(() {
-      if (mounted) {
-        context.read<LessonProvider>().loadLessons();
-      }
-    });
+    // Dersler provider'ın constructor'ında zaten yükleniyor.
+    // Future.microtask(() {
+    //   if (mounted) {
+    //     context.read<LessonProvider>().loadLessons();
+    //   }
+    // });
   }
 
   @override
@@ -142,13 +143,13 @@ class _LessonsPageState extends State<LessonsPage>
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () async {
-      //     await context.push('/new-lesson');
-      //   },
-      //   backgroundColor: AppColors.primary,
-      //   child: const Icon(Icons.add, color: Colors.white),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'lessons_fab',
+        onPressed: () {
+          context.pushNamed(RouteNames.addLesson);
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
@@ -251,11 +252,7 @@ class _LessonsPageState extends State<LessonsPage>
           right: AppDimensions.spacing16,
           child: FloatingActionButton(
             onPressed: () {
-              context.push('/new-lesson').then((_) {
-                if (mounted) {
-                  context.read<LessonProvider>().loadLessons();
-                }
-              });
+              context.pushNamed(RouteNames.addLesson);
             },
             child: const Icon(Icons.add),
           ),
@@ -290,11 +287,7 @@ class _LessonsPageState extends State<LessonsPage>
           right: AppDimensions.spacing24,
           child: FloatingActionButton.extended(
             onPressed: () {
-              context.push('/new-lesson').then((_) {
-                if (mounted) {
-                  context.read<LessonProvider>().loadLessons();
-                }
-              });
+              context.pushNamed(RouteNames.addLesson);
             },
             icon: const Icon(Icons.add),
             label: const Text('Yeni Ders'),
@@ -331,11 +324,7 @@ class _LessonsPageState extends State<LessonsPage>
           right: AppDimensions.spacing24,
           child: FloatingActionButton.extended(
             onPressed: () {
-              context.push('/new-lesson').then((_) {
-                if (mounted) {
-                  context.read<LessonProvider>().loadLessons();
-                }
-              });
+              context.pushNamed(RouteNames.addLesson);
             },
             icon: const Icon(Icons.add),
             label: const Text('Yeni Ders'),
@@ -346,29 +335,25 @@ class _LessonsPageState extends State<LessonsPage>
 
   // Ders liste öğesi
   Widget _buildLessonItem(Lesson lesson) => LessonListItem(
-    lessonTitle: lesson.subject,
-    studentName: lesson.studentName,
-    startTime: _parseDateTime(lesson.date, lesson.startTime),
-    endTime: _parseDateTime(lesson.date, lesson.endTime),
-    isCompleted: lesson.status == LessonStatus.completed,
-    fee: lesson.fee,
+    lesson: lesson,
+    student: student,
     isRecurring: lesson.recurringPatternId != null,
     isSelected: _isSelectionMode && _selectedLessons.contains(lesson.id),
     onTap: _isSelectionMode
         ? () => _toggleLessonSelection(lesson.id)
-        : () => context.push('/lesson/${lesson.id}'),
-    onEditPressed: _isSelectionMode
-        ? null
-        : () {
-            context.push('/edit-lesson/${lesson.id}').then((_) {
-              if (mounted) {
-                context.read<LessonProvider>().loadLessons();
-              }
-            });
-          },
-    onDeletePressed: _isSelectionMode
-        ? null
-        : () => _showDeleteConfirmation(lesson),
+        : () => context.pushNamed(
+            RouteNames.lessonDetails,
+            pathParameters: {'id': lesson.id},
+          ),
+    onEditPressed: () {
+      context.pushNamed(
+        RouteNames.editLesson,
+        pathParameters: {'id': lesson.id},
+      );
+    },
+    onDeletePressed: () {
+      _showDeleteConfirmation(lesson);
+    },
     onMarkCompleted: _isSelectionMode
         ? null
         : () => _markLessonAsCompleted(lesson),
@@ -432,11 +417,7 @@ class _LessonsPageState extends State<LessonsPage>
             child: ElevatedButton.icon(
               onPressed: () {
                 // Ders ekleme sayfasına yönlendir
-                context.push('/new-lesson').then((_) {
-                  if (mounted) {
-                    context.read<LessonProvider>().loadLessons();
-                  }
-                });
+                context.pushNamed(RouteNames.addLesson);
               },
               icon: const Icon(Icons.add),
               label: const Text('Ders Ekle'),
@@ -456,7 +437,7 @@ class _LessonsPageState extends State<LessonsPage>
     List<Lesson> filteredLessons;
     switch (filterType) {
       case LessonFilterType.upcoming:
-        filteredLessons = provider.lessons
+        filteredLessons = provider.allLessons
             .where(
               (lesson) =>
                   lesson.status != LessonStatus.completed &&
@@ -470,12 +451,12 @@ class _LessonsPageState extends State<LessonsPage>
             .toList();
         break;
       case LessonFilterType.completed:
-        filteredLessons = provider.lessons
+        filteredLessons = provider.allLessons
             .where((lesson) => lesson.status == LessonStatus.completed)
             .toList();
         break;
       case LessonFilterType.all:
-        filteredLessons = provider.lessons;
+        filteredLessons = provider.allLessons;
         break;
     }
 
@@ -609,41 +590,37 @@ class _LessonsPageState extends State<LessonsPage>
       _selectedLessons.clear();
     });
 
-    try {
-      final result = await context.read<LessonProvider>().deleteLessons(
-        selectedIds,
-      );
-      final successCount = result['success'] ?? 0;
-      final errorCount = result['error'] ?? 0;
+    final lessonProvider = context.read<LessonProvider>();
+    int successCount = 0;
+    int errorCount = 0;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              errorCount > 0
-                  ? '$successCount ders silindi, $errorCount ders silinemedi'
-                  : '$successCount ders başarıyla silindi',
-            ),
-            backgroundColor: errorCount > 0
-                ? AppColors.warning
-                : AppColors.success,
-            action: SnackBarAction(
-              label: 'Tamam',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
-          ),
-        );
+    for (final id in selectedIds) {
+      try {
+        await lessonProvider.deleteLesson(id);
+        successCount++;
+      } on Exception {
+        errorCount++;
       }
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Toplu silme işlemi sırasında hata oluştu: $e'),
-            backgroundColor: AppColors.error,
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            errorCount > 0
+                ? '$successCount ders silindi, $errorCount ders silinemedi'
+                : '$successCount ders başarıyla silindi',
           ),
-        );
-      }
+          backgroundColor: errorCount > 0
+              ? AppColors.warning
+              : AppColors.success,
+          action: SnackBarAction(
+            label: 'Tamam',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
     }
   }
 }

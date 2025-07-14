@@ -7,6 +7,7 @@ import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/widgets/loading_indicator.dart';
 import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class EditPaymentPage extends StatefulWidget {
   const EditPaymentPage({super.key, required this.id});
@@ -70,14 +71,17 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Ödeme Detayları'),
+      title: Text(_isEditMode ? 'Ödemeyi Düzenle' : 'Yeni Ödeme'),
       actions: [
         IconButton(
           icon: const Icon(Icons.edit),
           tooltip: 'Düzenle',
           onPressed: () {
             // Ödeme düzenleme sayfasına git
-            context.push('/add-payment?id=${widget.id}');
+            context.pushNamed(
+              RouteNames.addPayment,
+              queryParameters: {'id': widget.id},
+            );
           },
         ),
         IconButton(
@@ -85,13 +89,11 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
           tooltip: 'Ödeme İşlemleri',
           onPressed: () {
             // Ödeme işlemleri sayfasına git
-            context.push('/payment-transactions/${widget.id}');
+            context.pushNamed(
+              RouteNames.paymentTransactions,
+              pathParameters: {'id': widget.id},
+            );
           },
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete),
-          tooltip: 'Sil',
-          onPressed: _confirmDelete,
         ),
       ],
     ),
@@ -103,11 +105,28 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
     floatingActionButton: FloatingActionButton(
       onPressed: () {
         // Yeni ödeme işlemi ekle
-        context.push('/payment-transaction/${widget.id}');
+        context.pushNamed(
+          RouteNames.addPaymentTransaction,
+          pathParameters: {'id': widget.id},
+        );
       },
       tooltip: 'Ödeme İşlemi Ekle',
       child: const Icon(Icons.add),
     ),
+    persistentFooterButtons: [
+      Center(
+        child: TextButton.icon(
+          onPressed: () {
+            context.pushNamed(
+              RouteNames.paymentTransactions,
+              pathParameters: {'id': widget.id},
+            );
+          },
+          icon: const Icon(Icons.history),
+          label: const Text('Tüm İşlem Geçmişini Görüntüle'),
+        ),
+      ),
+    ],
   );
 
   Widget _buildPaymentDetails() {
@@ -292,7 +311,10 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
             child: InkWell(
               onTap: () {
                 if (mounted) {
-                  context.push('/payment-transactions/${widget.id}');
+                  context.pushNamed(
+                    RouteNames.paymentTransactions,
+                    pathParameters: {'id': widget.id},
+                  );
                 }
               },
               child: const Padding(

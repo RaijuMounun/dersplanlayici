@@ -9,8 +9,11 @@ import 'package:ders_planlayici/core/widgets/loading_indicator.dart';
 import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/domain/models/fee_summary_model.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
+import 'package:ders_planlayici/features/fees/presentation/providers/fee_management_provider.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
+import 'package:collection/collection.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class FeeManagementPage extends StatefulWidget {
   const FeeManagementPage({super.key});
@@ -21,27 +24,29 @@ class FeeManagementPage extends StatefulWidget {
 
 class _FeeManagementPageState extends State<FeeManagementPage>
     with SingleTickerProviderStateMixin {
-  bool _isLoading = true;
   TabController? _tabController;
-  List<FeeSummary> _feeSummaries = [];
-  List<Student> _students = [];
-  List<PaymentModel> _payments = [];
   String _searchQuery = '';
-
-  // Filtreleme seçenekleri
   String _statusFilter = '';
-
-  // İstatistikler
-  double _totalAmount = 0;
-  double _paidAmount = 0;
-  double _remainingAmount = 0;
-  int _overdueCount = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadData();
+    // Veri yükleme artık provider tarafından yönetiliyor.
+    // Provider'ı dinlemek için post-frame callback kullanılabilir.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final provider = context.read<FeeManagementProvider>();
+        if (provider.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(provider.error!),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -50,177 +55,88 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      if (!mounted) return;
-      final localContext = context;
-      // Provider'ları önceden al
-      final studentProvider = Provider.of<StudentProvider>(
-        localContext,
-        listen: false,
-      );
-      final paymentProvider = Provider.of<PaymentProvider>(
-        localContext,
-        listen: false,
-      );
-
-      await LoadingIndicator.wrapWithLoading(
-        context: localContext,
-        message: 'Veriler yükleniyor...',
-        future: Future(() async {
-          // Öğrencileri yükle
-          await studentProvider.loadStudents(notify: false);
-
-          // Ödemeleri yükle
-          await paymentProvider.loadPayments(notify: false);
-
-          // Ücret özetlerini yükle
-          await paymentProvider.loadAllStudentFeeSummaries(notify: false);
-
-          return {
-            'students': studentProvider.students,
-            'payments': paymentProvider.payments,
-            'summaries': paymentProvider.summaries,
-          };
-        }),
-      ).then((data) {
-        if (mounted) {
-          setState(() {
-            _students = data['students'] as List<Student>;
-            _payments = data['payments'] as List<PaymentModel>;
-            _feeSummaries = data['summaries'] as List<FeeSummary>;
-            _isLoading = false;
-
-            // İstatistikleri hesapla
-            _calculateStatistics();
-          });
-        }
-      });
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Veriler yüklenirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  void _calculateStatistics() {
-    _totalAmount = 0;
-    _paidAmount = 0;
-    _remainingAmount = 0;
-    _overdueCount = 0;
-
-    for (var payment in _payments) {
-      _totalAmount += payment.amount;
-      _paidAmount += payment.paidAmount;
-
-      if (payment.status == PaymentStatus.overdue) {
-        _overdueCount++;
-      }
-    }
-
-    _remainingAmount = _totalAmount - _paidAmount;
-  }
-
   void _applyStatusFilter(String status) {
     setState(() {
       _statusFilter = status;
     });
-
-    // Use Future.microtask to avoid build-time state change
-    Future.microtask(() {
-      if (mounted) {
-        Provider.of<PaymentProvider>(
-          context,
-          listen: false,
-        ).filterByStatus(_statusFilter, notify: true);
-      }
-    });
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Ücret Yönetimi'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.calculate),
-          tooltip: 'Otomatik Ücret Hesaplama',
-          onPressed: () {
-            if (mounted) {
-              context.push('/auto-fee-calculation');
-            }
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.history),
-          tooltip: 'Ödeme Geçmişi',
-          onPressed: () {
-            if (mounted) {
-              context.push('/fee-history');
-            }
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Yenile',
-          onPressed: _loadData,
-        ),
-      ],
-      bottom: TabBar(
-        controller: _tabController,
-        tabs: const [
-          Tab(text: 'Genel Bakış'),
-          Tab(text: 'Öğrenciler'),
-          Tab(text: 'Ödemeler'),
-        ],
-      ),
-    ),
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : ResponsiveLayout(
-            mobile: _buildMobileLayout(),
-            tablet: _buildTabletLayout(),
-            desktop: _buildDesktopLayout(),
+  Widget build(BuildContext context) {
+    final provider = context.watch<FeeManagementProvider>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ücret Yönetimi'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calculate),
+            tooltip: 'Otomatik Ücret Hesaplama',
+            onPressed: () => context.pushNamed(RouteNames.autoFeeCalculation),
           ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () {
-        if (mounted) {
-          context.push('/add-payment');
-        }
-      },
-      tooltip: 'Ödeme Ekle',
-      child: const Icon(Icons.add),
-    ),
-  );
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Ödeme Geçmişi',
+            onPressed: () => context.pushNamed(RouteNames.feeHistory),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Yenile',
+            onPressed: () => provider.loadInitialData(),
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Genel Bakış'),
+            Tab(text: 'Öğrenciler'),
+            Tab(text: 'Ödemeler'),
+          ],
+        ),
+      ),
+      body: provider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ResponsiveLayout(
+              mobile: _buildMobileLayout(provider),
+              tablet: _buildTabletLayout(provider),
+              desktop: _buildDesktopLayout(provider),
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.pushNamed(RouteNames.addPayment),
+        tooltip: 'Ödeme Ekle',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 
-  Widget _buildMobileLayout() => TabBarView(
+  Widget _buildMobileLayout(FeeManagementProvider provider) => TabBarView(
     controller: _tabController,
-    children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
+    children: [
+      _buildOverviewTab(provider),
+      _buildStudentsTab(provider),
+      _buildPaymentsTab(provider),
+    ],
   );
 
-  Widget _buildTabletLayout() => TabBarView(
+  Widget _buildTabletLayout(FeeManagementProvider provider) => TabBarView(
     controller: _tabController,
-    children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
+    children: [
+      _buildOverviewTab(provider),
+      _buildStudentsTab(provider),
+      _buildPaymentsTab(provider),
+    ],
   );
 
-  Widget _buildDesktopLayout() => TabBarView(
+  Widget _buildDesktopLayout(FeeManagementProvider provider) => TabBarView(
     controller: _tabController,
-    children: [_buildOverviewTab(), _buildStudentsTab(), _buildPaymentsTab()],
+    children: [
+      _buildOverviewTab(provider),
+      _buildStudentsTab(provider),
+      _buildPaymentsTab(provider),
+    ],
   );
 
-  Widget _buildOverviewTab() {
+  Widget _buildOverviewTab(FeeManagementProvider provider) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
       symbol: '₺',
@@ -232,13 +148,12 @@ class _FeeManagementPageState extends State<FeeManagementPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Özet kartları
           Row(
             children: [
               Expanded(
                 child: _buildSummaryCard(
                   'Toplam Tutar',
-                  currencyFormatter.format(_totalAmount),
+                  currencyFormatter.format(provider.totalAmount),
                   Icons.attach_money,
                   AppColors.primary,
                 ),
@@ -247,7 +162,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
               Expanded(
                 child: _buildSummaryCard(
                   'Ödenen Tutar',
-                  currencyFormatter.format(_paidAmount),
+                  currencyFormatter.format(provider.paidAmount),
                   Icons.check_circle,
                   AppColors.success,
                 ),
@@ -260,7 +175,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
               Expanded(
                 child: _buildSummaryCard(
                   'Kalan Tutar',
-                  currencyFormatter.format(_remainingAmount),
+                  currencyFormatter.format(provider.remainingAmount),
                   Icons.pending_actions,
                   AppColors.warning,
                 ),
@@ -269,17 +184,14 @@ class _FeeManagementPageState extends State<FeeManagementPage>
               Expanded(
                 child: _buildSummaryCard(
                   'Gecikmiş Ödemeler',
-                  _overdueCount.toString(),
+                  provider.overdueCount.toString(),
                   Icons.warning_amber,
                   AppColors.error,
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: AppDimensions.spacing24),
-
-          // Ödeme durumuna göre grafikler yerine basit progress bar'lar
           Card(
             child: Padding(
               padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -293,20 +205,20 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                   const SizedBox(height: AppDimensions.spacing16),
                   _buildProgressBar(
                     'Toplam Ödemeler',
-                    _paidAmount / (_totalAmount > 0 ? _totalAmount : 1) * 100,
+                    (provider.paidAmount /
+                            (provider.totalAmount > 0
+                                ? provider.totalAmount
+                                : 1)) *
+                        100,
                     AppColors.primary,
                   ),
-
-                  // Son eklenen ödemeler
                   const SizedBox(height: AppDimensions.spacing24),
                   const Text(
                     'Son Eklenen Ödemeler',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: AppDimensions.spacing16),
-
-                  // Son 5 ödemeyi listele
-                  ..._payments.take(5).map(_buildPaymentListItem),
+                  ...provider.payments.take(5).map(_buildPaymentListItem),
                 ],
               ),
             ),
@@ -316,7 +228,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     );
   }
 
-  Widget _buildStudentsTab() => Column(
+  Widget _buildStudentsTab(FeeManagementProvider provider) => Column(
     children: [
       Padding(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -338,11 +250,12 @@ class _FeeManagementPageState extends State<FeeManagementPage>
       Expanded(
         child: ListView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing8),
-          itemCount: _filteredStudents.length,
+          itemCount: _getFilteredStudents(provider.students).length,
           itemBuilder: (context, index) {
-            final student = _filteredStudents[index];
-            final summary = _getSummaryForStudent(student.id);
-
+            final student = _getFilteredStudents(provider.students)[index];
+            final summary = provider.feeSummaries.firstWhereOrNull(
+              (s) => s.id == student.id,
+            );
             return _buildStudentSummaryCard(student, summary);
           },
         ),
@@ -350,7 +263,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     ],
   );
 
-  Widget _buildPaymentsTab() => Column(
+  Widget _buildPaymentsTab(FeeManagementProvider provider) => Column(
     children: [
       Padding(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -378,9 +291,9 @@ class _FeeManagementPageState extends State<FeeManagementPage>
       Expanded(
         child: ListView.builder(
           padding: const EdgeInsets.all(AppDimensions.spacing8),
-          itemCount: _filteredPayments.length,
+          itemCount: _getFilteredPayments(provider.payments).length,
           itemBuilder: (context, index) {
-            final payment = _filteredPayments[index];
+            final payment = _getFilteredPayments(provider.payments)[index];
             return _buildPaymentCard(payment);
           },
         ),
@@ -465,7 +378,10 @@ class _FeeManagementPageState extends State<FeeManagementPage>
         color: _getStatusColor(payment.status),
       ),
       onTap: () {
-        context.push('/edit-payment/${payment.id}');
+        context.pushNamed(
+          RouteNames.editPayment,
+          pathParameters: {'id': payment.id},
+        );
       },
     );
   }
@@ -490,7 +406,10 @@ class _FeeManagementPageState extends State<FeeManagementPage>
       ),
       child: InkWell(
         onTap: () {
-          context.push('/fee-history?studentId=${student.id}');
+          context.pushNamed(
+            RouteNames.feeHistory,
+            queryParameters: {'studentId': student.id},
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -518,7 +437,10 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                     icon: const Icon(Icons.add_circle),
                     tooltip: 'Ödeme Ekle',
                     onPressed: () {
-                      context.push('/add-payment?studentId=${student.id}');
+                      context.pushNamed(
+                        RouteNames.addPayment,
+                        queryParameters: {'studentId': student.id},
+                      );
                     },
                   ),
                 ],
@@ -572,7 +494,10 @@ class _FeeManagementPageState extends State<FeeManagementPage>
       ),
       child: InkWell(
         onTap: () {
-          context.push('/edit-payment/${payment.id}');
+          context.pushNamed(
+            RouteNames.editPayment,
+            pathParameters: {'id': payment.id},
+          );
         },
         borderRadius: BorderRadius.circular(AppDimensions.radius8),
         child: Padding(
@@ -736,13 +661,13 @@ class _FeeManagementPageState extends State<FeeManagementPage>
   );
 
   // Yardımcı metodlar
-  List<Student> get _filteredStudents {
+  List<Student> _getFilteredStudents(List<Student> students) {
     if (_searchQuery.isEmpty) {
-      return _students;
+      return students;
     }
 
     final query = _searchQuery.toLowerCase();
-    return _students
+    return students
         .where(
           (student) =>
               student.name.toLowerCase().contains(query) ||
@@ -751,41 +676,32 @@ class _FeeManagementPageState extends State<FeeManagementPage>
         .toList();
   }
 
-  List<PaymentModel> get _filteredPayments {
-    var filtered = _payments;
+  List<PaymentModel> _getFilteredPayments(List<PaymentModel> payments) {
+    var filtered = List<PaymentModel>.from(payments);
 
-    // Arama sorgusu varsa filtrele
+    // Duruma göre filtrele
+    if (_statusFilter.isNotEmpty) {
+      final status = PaymentStatus.values.firstWhere(
+        (e) => e.toString().split('.').last == _statusFilter,
+        orElse: () => PaymentStatus.pending,
+      );
+      filtered = filtered.where((p) => p.status == status).toList();
+    }
+
+    // Arama sorgusuna göre filtrele
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       filtered = filtered
           .where(
-            (payment) =>
-                payment.studentName.toLowerCase().contains(query) ||
-                payment.description.toLowerCase().contains(query) ||
-                (payment.notes?.toLowerCase().contains(query) ?? false),
-          )
-          .toList();
-    }
-
-    // Durum filtresi varsa uygula
-    if (_statusFilter.isNotEmpty) {
-      filtered = filtered
-          .where(
-            (payment) =>
-                payment.status.toString().split('.').last == _statusFilter,
+            (p) =>
+                p.studentName.toLowerCase().contains(query) ||
+                p.description.toLowerCase().contains(query) ||
+                (p.notes?.toLowerCase().contains(query) ?? false),
           )
           .toList();
     }
 
     return filtered;
-  }
-
-  FeeSummary? _getSummaryForStudent(String studentId) {
-    try {
-      return _feeSummaries.firstWhere((summary) => summary.id == studentId);
-    } on Exception {
-      return null;
-    }
   }
 
   String _getStatusText(PaymentStatus status) {

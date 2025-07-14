@@ -3,7 +3,8 @@ import 'package:ders_planlayici/features/students/domain/models/student_model.da
 import 'package:uuid/uuid.dart';
 
 class StudentRepository {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  StudentRepository(this._databaseHelper);
+  final DatabaseHelper _databaseHelper;
   final Uuid _uuid = const Uuid();
 
   Future<List<Student>> getAllStudents() async {
@@ -27,5 +28,10 @@ class StudentRepository {
 
   Future<void> deleteStudent(String id) async {
     await _databaseHelper.deleteStudent(id);
+  }
+
+  Future<List<Student>> searchStudents(String query) async {
+    final studentMaps = await _databaseHelper.searchStudents(query);
+    return studentMaps.map(Student.fromMap).toList();
   }
 }

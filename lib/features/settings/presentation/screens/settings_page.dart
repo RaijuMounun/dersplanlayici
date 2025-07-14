@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:ders_planlayici/features/settings/presentation/pages/database_management_page.dart';
-import 'package:ders_planlayici/features/settings/presentation/pages/notification_settings_page.dart';
-import 'package:ders_planlayici/features/settings/presentation/pages/lesson_settings_page.dart';
-import 'package:ders_planlayici/features/settings/presentation/pages/feedback_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/screens/database_management_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/screens/notification_settings_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/screens/lesson_settings_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/screens/feedback_page.dart';
 import 'package:ders_planlayici/core/widgets/app_card.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
@@ -125,7 +125,7 @@ class SettingsPage extends StatelessWidget {
         underline: const SizedBox(),
         onChanged: (ThemeMode? newThemeMode) {
           if (newThemeMode != null) {
-            themeProvider.setThemeMode(newThemeMode);
+            themeProvider.setTheme(newThemeMode);
           }
         },
         items: const [
@@ -159,7 +159,7 @@ class SettingsPage extends StatelessWidget {
             ),
             title: const Text('Silme Onayı'),
             subtitle: const Text('Öğrencileri silmeden önce onay iste'),
-            value: settingsProvider.confirmBeforeDelete,
+            value: settingsProvider.settings.confirmBeforeDelete,
             onChanged: (bool value) {
               settingsProvider.updateConfirmBeforeDelete(value);
             },

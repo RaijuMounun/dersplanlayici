@@ -1,57 +1,47 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ders_planlayici/features/settings/data/repositories/app_settings_repository.dart';
 
 class ThemeProvider extends ChangeNotifier {
 
-  ThemeProvider() {
-    _loadThemeMode();
-  }
-
-  static const String _themeModeKey = 'theme_mode';
+  ThemeProvider(this._repository);
+  final AppSettingsRepository _repository;
 
   ThemeMode _themeMode = ThemeMode.system;
-
   ThemeMode get themeMode => _themeMode;
 
-  Future<void> _loadThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    final themeModeString = prefs.getString(_themeModeKey);
-    if (themeModeString != null) {
-      _themeMode = _parseThemeMode(themeModeString);
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  String? _error;
+  String? get error => _error;
+
+  Future<void> _executeAction(Future<void> Function() action) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await action();
+    } on Exception catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
-    if (_themeMode == mode) return;
-
-    _themeMode = mode;
-    notifyListeners();
-
-    // Tema modunu kaydet
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themeModeKey, _themeModeToString(mode));
+  Future<void> loadTheme() async {
+    await _executeAction(() async {
+      final settings = await _repository.getSettings();
+      _themeMode = settings.themeMode;
+    });
   }
 
-  String _themeModeToString(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'light';
-      case ThemeMode.dark:
-        return 'dark';
-      case ThemeMode.system:
-        return 'system';
-    }
-  }
-
-  ThemeMode _parseThemeMode(String value) {
-    switch (value) {
-      case 'light':
-        return ThemeMode.light;
-      case 'dark':
-        return ThemeMode.dark;
-      default:
-        return ThemeMode.system;
-    }
+  Future<void> setTheme(ThemeMode themeMode) async {
+    await _executeAction(() async {
+      _themeMode = themeMode;
+      final currentSettings = await _repository.getSettings();
+      final newSettings = currentSettings.copyWith(themeMode: themeMode);
+      await _repository.saveSettings(newSettings);
+    });
   }
 }

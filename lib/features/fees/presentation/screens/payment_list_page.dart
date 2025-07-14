@@ -7,6 +7,7 @@ import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class PaymentListPage extends StatefulWidget {
   const PaymentListPage({super.key});
@@ -32,18 +33,6 @@ class _PaymentListPageState extends State<PaymentListPage> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Apply filter from state if needed
-    if (_statusFilter.isNotEmpty && mounted) {
-      Provider.of<PaymentProvider>(
-        context,
-        listen: false,
-      ).filterByStatus(_statusFilter, notify: false);
-    }
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -62,7 +51,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
         listen: false,
       );
 
-      await paymentProvider.loadPayments(notify: false);
+      await paymentProvider.loadPayments();
     } on Exception catch (e) {
       // Hata durumunda sadece loading'i false yap
       if (mounted) {
@@ -85,51 +74,47 @@ class _PaymentListPageState extends State<PaymentListPage> {
   @override
   Widget build(BuildContext context) => Consumer<PaymentProvider>(
     builder: (context, paymentProvider, child) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Ödemeler'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.history),
-              tooltip: 'Ödeme Geçmişi',
-              onPressed: () {
-                if (mounted) {
-                  context.push('/fee-history');
-                }
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Yenile',
-              onPressed: () {
-                setState(() {
-                  _isLoading = true;
-                });
-                _loadPayments();
-              },
-            ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : ResponsiveLayout(
-                mobile: _buildMobileLayout(),
-                tablet: _buildTabletLayout(),
-                desktop: _buildDesktopLayout(),
-              ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            if (mounted) {
-              await context.push('/add-payment');
-              // Ödeme ekleme sayfasından döndükten sonra ödemeleri yeniden yükle
-              if (mounted) {
-                await _loadPayments();
-              }
-            }
-          },
-          tooltip: 'Ödeme Ekle',
-          child: const Icon(Icons.add),
-        ),
+      appBar: AppBar(
+        title: const Text('Ödemeler'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Tüm Ücret Geçmişi',
+            onPressed: () {
+              context.pushNamed(RouteNames.feeHistory);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Yenile',
+            onPressed: () {
+              setState(() {
+                _isLoading = true;
+              });
+              _loadPayments();
+            },
+          ),
+        ],
       ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ResponsiveLayout(
+              mobile: _buildMobileLayout(),
+              tablet: _buildTabletLayout(),
+              desktop: _buildDesktopLayout(),
+            ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'add_payment_fab_extended',
+        onPressed: () async {
+          await context.pushNamed(RouteNames.addPayment);
+          if (mounted) {
+            context.read<PaymentProvider>().loadPayments();
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Ödeme Ekle'),
+      ),
+    ),
   );
 
   Widget _buildMobileLayout() => Column(
@@ -275,15 +260,6 @@ class _PaymentListPageState extends State<PaymentListPage> {
         setState(() {
           _statusFilter = selected ? status : '';
         });
-        // Use Future.microtask to avoid build-time state change
-        Future.microtask(() {
-          if (mounted) {
-            Provider.of<PaymentProvider>(
-              context,
-              listen: false,
-            ).filterByStatus(_statusFilter, notify: true);
-          }
-        });
       },
       backgroundColor: AppColors.background,
       selectedColor: AppColors.primary.withAlpha(50),
@@ -302,15 +278,6 @@ class _PaymentListPageState extends State<PaymentListPage> {
       onTap: () {
         setState(() {
           _statusFilter = status;
-        });
-        // Use Future.microtask to avoid build-time state change
-        Future.microtask(() {
-          if (mounted) {
-            Provider.of<PaymentProvider>(
-              context,
-              listen: false,
-            ).filterByStatus(_statusFilter, notify: true);
-          }
         });
       },
       borderRadius: BorderRadius.circular(AppDimensions.radius8),
@@ -432,7 +399,10 @@ class _PaymentListPageState extends State<PaymentListPage> {
       ),
       child: InkWell(
         onTap: () {
-          context.push('/edit-payment/${payment.id}');
+          context.pushNamed(
+            RouteNames.editPayment,
+            pathParameters: {'id': payment.id},
+          );
         },
         borderRadius: BorderRadius.circular(AppDimensions.radius8),
         child: Padding(
@@ -537,7 +507,10 @@ class _PaymentListPageState extends State<PaymentListPage> {
                     icon: const Icon(Icons.edit, size: 18),
                     label: const Text('Düzenle'),
                     onPressed: () {
-                      context.push('/edit-payment/${payment.id}');
+                      context.pushNamed(
+                        RouteNames.editPayment,
+                        pathParameters: {'id': payment.id},
+                      );
                     },
                   ),
                   TextButton.icon(
@@ -592,7 +565,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
     try {
       final provider = Provider.of<PaymentProvider>(context, listen: false);
-      await provider.deletePayment(id, notify: false);
+      await provider.deletePayment(id);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -640,10 +613,10 @@ class _PaymentListPageState extends State<PaymentListPage> {
                 _searchController.clear();
               });
             } else {
-              await context.push('/add-payment');
+              await context.pushNamed(RouteNames.addPayment);
               // Ödeme ekleme sayfasından döndükten sonra ödemeleri yeniden yükle
               if (mounted) {
-                await _loadPayments();
+                context.read<PaymentProvider>().loadPayments();
               }
             }
           },

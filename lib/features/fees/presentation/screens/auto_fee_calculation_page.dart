@@ -87,7 +87,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           // Ödeme önerilerini oluştur
           final suggestions = FeeCalculationService.generatePaymentSuggestions(
             students: studentProvider.students,
-            allLessons: lessonProvider.lessons,
+            allLessons: lessonProvider.allLessons,
             allPayments: paymentProvider.payments,
           );
 
@@ -154,7 +154,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
           if (!mounted) return null;
 
           // Öğrencinin derslerini al
-          final lessons = lessonProvider.lessons
+          final lessons = lessonProvider.allLessons
               .where((lesson) => lesson.studentId == _selectedStudentId)
               .toList();
 

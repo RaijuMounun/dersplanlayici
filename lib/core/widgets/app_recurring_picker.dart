@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_dimensions.dart';
 import '../utils/responsive_utils.dart';
+import 'package:ders_planlayici/features/lessons/domain/models/recurring_pattern_model.dart'
+    as db;
 
 /// Tekrar türleri
 enum RecurringType { none, daily, weekly, biweekly, monthly, custom }
@@ -15,6 +17,30 @@ class RecurringInfo {
     this.endDate,
     this.totalOccurrences,
   });
+
+  factory RecurringInfo.fromPattern(db.RecurringPattern pattern) {
+    RecurringType type;
+    if (pattern.type == db.RecurringType.weekly) {
+      if (pattern.interval == 2) {
+        type = RecurringType.biweekly;
+      } else {
+        type = RecurringType.weekly;
+      }
+    } else {
+      type = RecurringType.monthly;
+    }
+
+    return RecurringInfo(
+      type: type,
+      interval: pattern.interval,
+      weekdays: pattern.daysOfWeek,
+      dayOfMonth: pattern.dayOfMonth,
+      endDate: pattern.endDate != null
+          ? DateTime.parse(pattern.endDate!)
+          : null,
+    );
+  }
+
   final RecurringType type;
   final int? interval;
   final List<int>? weekdays; // 1: Pazartesi, 7: Pazar
@@ -107,10 +133,7 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
         if (widget.label != null) ...[
           Row(
             children: [
-              Text(
-                widget.label!,
-                style: theme.textTheme.titleSmall,
-              ),
+              Text(widget.label!, style: theme.textTheme.titleSmall),
               if (widget.required)
                 Text(
                   ' *',
@@ -127,12 +150,22 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
           onTap: widget.enabled ? _showRecurringDialog : null,
           child: InputDecorator(
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.repeat, size: 20, color: theme.colorScheme.onSurface),
+              prefixIcon: Icon(
+                Icons.repeat,
+                size: 20,
+                color: theme.colorScheme.onSurface,
+              ),
               suffixIcon: widget.enabled
-                  ? Icon(Icons.arrow_drop_down, size: 20, color: theme.colorScheme.onSurface)
+                  ? Icon(
+                      Icons.arrow_drop_down,
+                      size: 20,
+                      color: theme.colorScheme.onSurface,
+                    )
                   : null,
               filled: true,
-              fillColor: widget.enabled ? null : theme.colorScheme.surface.withValues(alpha: 0.5),
+              fillColor: widget.enabled
+                  ? null
+                  : theme.colorScheme.surface.withValues(alpha: 0.5),
               border: null, // Tema border'ını kullan
               enabledBorder: null,
               focusedBorder: null,
@@ -160,139 +193,130 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-              title: Text('Tekrar Seçimi', style: theme.textTheme.titleLarge),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Tekrar türü seçimi
-                      Text('Tekrar türü:', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: AppDimensions.spacing8),
-                      _buildRecurringTypeDropdown(setState),
-                      const SizedBox(height: AppDimensions.spacing16),
+        builder: (context, setState) => AlertDialog(
+          title: Text('Tekrar Seçimi', style: theme.textTheme.titleLarge),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Tekrar türü seçimi
+                  Text('Tekrar türü:', style: theme.textTheme.titleSmall),
+                  const SizedBox(height: AppDimensions.spacing8),
+                  _buildRecurringTypeDropdown(setState),
+                  const SizedBox(height: AppDimensions.spacing16),
 
-                      // Günlük/haftalık/aylık tekrar için aralık seçimi
-                      if (_recurringInfo.type != RecurringType.none &&
-                          _recurringInfo.type != RecurringType.biweekly) ...[
-                        _buildIntervalSelector(setState),
-                        const SizedBox(height: AppDimensions.spacing16),
-                      ],
+                  // Günlük/haftalık/aylık tekrar için aralık seçimi
+                  if (_recurringInfo.type != RecurringType.none &&
+                      _recurringInfo.type != RecurringType.biweekly) ...[
+                    _buildIntervalSelector(setState),
+                    const SizedBox(height: AppDimensions.spacing16),
+                  ],
 
-                      // Haftalık tekrar için gün seçimi
-                      if (_recurringInfo.type == RecurringType.weekly ||
-                          _recurringInfo.type == RecurringType.biweekly) ...[
-                        _buildWeekdaysSelector(setState),
-                        const SizedBox(height: AppDimensions.spacing16),
-                      ],
+                  // Haftalık tekrar için gün seçimi
+                  if (_recurringInfo.type == RecurringType.weekly ||
+                      _recurringInfo.type == RecurringType.biweekly) ...[
+                    _buildWeekdaysSelector(setState),
+                    const SizedBox(height: AppDimensions.spacing16),
+                  ],
 
-                      // Aylık tekrar için gün seçimi
-                      if (_recurringInfo.type == RecurringType.monthly) ...[
-                        _buildDayOfMonthSelector(setState),
-                        const SizedBox(height: AppDimensions.spacing16),
-                      ],
-                    ],
-                  ),
-                ),
+                  // Aylık tekrar için gün seçimi
+                  if (_recurringInfo.type == RecurringType.monthly) ...[
+                    _buildDayOfMonthSelector(setState),
+                    const SizedBox(height: AppDimensions.spacing16),
+                  ],
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('İptal'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    widget.onChanged?.call(_recurringInfo);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Tamam'),
-                ),
-              ])),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                widget.onChanged?.call(_recurringInfo);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildRecurringTypeDropdown(StateSetter setState) => DropdownButtonFormField<RecurringType>(
-      value: _recurringInfo.type,
-      decoration: const InputDecoration(
-        filled: true,
-        fillColor: null, // Tema rengini kullan
-        border: null, // Tema border'ını kullan
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing12,
-          vertical: AppDimensions.spacing8,
-        ),
+  Widget _buildRecurringTypeDropdown(
+    StateSetter setState,
+  ) => DropdownButtonFormField<RecurringType>(
+    value: _recurringInfo.type,
+    decoration: const InputDecoration(
+      filled: true,
+      fillColor: null, // Tema rengini kullan
+      border: null, // Tema border'ını kullan
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing12,
+        vertical: AppDimensions.spacing8,
       ),
-      items: const [
-        DropdownMenuItem(
-          value: RecurringType.none,
-          child: Text('Tekrarlanmaz'),
-        ),
-        DropdownMenuItem(
-          value: RecurringType.daily,
-          child: Text('Günlük'),
-        ),
-        DropdownMenuItem(
-          value: RecurringType.weekly,
-          child: Text('Haftalık'),
-        ),
-        DropdownMenuItem(
-          value: RecurringType.biweekly,
-          child: Text('İki Haftalık'),
-        ),
-        DropdownMenuItem(
-          value: RecurringType.monthly,
-          child: Text('Aylık'),
-        ),
-      ],
-      onChanged: (value) {
-        if (value != null) {
-          setState(() {
-            _recurringInfo = RecurringInfo(type: value);
-          });
-        }
-      },
-    );
+    ),
+    items: const [
+      DropdownMenuItem(value: RecurringType.none, child: Text('Tekrarlanmaz')),
+      DropdownMenuItem(value: RecurringType.daily, child: Text('Günlük')),
+      DropdownMenuItem(value: RecurringType.weekly, child: Text('Haftalık')),
+      DropdownMenuItem(
+        value: RecurringType.biweekly,
+        child: Text('İki Haftalık'),
+      ),
+      DropdownMenuItem(value: RecurringType.monthly, child: Text('Aylık')),
+    ],
+    onChanged: (value) {
+      if (value != null) {
+        setState(() {
+          _recurringInfo = RecurringInfo(type: value);
+        });
+      }
+    },
+  );
 
   Widget _buildIntervalSelector(StateSetter setState) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Aralık:', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: AppDimensions.spacing8),
-        DropdownButtonFormField<int>(
-          value: _recurringInfo.interval,
-          decoration: const InputDecoration(
-            filled: true,
-            fillColor: null, // Tema rengini kullan
-            border: null, // Tema border'ını kullan
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacing12,
-              vertical: AppDimensions.spacing8,
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('Aralık:', style: Theme.of(context).textTheme.titleSmall),
+      const SizedBox(height: AppDimensions.spacing8),
+      DropdownButtonFormField<int>(
+        value: _recurringInfo.interval,
+        decoration: const InputDecoration(
+          filled: true,
+          fillColor: null, // Tema rengini kullan
+          border: null, // Tema border'ını kullan
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing12,
+            vertical: AppDimensions.spacing8,
           ),
-          items: List.generate(12, (index) => index + 1)
-              .map((value) => DropdownMenuItem(
-                    value: value,
-                    child: Text('$value'),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _recurringInfo = RecurringInfo(
-                  type: _recurringInfo.type,
-                  interval: value,
-                  weekdays: _recurringInfo.weekdays,
-                  dayOfMonth: _recurringInfo.dayOfMonth,
-                );
-              });
-            }
-          },
         ),
-      ],
-    );
+        items: List.generate(12, (index) => index + 1)
+            .map(
+              (value) => DropdownMenuItem(value: value, child: Text('$value')),
+            )
+            .toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              _recurringInfo = RecurringInfo(
+                type: _recurringInfo.type,
+                interval: value,
+                weekdays: _recurringInfo.weekdays,
+                dayOfMonth: _recurringInfo.dayOfMonth,
+              );
+            });
+          }
+        },
+      ),
+    ],
+  );
 
   Widget _buildWeekdaysSelector(StateSetter setState) {
     final theme = Theme.of(context);
@@ -315,14 +339,17 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
           spacing: AppDimensions.spacing8,
           children: List.generate(7, (index) {
             final dayNumber = index + 1;
-            final isSelected = _recurringInfo.weekdays?.contains(dayNumber) ?? false;
+            final isSelected =
+                _recurringInfo.weekdays?.contains(dayNumber) ?? false;
 
             return FilterChip(
               label: Text(days[index]),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {
-                  final currentWeekdays = List<int>.from(_recurringInfo.weekdays ?? []);
+                  final currentWeekdays = List<int>.from(
+                    _recurringInfo.weekdays ?? [],
+                  );
                   if (selected) {
                     currentWeekdays.add(dayNumber);
                   } else {
@@ -344,40 +371,39 @@ class _AppRecurringPickerState extends State<AppRecurringPicker> {
   }
 
   Widget _buildDayOfMonthSelector(StateSetter setState) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Ayın günü:', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: AppDimensions.spacing8),
-        DropdownButtonFormField<int>(
-          value: _recurringInfo.dayOfMonth ?? 1,
-          decoration: const InputDecoration(
-            filled: true,
-            fillColor: null, // Tema rengini kullan
-            border: null, // Tema border'ını kullan
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacing12,
-              vertical: AppDimensions.spacing8,
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('Ayın günü:', style: Theme.of(context).textTheme.titleSmall),
+      const SizedBox(height: AppDimensions.spacing8),
+      DropdownButtonFormField<int>(
+        value: _recurringInfo.dayOfMonth ?? 1,
+        decoration: const InputDecoration(
+          filled: true,
+          fillColor: null, // Tema rengini kullan
+          border: null, // Tema border'ını kullan
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing12,
+            vertical: AppDimensions.spacing8,
           ),
-          items: List.generate(31, (index) => index + 1)
-              .map((value) => DropdownMenuItem(
-                    value: value,
-                    child: Text('$value'),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _recurringInfo = RecurringInfo(
-                  type: _recurringInfo.type,
-                  interval: _recurringInfo.interval,
-                  weekdays: _recurringInfo.weekdays,
-                  dayOfMonth: value,
-                );
-              });
-            }
-          },
         ),
-      ],
-    );
+        items: List.generate(31, (index) => index + 1)
+            .map(
+              (value) => DropdownMenuItem(value: value, child: Text('$value')),
+            )
+            .toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              _recurringInfo = RecurringInfo(
+                type: _recurringInfo.type,
+                interval: _recurringInfo.interval,
+                weekdays: _recurringInfo.weekdays,
+                dayOfMonth: value,
+              );
+            });
+          }
+        },
+      ),
+    ],
+  );
 }

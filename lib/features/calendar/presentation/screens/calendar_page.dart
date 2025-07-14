@@ -9,6 +9,7 @@ import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -26,12 +27,10 @@ class _CalendarPageState extends State<CalendarPage> {
     // Provider erişimini build sonrasına ertele
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final lessonProvider = Provider.of<LessonProvider>(
+        Provider.of<LessonProvider>(
           context,
           listen: false,
-        );
-        lessonProvider.loadLessons();
-        lessonProvider.setSelectedDate(_selectedDate);
+        ).setSelectedDate(_selectedDate);
       }
     });
   }
@@ -132,7 +131,7 @@ class _CalendarPageState extends State<CalendarPage> {
   Map<DateTime, List<dynamic>> _buildEventsMap(LessonProvider lessonProvider) {
     final Map<DateTime, List<dynamic>> eventsMap = {};
 
-    for (final lesson in lessonProvider.lessons) {
+    for (final lesson in lessonProvider.allLessons) {
       final date = _parseDate(lesson.date);
       if (eventsMap.containsKey(date)) {
         eventsMap[date]!.add(lesson.subject);
@@ -161,7 +160,7 @@ class _CalendarPageState extends State<CalendarPage> {
         return Center(child: Text('Hata: ${lessonProvider.error}'));
       }
 
-      if (lessonProvider.dailyLessons.isEmpty) {
+      if (lessonProvider.lessonsForSelectedDate.isEmpty) {
         return _buildEmptyState();
       }
 
@@ -175,9 +174,9 @@ class _CalendarPageState extends State<CalendarPage> {
 
       return ListView.builder(
         padding: padding,
-        itemCount: lessonProvider.dailyLessons.length,
+        itemCount: lessonProvider.lessonsForSelectedDate.length,
         itemBuilder: (context, index) {
-          final lesson = lessonProvider.dailyLessons[index];
+          final lesson = lessonProvider.lessonsForSelectedDate[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: AppDimensions.spacing8),
             child: LessonCard(
@@ -186,8 +185,10 @@ class _CalendarPageState extends State<CalendarPage> {
               startTime: lesson.startTime,
               endTime: lesson.endTime,
               onTap: () {
-                // Ders detay sayfasına yönlendir
-                context.push('/lesson/${lesson.id}');
+                context.pushNamed(
+                  RouteNames.lessonDetails,
+                  pathParameters: {'id': lesson.id},
+                );
               },
             ),
           );
@@ -231,9 +232,11 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             child: ElevatedButton.icon(
               onPressed: () async {
-                // Ders ekleme sayfasına yönlendir - seçilen tarihi parametre olarak geç
                 final selectedDateStr = _selectedDate.toIso8601String();
-                await context.push('/new-lesson?initialDate=$selectedDateStr');
+                await context.pushNamed(
+                  RouteNames.addLesson,
+                  queryParameters: {'initialDate': selectedDateStr},
+                );
 
                 if (mounted) {
                   final lessonProvider = Provider.of<LessonProvider>(

@@ -41,7 +41,7 @@ class NotificationSettingsPage extends StatelessWidget {
                   ),
                   title: const Text('Ders Hatırlatmaları'),
                   subtitle: const Text('Ders başlamadan önce bildirim al'),
-                  value: settingsProvider.lessonRemindersEnabled,
+                  value: settingsProvider.settings.lessonRemindersEnabled,
                   onChanged: (bool value) {
                     settingsProvider.updateLessonRemindersEnabled(value);
                   },
@@ -51,7 +51,7 @@ class NotificationSettingsPage extends StatelessWidget {
             const Divider(height: 1),
             Consumer<AppSettingsProvider>(
               builder: (context, settingsProvider, child) {
-                if (!settingsProvider.lessonRemindersEnabled) {
+                if (!settingsProvider.settings.lessonRemindersEnabled) {
                   return const ListTile(
                     leading: Icon(Icons.timer, color: AppColors.primary),
                     title: Text('Hatırlatma Süresi'),
@@ -64,10 +64,10 @@ class NotificationSettingsPage extends StatelessWidget {
                   leading: const Icon(Icons.timer, color: AppColors.primary),
                   title: const Text('Hatırlatma Süresi'),
                   subtitle: Text(
-                    '${settingsProvider.reminderMinutes} dakika önce',
+                    '${settingsProvider.settings.reminderMinutes} dakika önce',
                   ),
                   trailing: DropdownButton<int>(
-                    value: settingsProvider.reminderMinutes,
+                    value: settingsProvider.settings.reminderMinutes,
                     underline: const SizedBox(),
                     onChanged: (int? newValue) {
                       if (newValue != null) {
@@ -93,29 +93,26 @@ class NotificationSettingsPage extends StatelessWidget {
           children: [
             Consumer<AppSettingsProvider>(
               builder: (context, settingsProvider, child) => SwitchListTile(
-                  secondary: const Icon(
-                    Icons.payment,
-                    color: AppColors.primary,
-                  ),
-                  title: const Text('Ödeme Hatırlatmaları'),
-                  subtitle: const Text('Gecikmiş ödemeler için bildirim al'),
-                  value: settingsProvider.paymentRemindersEnabled,
-                  onChanged: (bool value) {
-                    settingsProvider.updatePaymentRemindersEnabled(value);
-                  },
-                ),
+                secondary: const Icon(Icons.payment, color: AppColors.primary),
+                title: const Text('Ödeme Hatırlatmaları'),
+                subtitle: const Text('Gecikmiş ödemeler için bildirim al'),
+                value: settingsProvider.settings.paymentRemindersEnabled,
+                onChanged: (bool value) {
+                  settingsProvider.updatePaymentRemindersEnabled(value);
+                },
+              ),
             ),
             const Divider(height: 1),
             Consumer<AppSettingsProvider>(
               builder: (context, settingsProvider, child) => SwitchListTile(
-                  secondary: const Icon(Icons.school, color: AppColors.primary),
-                  title: const Text('Öğrenci Doğum Günü'),
-                  subtitle: const Text('Öğrenci doğum günlerinde bildirim al'),
-                  value: settingsProvider.birthdayRemindersEnabled,
-                  onChanged: (bool value) {
-                    settingsProvider.updateBirthdayRemindersEnabled(value);
-                  },
-                ),
+                secondary: const Icon(Icons.school, color: AppColors.primary),
+                title: const Text('Öğrenci Doğum Günü'),
+                subtitle: const Text('Öğrenci doğum günlerinde bildirim al'),
+                value: settingsProvider.settings.birthdayRemindersEnabled,
+                onChanged: (bool value) {
+                  settingsProvider.updateBirthdayRemindersEnabled(value);
+                },
+              ),
             ),
           ],
         ),

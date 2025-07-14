@@ -72,7 +72,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         context,
         listen: false,
       );
-      await studentProvider.loadStudents(notify: false);
+      await studentProvider.loadStudents();
 
       if (!mounted) return;
 
@@ -120,12 +120,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         context,
         listen: false,
       );
-      await lessonProvider.loadLessonsByStudent(_selectedStudentId!);
+      // loadLessonsByStudent kaldırıldı, allLessons üzerinden filtrele
+      // await lessonProvider.loadLessonsByStudent(_selectedStudentId!);
 
       if (!mounted) return;
 
       setState(() {
-        _lessons = lessonProvider.lessons
+        _lessons = lessonProvider.allLessons
+            .where((lesson) => lesson.studentId == _selectedStudentId)
             .where(
               (lesson) =>
                   lesson.status == LessonStatus.scheduled ||

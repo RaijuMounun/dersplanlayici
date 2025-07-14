@@ -58,6 +58,7 @@ class RecurringPattern { // Ayın günü (1-31)
 
   /// Güncellenmiş bir tekrarlama deseni nesnesi oluşturur.
   RecurringPattern copyWith({
+    String? id,
     RecurringType? type,
     int? interval,
     String? startDate,
@@ -65,7 +66,7 @@ class RecurringPattern { // Ayın günü (1-31)
     List<int>? daysOfWeek,
     int? dayOfMonth,
   }) => RecurringPattern(
-      id: id,
+      id: id ?? this.id,
       type: type ?? this.type,
       interval: interval ?? this.interval,
       startDate: startDate ?? this.startDate,

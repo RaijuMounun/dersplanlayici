@@ -7,6 +7,7 @@ import 'package:ders_planlayici/core/utils/date_utils.dart' as date_utils;
 import 'package:ders_planlayici/core/widgets/app_card.dart';
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 enum LessonFilterType { all, upcoming, past, completed, cancelled }
 
@@ -286,7 +287,10 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
                 icon: const Icon(Icons.edit, size: 18),
                 label: const Text('Düzenle'),
                 onPressed: () {
-                  context.push('/edit-lesson/${lesson.id}');
+                  context.pushNamed(
+                    RouteNames.editLesson,
+                    pathParameters: {'id': lesson.id},
+                  );
                 },
               ),
               TextButton.icon(
@@ -349,7 +353,10 @@ class _StudentLessonsWidgetState extends State<StudentLessonsWidget> {
           const SizedBox(height: AppDimensions.spacing24),
           ElevatedButton.icon(
             onPressed: () {
-              context.push('/add-lesson?studentId=${widget.student.id}');
+              context.pushNamed(
+                RouteNames.addLesson,
+                queryParameters: {'studentId': widget.student.id},
+              );
             },
             icon: const Icon(Icons.add),
             label: const Text('Ders Ekle'),

@@ -11,6 +11,7 @@ import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart
 import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
 import 'package:ders_planlayici/features/students/presentation/widgets/student_lessons_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class StudentDetailsPage extends StatefulWidget {
   const StudentDetailsPage({super.key, required this.studentId});
@@ -77,11 +78,14 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     try {
       if (!mounted) return;
       final lessonProvider = context.read<LessonProvider>();
-      await lessonProvider.loadLessonsByStudent(_student!.id);
+      // loadLessonsByStudent is removed, filter from allLessons
+      // await lessonProvider.loadLessonsByStudent(_student!.id);
 
       if (!mounted) return;
       setState(() {
-        _lessons = List.from(lessonProvider.lessons);
+        _lessons = lessonProvider.allLessons
+            .where((lesson) => lesson.studentId == _student!.id)
+            .toList();
         _lessonsLoading = false;
       });
     } on Exception catch (e) {
@@ -143,19 +147,19 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
                     icon: Icons.add,
                     label: 'Ders Ekle',
                     onPressed: () =>
-                        context.push('/add-lesson?studentId=${_student!.id}'),
+                        context.pushNamed(RouteNames.addLesson, queryParameters: {'studentId': _student!.id}),
                   ),
                   _buildBottomBarButton(
                     icon: Icons.payments,
                     label: 'Ödeme Ekle',
                     onPressed: () =>
-                        context.push('/add-payment?studentId=${_student!.id}'),
+                        context.pushNamed(RouteNames.addPayment, queryParameters: {'studentId': _student!.id}),
                   ),
                   _buildBottomBarButton(
                     icon: Icons.history,
                     label: 'Ödeme Geçmişi',
                     onPressed: () =>
-                        context.push('/fee-history?studentId=${_student!.id}'),
+                        context.pushNamed(RouteNames.feeHistory, queryParameters: {'studentId': _student!.id}),
                   ),
                 ],
               ),
@@ -182,7 +186,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
         const Text('Aradığınız öğrenci silinmiş veya mevcut değil.'),
         const SizedBox(height: AppDimensions.spacing24),
         ElevatedButton.icon(
-          onPressed: () => context.go('/'),
+          onPressed: () => context.goNamed(RouteNames.home),
           icon: const Icon(Icons.arrow_back),
           label: const Text('Öğrencilere Dön'),
         ),
@@ -460,7 +464,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Ders Ekle'),
               onPressed: () {
-                context.push('/add-lesson?studentId=${_student!.id}');
+                context.pushNamed(RouteNames.addLesson, queryParameters: {'studentId': _student!.id});
               },
             ),
         ],
@@ -609,7 +613,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   // Düzenleme sayfasına yönlendir
   void _navigateToEdit(BuildContext context) {
     if (mounted) {
-      context.push('/edit-student/${_student!.id}').then((_) {
+      context.pushNamed(RouteNames.editStudent, pathParameters: {'id': _student!.id}).then((_) {
         if (mounted) {
           _loadStudentDetails();
         }
@@ -657,7 +661,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
         );
         // Ana sayfaya dön
         if (mounted) {
-          context.go('/');
+          context.goNamed(RouteNames.home);
         }
       }
     } on Exception catch (e) {
@@ -677,7 +681,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     onPressed: () {
       // Yeni ders ekle
       if (mounted) {
-        context.push('/add-lesson?studentId=${_student!.id}');
+        context.pushNamed(RouteNames.addLesson, queryParameters: {'studentId': _student!.id});
       }
     },
     tooltip: 'Ders Ekle',

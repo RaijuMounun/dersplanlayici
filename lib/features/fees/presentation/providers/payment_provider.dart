@@ -7,219 +7,84 @@ import 'package:intl/intl.dart';
 
 /// Ödeme işlemlerini yöneten Provider sınıfı.
 class PaymentProvider extends ChangeNotifier {
-  PaymentProvider(this._paymentRepository);
-  final PaymentRepository _paymentRepository;
+
+  PaymentProvider(this._repository) {
+    loadPayments();
+  }
+  final PaymentRepository _repository;
 
   List<PaymentModel> _payments = [];
   List<FeeSummary> _summaries = [];
   bool _isLoading = false;
-  AppException? _error;
-  String _filterStatus = '';
+  String? _error;
 
-  /// Ödemeleri döndürür.
   List<PaymentModel> get payments => _payments;
-
-  /// Ücret özetlerini döndürür.
   List<FeeSummary> get summaries => _summaries;
-
-  /// Yükleme durumunu döndürür.
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
-  /// Hata durumunu döndürür.
-  AppException? get error => _error;
-
-  /// Tüm ödemeleri yükler.
-  Future<void> loadPayments({bool notify = true}) async {
-    _setLoading(true, notify: notify);
+  Future<T> _executeAction<T>(Future<T> Function() action) async {
+    _isLoading = true;
     _error = null;
+    notifyListeners();
 
     try {
-      _payments = await _paymentRepository.getAllPayments();
-      if (notify) notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      if (notify) notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ödemeler yüklenirken bir hata oluştu: ${e.toString()}',
-      );
-      if (notify) notifyListeners();
+      return await action();
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
     } finally {
-      _setLoading(false, notify: notify);
-    }
-  }
-
-  /// Öğrenci ödemelerini yükler.
-  Future<void> loadPaymentsByStudent(
-    String studentId, {
-    bool notify = true,
-  }) async {
-    _setLoading(true, notify: notify);
-    _error = null;
-
-    try {
-      _payments = await _paymentRepository.getPaymentsByStudent(studentId);
-      if (notify) notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      if (notify) notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Öğrenci ödemeleri yüklenirken bir hata oluştu: ${e.toString()}',
-      );
-      if (notify) notifyListeners();
-    } finally {
-      _setLoading(false, notify: notify);
-    }
-  }
-
-  /// Öğrenci ücret özetini yükler.
-  Future<FeeSummary?> loadStudentFeeSummary(
-    String studentId, {
-    bool notify = true,
-  }) async {
-    _setLoading(true, notify: notify);
-    _error = null;
-
-    try {
-      final summary = await _paymentRepository.getStudentFeeSummary(studentId);
-      _summaries = [summary];
-      if (notify) notifyListeners();
-      return summary;
-    } on AppException catch (e) {
-      _error = e;
-      if (notify) notifyListeners();
-      return null;
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Öğrenci ücret özeti yüklenirken bir hata oluştu: ${e.toString()}',
-      );
-      if (notify) notifyListeners();
-      return null;
-    } finally {
-      _setLoading(false, notify: notify);
-    }
-  }
-
-  /// Tüm öğrencilerin ücret özetlerini yükler.
-  Future<void> loadAllStudentFeeSummaries({bool notify = true}) async {
-    _setLoading(true, notify: notify);
-    _error = null;
-
-    try {
-      _summaries = await _paymentRepository.getAllStudentFeeSummaries();
-      if (notify) notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      if (notify) notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ücret özetleri yüklenirken bir hata oluştu: ${e.toString()}',
-      );
-      if (notify) notifyListeners();
-    } finally {
-      _setLoading(false, notify: notify);
-    }
-  }
-
-  /// Ödeme durumuna göre ödemeleri filtreler.
-  void filterByStatus(String status, {bool notify = true}) {
-    _filterStatus = status;
-    if (notify) {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Filtrelenmiş ödemeleri döndürür.
-  List<PaymentModel> get filteredPayments {
-    if (_filterStatus.isEmpty) {
-      return _payments;
-    }
-    return _payments
-        .where(
-          (payment) =>
-              payment.status.toString().split('.').last == _filterStatus,
-        )
-        .toList();
+  /// Tüm ödemeleri yükler.
+  Future<void> loadPayments() async {
+    await _executeAction(() async {
+      _payments = await _repository.getAllPayments();
+    });
   }
 
+  /// Öğrenciye ait ödemeleri yükler.
+  Future<void> loadPaymentsByStudent(String studentId) async {
+    await _executeAction(() async {
+      _payments = await _repository.getPaymentsByStudent(studentId);
+    });
+  }
+
+  /// Tüm öğrencilerin ücret özetlerini yükler.
+  Future<void> loadAllStudentFeeSummaries() async {
+    await _executeAction(() async {
+      _summaries = await _repository.getAllStudentFeeSummaries();
+    });
+  }
+
+  /// Tek bir öğrencinin ücret özetini yükler.
+  Future<FeeSummary?> loadStudentFeeSummary(String studentId) async => _executeAction(() => _repository.getStudentFeeSummary(studentId));
+
   /// Ödeme ekler.
-  Future<void> addPayment(PaymentModel payment, {bool notify = true}) async {
-    _setLoading(true, notify: notify);
-    _error = null;
-
-    try {
-      // Doğrulama: Ödeme miktarı pozitif olmalı
-      if (payment.amount <= 0) {
-        throw const ValidationException(
-          message: 'Ödeme miktarı sıfırdan büyük olmalıdır',
-        );
-      }
-
-      await _paymentRepository.addPayment(payment);
-      await loadPayments(notify: notify);
-    } on AppException catch (e) {
-      _error = e;
-      if (notify) notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ödeme eklenirken bir hata oluştu: ${e.toString()}',
-      );
-      if (notify) notifyListeners();
-    } finally {
-      _setLoading(false, notify: notify);
+  Future<void> addPayment(PaymentModel payment) async {
+    if (payment.amount <= 0) {
+      throw const ValidationException(message: 'Ödeme miktarı sıfırdan büyük olmalıdır');
     }
+    await _executeAction(() => _repository.addPayment(payment));
+    await loadPayments();
   }
 
   /// Ödeme günceller.
-  Future<void> updatePayment(PaymentModel payment, {bool notify = true}) async {
-    _setLoading(true, notify: notify);
-    _error = null;
-
-    try {
-      // Doğrulama: Ödeme miktarı pozitif olmalı
-      if (payment.amount <= 0) {
-        throw const ValidationException(
-          message: 'Ödeme miktarı sıfırdan büyük olmalıdır',
-        );
-      }
-
-      await _paymentRepository.updatePayment(payment);
-      await loadPayments(notify: notify);
-    } on AppException catch (e) {
-      _error = e;
-      if (notify) notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ödeme güncellenirken bir hata oluştu: ${e.toString()}',
-      );
-      if (notify) notifyListeners();
-    } finally {
-      _setLoading(false, notify: notify);
+  Future<void> updatePayment(PaymentModel payment) async {
+    if (payment.amount <= 0) {
+      throw const ValidationException(message: 'Ödeme miktarı sıfırdan büyük olmalıdır');
     }
+    await _executeAction(() => _repository.updatePayment(payment));
+    await loadPayments();
   }
 
   /// Ödeme siler.
-  Future<void> deletePayment(String id, {bool notify = true}) async {
-    _setLoading(true, notify: notify);
-    _error = null;
-
-    try {
-      await _paymentRepository.deletePayment(id);
-      await loadPayments(notify: notify);
-    } on AppException catch (e) {
-      _error = e;
-      if (notify) notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ödeme silinirken bir hata oluştu: ${e.toString()}',
-      );
-      if (notify) notifyListeners();
-    } finally {
-      _setLoading(false, notify: notify);
-    }
+  Future<void> deletePayment(String id) async {
+    await _executeAction(() => _repository.deletePayment(id));
+    await loadPayments();
   }
 
   /// Ödeme oluşturma helper metodu
@@ -253,13 +118,6 @@ class PaymentProvider extends ChangeNotifier {
       lessonIds: lessonIds,
       notes: notes,
     );
-  }
-
-  void _setLoading(bool loading, {bool notify = true}) {
-    _isLoading = loading;
-    if (notify) {
-      notifyListeners();
-    }
   }
 
   /// Belirli bir ID'ye sahip ödemeyi döndürür.

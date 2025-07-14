@@ -86,14 +86,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
         context: context,
         message: 'Öğrenci bilgileri yükleniyor...',
         future: Future(() async {
-          await studentProvider.loadStudents(notify: false);
-
-          // State güncellemesini ayrı bir mikro görevde yap
-          await Future.microtask(() {
-            if (mounted) {
-              studentProvider.notifyListeners();
-            }
-          });
+          await studentProvider.loadStudents();
 
           return studentProvider.getStudentById(widget.studentId!);
         }),
@@ -574,13 +567,10 @@ class _AddStudentPageState extends State<AddStudentPage> {
             : 'Öğrenci kaydediliyor...',
         future: Future(() async {
           if (_isEditMode) {
-            await studentProvider.updateStudent(student, notify: false);
+            await studentProvider.updateStudent(student);
           } else {
-            await studentProvider.addStudent(student, notify: false);
+            await studentProvider.addStudent(student);
           }
-
-          // State güncellemesini ayrı bir mikro görevde yap
-          await Future.microtask(studentProvider.notifyListeners);
 
           return true;
         }),
@@ -650,13 +640,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
         context: context,
         message: 'Öğrenci siliniyor...',
         future: Future(() async {
-          await studentProvider.deleteStudent(
-            _originalStudent!.id,
-            notify: false,
-          );
-
-          // State güncellemesini ayrı bir mikro görevde yap
-          await Future.microtask(studentProvider.notifyListeners);
+          await studentProvider.deleteStudent(_originalStudent!.id);
 
           return true;
         }),

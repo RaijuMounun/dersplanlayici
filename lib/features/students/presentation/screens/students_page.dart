@@ -8,6 +8,7 @@ import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
+import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class StudentsPage extends StatefulWidget {
   const StudentsPage({super.key});
@@ -29,33 +30,52 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Öğrenciler'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () {
-            // Arama işlevi
-          },
-        ),
-      ],
-    ),
-    body: _buildStudentsList(),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () async {
-        final studentProvider = Provider.of<StudentProvider>(
-          context,
-          listen: false,
+  Widget build(BuildContext context) {
+    return Consumer<StudentProvider>(
+      builder: (context, studentProvider, child) {
+        if (studentProvider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (studentProvider.error != null &&
+            studentProvider.error.toString().isNotEmpty) {
+          return Center(child: Text('Hata: ${studentProvider.error}'));
+        }
+
+        if (studentProvider.students.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Öğrenciler'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  // Arama işlevi
+                },
+              ),
+            ],
+          ),
+          body: _buildStudentsList(),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () async {
+              final studentProvider = Provider.of<StudentProvider>(
+                context,
+                listen: false,
+              );
+              await context.pushNamed(RouteNames.addStudent);
+              if (!mounted) return;
+              await studentProvider.loadStudents();
+            },
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.person_add, color: Colors.white),
+          ),
         );
-        await context.push('/add-student');
-        if (!mounted) return;
-        await studentProvider.loadStudents();
       },
-      backgroundColor: AppColors.primary,
-      child: const Icon(Icons.person_add, color: Colors.white),
-    ),
-  );
+    );
+  }
 
   Widget _buildStudentsList() => Consumer<StudentProvider>(
     builder: (context, studentProvider, child) {
@@ -69,7 +89,25 @@ class _StudentsPageState extends State<StudentsPage> {
       }
 
       if (studentProvider.students.isEmpty) {
-        return _buildEmptyState();
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Henüz öğrenci eklenmemiş.'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  await context.pushNamed(RouteNames.addStudent);
+                  // Geri dönüldüğünde listeyi yenilemek için
+                  if (context.mounted) {
+                    context.read<StudentProvider>().loadStudents();
+                  }
+                },
+                child: const Text('Öğrenci Ekle'),
+              ),
+            ],
+          ),
+        );
       }
 
       // Responsive layout kullanarak ekran boyutuna göre farklı görünüm göster
@@ -115,7 +153,10 @@ class _StudentsPageState extends State<StudentsPage> {
       );
 
       // Go Router ile navigasyon
-      await context.push('/student/${student.id}');
+      await context.pushNamed(
+        RouteNames.studentDetails,
+        pathParameters: {'id': student.id},
+      );
 
       if (mounted) {
         await studentProvider.loadStudents();
@@ -127,7 +168,10 @@ class _StudentsPageState extends State<StudentsPage> {
       final provider = Provider.of<StudentProvider>(context, listen: false);
 
       // Öğrenci düzenleme sayfasına yönlendir
-      await localContext.push('/student/${student.id}/edit');
+      await localContext.pushNamed(
+        RouteNames.editStudent,
+        pathParameters: {'id': student.id},
+      );
 
       if (mounted) {
         await provider.loadStudents();
@@ -168,7 +212,7 @@ class _StudentsPageState extends State<StudentsPage> {
               context,
               listen: false,
             );
-            await context.push('/add-student');
+            await context.pushNamed(RouteNames.addStudent);
             if (!mounted) return;
             await studentProvider.loadStudents();
           },

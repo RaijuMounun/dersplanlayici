@@ -129,3 +129,23 @@ class ErrorHandler {
     }
   }
 }
+
+/// Yakalanan hataları UI'da kullanıcıya göstermek için merkezi sınıf.
+class AppErrorHandler {
+  /// Hatayı türüne göre işler ve kullanıcıya uygun bir mesaj gösterir.
+  static void handleError(BuildContext context, dynamic error) {
+    String message;
+    if (error is AppException) {
+      message = error.message;
+    } else {
+      message = 'Beklenmedik bir hata oluştu. Lütfen tekrar deneyin.';
+    }
+
+    // Geliştirme ortamında daha detaylı loglama
+    if (kDebugMode) {
+      print('İşlenen Hata: $error');
+    }
+
+    ErrorHandler.showErrorSnackBar(context, message: message);
+  }
+}

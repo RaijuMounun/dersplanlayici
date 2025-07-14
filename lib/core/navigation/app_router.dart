@@ -1,192 +1,134 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ders_planlayici/features/home/presentation/pages/home_page.dart';
-import 'package:ders_planlayici/features/students/presentation/pages/add_student_page.dart';
-import 'package:ders_planlayici/features/students/presentation/pages/student_details_page.dart';
-import 'package:ders_planlayici/features/lessons/presentation/pages/lesson_details_page.dart';
-import 'package:ders_planlayici/features/lessons/presentation/pages/add_edit_lesson_page.dart';
-import 'package:ders_planlayici/features/fees/presentation/pages/payment_list_page.dart';
-import 'package:ders_planlayici/features/fees/presentation/pages/add_payment_page.dart';
-import 'package:ders_planlayici/features/fees/presentation/pages/fee_history_page.dart';
-import 'package:ders_planlayici/features/fees/presentation/pages/fee_management_page.dart';
-import 'package:ders_planlayici/features/fees/presentation/pages/auto_fee_calculation_page.dart';
-import 'package:ders_planlayici/features/fees/presentation/pages/payment_transactions_page.dart';
-import 'package:ders_planlayici/features/fees/presentation/pages/payment_transaction_page.dart';
+import 'package:ders_planlayici/features/home/presentation/screens/home_page.dart';
+import 'package:ders_planlayici/features/students/presentation/screens/add_edit_student_page.dart';
+import 'package:ders_planlayici/features/students/presentation/screens/student_details_page.dart';
+import 'package:ders_planlayici/features/students/presentation/screens/student_list_page.dart';
+import 'package:ders_planlayici/features/lessons/presentation/screens/lessons_page.dart';
+import 'package:ders_planlayici/features/lessons/presentation/screens/lesson_details_page.dart';
+import 'package:ders_planlayici/features/lessons/presentation/screens/add_edit_lesson_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/screens/payment_list_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/screens/add_payment_page.dart';
+import 'package:ders_planlayici/features/fees/presentation/screens/payment_transactions_page.dart';
+import 'package:ders_planlayici/features/calendar/presentation/screens/calendar_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/screens/settings_page.dart';
 import 'route_names.dart';
 
 /// Uygulama genelinde navigasyon için kullanılan router sınıfı.
 class AppRouter {
   /// Router'ı oluşturur
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/students',
     debugLogDiagnostics: true,
     routes: [
-      // Ana sayfa rotası
-      GoRoute(
-        path: '/',
-        name: RouteNames.home,
-        builder: (context, state) => const HomePage(),
-        routes: [
-          // Öğrenci ekleme sayfası
-          GoRoute(
-            path: 'add-student',
-            name: RouteNames.addStudent,
-            builder: (context, state) => const AddStudentPage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomePage(navigationShell: navigationShell),
+        branches: [
+          // Takvim Branch
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/calendar',
+                name: RouteNames.calendar,
+                builder: (context, state) => const CalendarPage(),
+              ),
+            ],
           ),
-
-          // Öğrenci detay sayfası
-          GoRoute(
-            path: 'student/:id',
-            name: RouteNames.studentDetails,
-            builder: (context, state) {
-              final studentId = state.pathParameters['id']!;
-              return StudentDetailsPage(studentId: studentId);
-            },
+          // Dersler Branch
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/lessons',
+                name: RouteNames.lessons,
+                builder: (context, state) => const LessonsPage(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    name: RouteNames.addLesson,
+                    builder: (context, state) => const AddEditLessonPage(),
+                  ),
+                  GoRoute(
+                    path: ':id/details',
+                    name: RouteNames.lessonDetails,
+                    builder: (context, state) => LessonDetailsPage(
+                      lessonId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':id/edit',
+                    name: RouteNames.editLesson,
+                    builder: (context, state) =>
+                        AddEditLessonPage(lessonId: state.pathParameters['id']),
+                  ),
+                ],
+              ),
+            ],
           ),
-
-          // Öğrenci düzenleme sayfası
-          GoRoute(
-            path: 'edit-student/:id',
-            name: 'editStudent',
-            builder: (context, state) {
-              final studentId = state.pathParameters['id']!;
-              return AddStudentPage(studentId: studentId);
-            },
+          // Öğrenciler Branch
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/students',
+                name: RouteNames.students,
+                builder: (context, state) => const StudentListPage(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    name: RouteNames.addStudent,
+                    builder: (context, state) => const AddEditStudentPage(),
+                  ),
+                  GoRoute(
+                    path: ':id/details',
+                    name: RouteNames.studentDetails,
+                    builder: (context, state) => StudentDetailsPage(
+                      studentId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':id/edit',
+                    name: RouteNames.editStudent,
+                    builder: (context, state) => AddEditStudentPage(
+                      studentId: state.pathParameters['id'],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-
-          // Ders ekleme sayfası (Birleştirilmiş - hem ekleme hem düzenleme)
-          GoRoute(
-            path: 'add-lesson',
-            name: RouteNames.addLesson,
-            builder: (context, state) {
-              final studentId = state.uri.queryParameters['studentId'];
-              return AddEditLessonPage(studentId: studentId);
-            },
+          // Ödemeler Branch
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/payments',
+                name: RouteNames.payments,
+                builder: (context, state) => const PaymentListPage(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    name: RouteNames.addPayment,
+                    builder: (context, state) => const AddPaymentPage(),
+                  ),
+                  GoRoute(
+                    path: 'transactions/:paymentId',
+                    name: RouteNames.paymentTransactions,
+                    builder: (context, state) => PaymentTransactionsPage(
+                      paymentId: state.pathParameters['paymentId']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-
-          // Yeni ders ekleme sayfası (Ana sayfa)
-          GoRoute(
-            path: 'new-lesson',
-            name: 'newLesson',
-            builder: (context, state) {
-              final studentId = state.uri.queryParameters['studentId'];
-              final initialDateStr = state.uri.queryParameters['initialDate'];
-              DateTime? initialDate;
-              
-              if (initialDateStr != null) {
-                try {
-                  initialDate = DateTime.parse(initialDateStr);
-                } on Exception {
-                  // Parse hatası durumunda null bırak
-                }
-              }
-              
-              return AddEditLessonPage(
-                studentId: studentId,
-                initialDate: initialDate,
-              );
-            },
-          ),
-
-          // Ders düzenleme sayfası
-          GoRoute(
-            path: 'edit-lesson/:id',
-            name: 'editLesson',
-            builder: (context, state) {
-              final lessonId = state.pathParameters['id']!;
-              return AddEditLessonPage(lessonId: lessonId);
-            },
-          ),
-
-          // Ders detay sayfası
-          GoRoute(
-            path: 'lesson/:id',
-            name: RouteNames.lessonDetails,
-            builder: (context, state) {
-              final lessonId = state.pathParameters['id']!;
-              return LessonDetailsPage(lessonId: lessonId);
-            },
-          ),
-
-          // Ödemeler listesi sayfası
-          GoRoute(
-            path: 'payments',
-            name: 'payments',
-            builder: (context, state) => const PaymentListPage(),
-          ),
-
-          // Ücret yönetim sayfası
-          GoRoute(
-            path: 'fee-management',
-            name: 'feeManagement',
-            builder: (context, state) => const FeeManagementPage(),
-          ),
-
-          // Otomatik ücret hesaplama sayfası
-          GoRoute(
-            path: 'auto-fee-calculation',
-            name: 'autoFeeCalculation',
-            builder: (context, state) => const AutoFeeCalculationPage(),
-          ),
-
-          // Ödeme ekleme sayfası
-          GoRoute(
-            path: 'add-payment',
-            name: 'addPayment',
-            builder: (context, state) {
-              final queryParams = state.uri.queryParameters;
-              return AddPaymentPage(studentId: queryParams['studentId']);
-            },
-          ),
-
-          // Ödeme düzenleme sayfası
-          GoRoute(
-            path: 'edit-payment/:id',
-            name: 'editPayment',
-            builder: (context, state) {
-              final id = state.pathParameters['id'] ?? '';
-              return AddPaymentPage(paymentId: id);
-            },
-          ),
-
-          // Ödeme geçmişi sayfası
-          GoRoute(
-            path: 'fee-history',
-            name: 'feeHistory',
-            builder: (context, state) {
-              final queryParams = state.uri.queryParameters;
-              return FeeHistoryPage(studentId: queryParams['studentId']);
-            },
-          ),
-
-          // Payment Transaction routes
-          GoRoute(
-            path: 'payment-transactions/:paymentId',
-            name: 'paymentTransactions',
-            builder: (context, state) {
-              final paymentId = state.pathParameters['paymentId'] ?? '';
-              return PaymentTransactionsPage(paymentId: paymentId);
-            },
-          ),
-          GoRoute(
-            path: 'payment-transaction/:paymentId',
-            name: 'addPaymentTransaction',
-            builder: (context, state) {
-              final paymentId = state.pathParameters['paymentId'] ?? '';
-              return PaymentTransactionPage(paymentId: paymentId);
-            },
-          ),
-          GoRoute(
-            path: 'payment-transaction/:paymentId/:transactionId',
-            name: 'editPaymentTransaction',
-            builder: (context, state) {
-              final paymentId = state.pathParameters['paymentId'] ?? '';
-              final transactionId = state.pathParameters['transactionId'] ?? '';
-              return PaymentTransactionPage(
-                paymentId: paymentId,
-                transactionId: transactionId,
-              );
-            },
+          // Ayarlar Branch
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                name: RouteNames.settings,
+                builder: (context, state) => const SettingsPage(),
+              ),
+            ],
           ),
         ],
       ),
@@ -200,7 +142,7 @@ class AppRouter {
             const Text('Aradığınız sayfa bulunamadı.'),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => context.go('/'),
+              onPressed: () => context.goNamed(RouteNames.students),
               child: const Text('Ana Sayfaya Dön'),
             ),
           ],

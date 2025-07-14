@@ -1,17 +1,18 @@
 import 'package:ders_planlayici/core/error/app_exception.dart';
+import 'package:ders_planlayici/core/data/database_helper.dart';
 import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/domain/models/fee_summary_model.dart';
-import 'package:ders_planlayici/services/database/database_service.dart';
 
 /// Ödeme işlemlerini yöneten repository sınıfı.
 class PaymentRepository {
-  PaymentRepository(this._databaseService);
-  final DatabaseService _databaseService;
+
+  PaymentRepository(this._databaseHelper);
+  final DatabaseHelper _databaseHelper;
 
   /// Tüm ödemeleri getirir.
   Future<List<PaymentModel>> getAllPayments() async {
     try {
-      final payments = await _databaseService.getPayments();
+      final payments = await _databaseHelper.getPayments();
 
       final List<PaymentModel> result = [];
       for (int i = 0; i < payments.length; i++) {
@@ -19,7 +20,7 @@ class PaymentRepository {
           final payment = PaymentModel.fromMap(payments[i]);
           result.add(payment);
         } on Exception {
-          // 
+          //
         }
       }
 
@@ -34,7 +35,7 @@ class PaymentRepository {
   /// Öğrenciye ait ödemeleri getirir.
   Future<List<PaymentModel>> getPaymentsByStudent(String studentId) async {
     try {
-      final payments = await _databaseService.getPaymentsByStudent(studentId);
+      final payments = await _databaseHelper.getPaymentsByStudent(studentId);
       return payments.map(PaymentModel.fromMap).toList();
     } catch (e) {
       throw DatabaseException(
@@ -46,7 +47,7 @@ class PaymentRepository {
   /// Belirli bir ödemeyi getirir.
   Future<PaymentModel?> getPaymentById(String id) async {
     try {
-      final payment = await _databaseService.getPaymentById(id);
+      final payment = await _databaseHelper.getPaymentById(id);
       if (payment != null) {
         return PaymentModel.fromMap(payment);
       }
@@ -62,7 +63,7 @@ class PaymentRepository {
   Future<void> addPayment(PaymentModel payment) async {
     try {
       final paymentMap = payment.toMap();
-      await _databaseService.insertPayment(paymentMap);
+      await _databaseHelper.insertPayment(paymentMap);
     } catch (e) {
       throw DatabaseException(message: 'Ödeme eklenirken bir hata oluştu: $e');
     }
@@ -71,7 +72,7 @@ class PaymentRepository {
   /// Bir ödemeyi günceller.
   Future<void> updatePayment(PaymentModel payment) async {
     try {
-      await _databaseService.updatePayment(payment.toMap());
+      await _databaseHelper.updatePayment(payment.toMap());
     } catch (e) {
       throw DatabaseException(
         message: 'Ödeme güncellenirken bir hata oluştu: $e',
@@ -82,7 +83,7 @@ class PaymentRepository {
   /// Bir ödemeyi siler.
   Future<void> deletePayment(String id) async {
     try {
-      await _databaseService.deletePayment(id);
+      await _databaseHelper.deletePayment(id);
     } catch (e) {
       throw DatabaseException(message: 'Ödeme silinirken bir hata oluştu: $e');
     }
@@ -92,16 +93,16 @@ class PaymentRepository {
   Future<FeeSummary> getStudentFeeSummary(String studentId) async {
     try {
       // Öğrenci bilgilerini al
-      final studentData = await _databaseService.getStudentById(studentId);
+      final studentData = await _databaseHelper.getStudent(studentId);
       if (studentData == null) {
         throw const NotFoundException(message: 'Öğrenci bulunamadı');
       }
 
       // Öğrencinin derslerini al
-      final lessons = await _databaseService.getLessonsByStudent(studentId);
+      final lessons = await _databaseHelper.getLessonsByStudent(studentId);
 
       // Öğrencinin ödemelerini al
-      final payments = await _databaseService.getPaymentsByStudent(studentId);
+      final payments = await _databaseHelper.getPaymentsByStudent(studentId);
 
       // Toplam ders ücreti
       double totalAmount = 0;
@@ -159,7 +160,7 @@ class PaymentRepository {
   Future<List<FeeSummary>> getAllStudentFeeSummaries() async {
     try {
       // Tüm öğrencileri al
-      final students = await _databaseService.getStudents();
+      final students = await _databaseHelper.getStudents();
 
       final List<FeeSummary> summaries = [];
 

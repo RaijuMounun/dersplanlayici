@@ -7,6 +7,7 @@ import 'package:ders_planlayici/core/error/app_exception.dart'
     show DatabaseException;
 import 'package:ders_planlayici/core/error/error_handler.dart';
 import 'dart:convert';
+import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 
 class DatabaseHelper {
   factory DatabaseHelper() => _instance;
@@ -554,26 +555,12 @@ class DatabaseHelper {
   Future<int> insertStudent(Map<String, dynamic> student) async {
     try {
       final db = await database;
-      developer.log('Öğrenci ekleniyor: ${student['name']}');
-
-      // Tarih alanlarını ekle
       final now = DateTime.now().toIso8601String();
       student['createdAt'] = now;
       student['updatedAt'] = now;
-
-      developer.log('Öğrenci verisi: $student');
-
-      final result = await db.insert('students', student);
-      developer.log('Öğrenci eklendi, ID: ${student['id']}, Sonuç: $result');
-
-      // Veritabanı durumunu kontrol et
-      final dbInfo = await getDatabaseInfo();
-      developer.log('Güncel veritabanı durumu: $dbInfo');
-
-      return result;
+      return await db.insert('students', student);
     } catch (e) {
-      developer.log('Öğrenci ekleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci ekleme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -581,11 +568,7 @@ class DatabaseHelper {
   Future<int> updateStudent(Map<String, dynamic> student) async {
     try {
       final db = await database;
-      developer.log('Öğrenci güncelleniyor, ID: ${student['id']}');
-
-      // Güncelleme tarihini ekle
       student['updatedAt'] = DateTime.now().toIso8601String();
-
       return await db.update(
         'students',
         student,
@@ -593,8 +576,7 @@ class DatabaseHelper {
         whereArgs: [student['id']],
       );
     } catch (e) {
-      developer.log('Öğrenci güncelleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci güncelleme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -602,11 +584,9 @@ class DatabaseHelper {
   Future<int> deleteStudent(String id) async {
     try {
       final db = await database;
-      developer.log('Öğrenci siliniyor, ID: $id');
       return await db.delete('students', where: 'id = ?', whereArgs: [id]);
     } catch (e) {
-      developer.log('Öğrenci silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci silme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -614,19 +594,9 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getStudents() async {
     try {
       final db = await database;
-      developer.log('Tüm öğrenciler alınıyor');
-      final result = await db.query('students');
-      developer.log('${result.length} öğrenci bulundu');
-
-      // Detaylı bilgi
-      if (result.isNotEmpty) {
-        developer.log('İlk öğrenci: ${result.first}');
-      }
-
-      return result;
+      return await db.query('students');
     } catch (e) {
-      developer.log('Öğrenci listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci listesi alma hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -637,15 +607,13 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> searchStudents(String searchTerm) async {
     try {
       if (searchTerm.trim().isEmpty) {
-        return getStudents();
+        return Future.value([]);
       }
 
       final db = await database;
-      developer.log('Öğrenciler aranıyor, Arama terimi: $searchTerm');
-
       final query = '%${searchTerm.toLowerCase()}%';
 
-      final result = await db.rawQuery(
+      return await db.rawQuery(
         '''
         SELECT * FROM students 
         WHERE lower(name) LIKE ? 
@@ -658,14 +626,8 @@ class DatabaseHelper {
       ''',
         [query, query, query, query, query],
       );
-
-      developer.log(
-        '${result.length} öğrenci bulundu, Arama terimi: $searchTerm',
-      );
-      return result;
     } catch (e) {
-      developer.log('Öğrenci arama hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci arama hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -673,21 +635,14 @@ class DatabaseHelper {
   Future<Map<String, dynamic>?> getStudent(String id) async {
     try {
       final db = await database;
-      developer.log('Öğrenci alınıyor, ID: $id');
       final List<Map<String, dynamic>> result = await db.query(
         'students',
         where: 'id = ?',
         whereArgs: [id],
       );
-      if (result.isNotEmpty) {
-        developer.log('Öğrenci bulundu: ${result.first['name']}');
-      } else {
-        developer.log('Öğrenci bulunamadı, ID: $id');
-      }
       return result.isNotEmpty ? result.first : null;
     } catch (e) {
-      developer.log('Öğrenci alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci alma hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -696,41 +651,12 @@ class DatabaseHelper {
   Future<int> insertLesson(Map<String, dynamic> lesson) async {
     try {
       final db = await database;
-      developer.log(
-        'Ders ekleniyor: ${lesson['subject']} - ${lesson['studentName']}',
-      );
-
-      // Gerekli alanları kontrol et
-      developer.log('🔍 [DatabaseHelper] Ders verisi detayları:');
-      developer.log('  - ID: ${lesson['id']}');
-      developer.log('  - StudentID: ${lesson['studentId']}');
-      developer.log('  - StudentName: ${lesson['studentName']}');
-      developer.log('  - Subject: ${lesson['subject']}');
-      developer.log('  - Date: ${lesson['date']}');
-      developer.log('  - StartTime: ${lesson['startTime']}');
-      developer.log('  - EndTime: ${lesson['endTime']}');
-      developer.log('  - Status: ${lesson['status']}');
-
-      // Tarih alanlarını ekle
       final now = DateTime.now().toIso8601String();
       lesson['createdAt'] = now;
       lesson['updatedAt'] = now;
-
-      developer.log('Ders verisi: $lesson');
-
-      final result = await db.insert('lessons', lesson);
-      developer.log('Ders eklendi, ID: ${lesson['id']}, Sonuç: $result');
-
-      // Veritabanı durumunu kontrol et
-      final dbInfo = await getDatabaseInfo();
-      developer.log('Güncel veritabanı durumu: $dbInfo');
-
-      return result;
+      return await db.insert('lessons', lesson);
     } catch (e) {
-      developer.log('❌ [DatabaseHelper] Ders ekleme hatası: $e');
-      developer.log(
-        '❌ [DatabaseHelper] Hata stack trace: ${StackTrace.current}',
-      );
+      developer.log('Ders ekleme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -738,11 +664,7 @@ class DatabaseHelper {
   Future<int> updateLesson(Map<String, dynamic> lesson) async {
     try {
       final db = await database;
-      developer.log('Ders güncelleniyor, ID: ${lesson['id']}');
-
-      // Güncelleme tarihini ekle
       lesson['updatedAt'] = DateTime.now().toIso8601String();
-
       return await db.update(
         'lessons',
         lesson,
@@ -750,8 +672,7 @@ class DatabaseHelper {
         whereArgs: [lesson['id']],
       );
     } catch (e) {
-      developer.log('Ders güncelleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Ders güncelleme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -759,11 +680,9 @@ class DatabaseHelper {
   Future<int> deleteLesson(String id) async {
     try {
       final db = await database;
-      developer.log('Ders siliniyor, ID: $id');
       return await db.delete('lessons', where: 'id = ?', whereArgs: [id]);
     } catch (e) {
-      developer.log('Ders silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Ders silme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -771,19 +690,9 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getLessons() async {
     try {
       final db = await database;
-      developer.log('Tüm dersler alınıyor');
-      final result = await db.query('lessons', orderBy: 'date, startTime');
-      developer.log('${result.length} ders bulundu');
-
-      // Detaylı bilgi
-      if (result.isNotEmpty) {
-        developer.log('İlk ders: ${result.first}');
-      }
-
-      return result;
+      return await db.query('lessons', orderBy: 'date, startTime');
     } catch (e) {
-      developer.log('Ders listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Ders listesi alma hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -791,18 +700,14 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getLessonsByDate(String dateString) async {
     try {
       final db = await database;
-      developer.log('Tarihe göre dersler alınıyor: $dateString');
-      final result = await db.query(
+      return await db.query(
         'lessons',
         where: 'date = ?',
         whereArgs: [dateString],
         orderBy: 'startTime',
       );
-      developer.log('${result.length} ders bulundu, tarih: $dateString');
-      return result;
     } catch (e) {
-      developer.log('Tarihe göre ders listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Tarihe göre ders listesi alma hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -812,40 +717,87 @@ class DatabaseHelper {
   ) async {
     try {
       final db = await database;
-      developer.log('Öğrenciye göre dersler alınıyor, Öğrenci ID: $studentId');
-      final result = await db.query(
+      return await db.query(
         'lessons',
         where: 'studentId = ?',
         whereArgs: [studentId],
         orderBy: 'date DESC, startTime',
       );
-      developer.log('${result.length} ders bulundu, Öğrenci ID: $studentId');
-      return result;
     } catch (e) {
-      developer.log('Öğrenciye göre ders listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenciye göre ders listesi alma hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
+  }
+
+  Future<List<Map<String, dynamic>>> getLessonsByDateRange(
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final db = await database;
+      return await db.query(
+        'lessons',
+        where: 'date BETWEEN ? AND ?',
+        whereArgs: [startDate, endDate],
+        orderBy: 'date ASC, startTime ASC',
+      );
+    } catch (e) {
+      developer.log('Tarih aralığına göre ders listesi alma hatası: $e', stackTrace: StackTrace.current);
+      rethrow;
+    }
+  }
+
+  Future<bool> checkLessonConflict({
+    required String date,
+    required String startTime,
+    required String endTime,
+    String? lessonId,
+  }) async {
+    final db = await database;
+    var where =
+        'date = ? AND ((startTime < ? AND endTime > ?) OR '
+        '(startTime >= ? AND startTime < ?))';
+    final whereArgs = [date, endTime, startTime, startTime, endTime];
+
+    if (lessonId != null) {
+      where += ' AND id != ?';
+      whereArgs.add(lessonId);
+    }
+
+    final result = await db.query(
+      'lessons',
+      where: where,
+      whereArgs: whereArgs,
+      limit: 1,
+    );
+    return result.isNotEmpty;
   }
 
   Future<Map<String, dynamic>?> getLesson(String id) async {
     try {
       final db = await database;
-      developer.log('Ders alınıyor, ID: $id');
       final List<Map<String, dynamic>> result = await db.query(
         'lessons',
         where: 'id = ?',
         whereArgs: [id],
       );
-      if (result.isNotEmpty) {
-        developer.log('Ders bulundu, ID: $id');
-      } else {
-        developer.log('Ders bulunamadı, ID: $id');
-      }
       return result.isNotEmpty ? result.first : null;
     } catch (e) {
-      developer.log('Ders alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Ders alma hatası: $e', stackTrace: StackTrace.current);
+      rethrow;
+    }
+  }
+
+  Future<void> batchInsertLessons(List<Lesson> lessons) async {
+    try {
+      final db = await database;
+      final batch = db.batch();
+      for (var lesson in lessons) {
+        batch.insert('lessons', lesson.toMap());
+      }
+      await batch.commit(noResult: true);
+    } catch (e) {
+      developer.log('Toplu ders ekleme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -870,7 +822,7 @@ class DatabaseHelper {
       // Veritabanını kapat ve yeniden aç
       await db.close();
       _database = null;
-      
+
       // Yeni veritabanı oluştur
       await database;
       developer.log('Veritabanı başarıyla sıfırlandı');
@@ -968,108 +920,70 @@ class DatabaseHelper {
     }
   }
 
-  Future<int> deleteRecurringPattern(String id) async {
-    try {
-      final db = await database;
-      developer.log('Tekrarlanan ders deseni siliniyor, ID: $id');
-      return await db.delete(
-        'recurring_patterns',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-    } catch (e) {
-      developer.log('Tekrarlanan ders deseni silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
-  }
-
   Future<Map<String, dynamic>?> getRecurringPattern(String id) async {
     try {
       final db = await database;
-      developer.log('Tekrarlanan ders deseni alınıyor, ID: $id');
       final List<Map<String, dynamic>> result = await db.query(
         'recurring_patterns',
         where: 'id = ?',
         whereArgs: [id],
       );
-      return result.isNotEmpty ? result.first : null;
+      return result.firstOrNull;
     } catch (e) {
       developer.log('Tekrarlanan ders deseni alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
       rethrow;
     }
   }
 
-  // Ücret işlemleri
-  Future<int> insertFee(Map<String, dynamic> fee) async {
-    try {
-      final db = await database;
-      developer.log('Ücret ekleniyor: ${fee['id']}');
-
-      // Tarih alanlarını ekle
-      final now = DateTime.now().toIso8601String();
-      fee['createdAt'] = now;
-      fee['updatedAt'] = now;
-
-      final result = await db.insert('fees', fee);
-      developer.log('Ücret eklendi, ID: ${fee['id']}');
-      return result;
-    } catch (e) {
-      developer.log('Ücret ekleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+  Future<void> deleteRecurringPattern(String id) async {
+    final db = await database;
+    await db.delete('recurring_patterns', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> updateFee(Map<String, dynamic> fee) async {
-    try {
-      final db = await database;
-      developer.log('Ücret güncelleniyor, ID: ${fee['id']}');
-
-      // Güncelleme tarihini ekle
-      fee['updatedAt'] = DateTime.now().toIso8601String();
-
-      return await db.update(
-        'fees',
-        fee,
-        where: 'id = ?',
-        whereArgs: [fee['id']],
-      );
-    } catch (e) {
-      developer.log('Ücret güncelleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+  Future<int> deleteLessonsByRecurringPatternId(String patternId) async {
+    final db = await database;
+    final count = await db.delete(
+      'lessons',
+      where: 'recurringPatternId = ?',
+      whereArgs: [patternId],
+    );
+    return count;
   }
 
-  Future<int> deleteFee(String id) async {
-    try {
-      final db = await database;
-      developer.log('Ücret siliniyor, ID: $id');
-      return await db.delete('fees', where: 'id = ?', whereArgs: [id]);
-    } catch (e) {
-      developer.log('Ücret silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+  /// Ücret Operasyonları
+
+  Future<List<Map<String, dynamic>>> getFees({
+    String? where,
+    List<Object?>? whereArgs,
+  }) async {
+    final db = await database;
+    return db.query(
+      'fees',
+      where: where,
+      whereArgs: whereArgs,
+      orderBy: 'date DESC',
+    );
   }
 
   Future<Map<String, dynamic>?> getFee(String id) async {
-    try {
-      final db = await database;
-      developer.log('Ücret alınıyor, ID: $id');
-      final List<Map<String, dynamic>> result = await db.query(
-        'fees',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-      return result.isNotEmpty ? result.first : null;
-    } catch (e) {
-      developer.log('Ücret alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+    final db = await database;
+    final results = await db.query('fees', where: 'id = ?', whereArgs: [id]);
+    return results.firstOrNull;
+  }
+
+  Future<void> insertFee(Map<String, dynamic> fee) async {
+    final db = await database;
+    await db.insert('fees', fee);
+  }
+
+  Future<void> updateFee(Map<String, dynamic> fee) async {
+    final db = await database;
+    await db.update('fees', fee, where: 'id = ?', whereArgs: [fee['id']]);
+  }
+
+  Future<void> deleteFee(String id) async {
+    final db = await database;
+    await db.delete('fees', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, dynamic>>> getFeesByStudent(String studentId) async {
@@ -1327,62 +1241,15 @@ class DatabaseHelper {
   }
 
   // Ayarlar işlemleri
-  Future<int> insertOrUpdateAppSettings(Map<String, dynamic> settings) async {
+  Future<void> insertOrUpdateAppSettings(Map<String, dynamic> settings) async {
     try {
       final db = await database;
       developer.log('Ayarlar güncelleniyor');
-
-      // JSON verilerini string'e dönüştür
-      if (settings['additionalSettings'] != null &&
-          settings['additionalSettings'] is Map) {
-        settings['additionalSettings'] = jsonEncode(
-          settings['additionalSettings'],
-        );
-      }
-
-      // Boolean değerleri 0/1'e dönüştür
-      final boolFields = [
-        'showWeekends',
-        'confirmBeforeDelete',
-        'showLessonColors',
-        'lessonRemindersEnabled',
-        'paymentRemindersEnabled',
-        'birthdayRemindersEnabled',
-      ];
-      for (final field in boolFields) {
-        if (settings[field] is bool) {
-          settings[field] = settings[field] ? 1 : 0;
-        }
-      }
-
-      // Tarih alanlarını ekle
-      final now = DateTime.now().toIso8601String();
-      settings['updatedAt'] = now;
-
-      // Önce ayarların var olup olmadığını kontrol et
-      final List<Map<String, dynamic>> existingSettings = await db.query(
+      await db.insert(
         'app_settings',
+        settings,
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
-
-      if (existingSettings.isEmpty) {
-        // Yeni ayarlar oluştur
-        settings['id'] = 'app_settings';
-        settings['createdAt'] = now;
-
-        final result = await db.insert('app_settings', settings);
-        developer.log('Yeni ayarlar oluşturuldu, Sonuç: $result');
-        return result;
-      } else {
-        // Mevcut ayarları güncelle
-        final result = await db.update(
-          'app_settings',
-          settings,
-          where: 'id = ?',
-          whereArgs: ['app_settings'],
-        );
-        developer.log('Ayarlar güncellendi, Sonuç: $result');
-        return result;
-      }
     } catch (e) {
       developer.log('Ayarlar güncelleme hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
@@ -1420,32 +1287,17 @@ class DatabaseHelper {
           'birthdayRemindersEnabled',
         ];
         for (final field in boolFields) {
-          processedSettings[field] = processedSettings[field] == 1;
+          if (processedSettings.containsKey(field) &&
+              processedSettings[field] != null) {
+            processedSettings[field] = processedSettings[field] == 1;
+          }
         }
 
         developer.log('Ayarlar bulundu');
         return processedSettings;
       } else {
         developer.log('Ayarlar bulunamadı, varsayılan ayarlar döndürülecek');
-
-        // Varsayılan ayarları döndür
-        return {
-          'id': 'app_settings',
-          'themeMode': 'system',
-          'lessonNotificationTime': 'fifteenMinutes',
-          'showWeekends': true,
-          'defaultLessonDuration': 90,
-          'defaultLessonFee': 0.0,
-          'currency': 'TL',
-          'defaultSubject': null,
-          'confirmBeforeDelete': true,
-          'showLessonColors': true,
-          'lessonRemindersEnabled': true,
-          'reminderMinutes': 15,
-          'paymentRemindersEnabled': true,
-          'birthdayRemindersEnabled': true,
-          'additionalSettings': null,
-        };
+        return null;
       }
     } catch (e) {
       developer.log('Ayarlar alma hatası: $e');
@@ -1455,19 +1307,11 @@ class DatabaseHelper {
   }
 
   // Veritabanı yedekleri işlemleri
-  Future<int> insertDatabaseBackup(Map<String, dynamic> backup) async {
+  Future<void> insertDatabaseBackup(Map<String, dynamic> backup) async {
     try {
       final db = await database;
       developer.log('Veritabanı yedeği kaydediliyor: ${backup['fileName']}');
-
-      // Otomatik id oluştur
-      backup['id'] = 'backup_${DateTime.now().millisecondsSinceEpoch}';
-
-      final result = await db.insert('database_backups', backup);
-      developer.log(
-        'Veritabanı yedeği kaydedildi, ID: ${backup['id']}, Sonuç: $result',
-      );
-      return result;
+      await db.insert('database_backups', backup);
     } catch (e) {
       developer.log('Veritabanı yedeği kaydetme hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
@@ -1475,15 +1319,11 @@ class DatabaseHelper {
     }
   }
 
-  Future<int> deleteDatabaseBackup(String id) async {
+  Future<void> deleteDatabaseBackup(String id) async {
     try {
       final db = await database;
       developer.log('Veritabanı yedeği siliniyor, ID: $id');
-      return await db.delete(
-        'database_backups',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await db.delete('database_backups', where: 'id = ?', whereArgs: [id]);
     } catch (e) {
       developer.log('Veritabanı yedeği silme hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
@@ -1614,6 +1454,156 @@ class DatabaseHelper {
     } catch (e) {
       developer.log('Tatil günleri haritası alma hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  /// Ödeme Operasyonları
+  Future<List<Map<String, dynamic>>> getPayments() async {
+    try {
+      final db = await database;
+      return db.query('payments', orderBy: 'date DESC');
+    } catch (e, s) {
+      developer.log('Ödemeler alınırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getPaymentById(String id) async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'payments',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return results.firstOrNull;
+    } catch (e, s) {
+      developer.log('ID ile ödeme alınırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPaymentsByStudent(
+    String studentId,
+  ) async {
+    try {
+      final db = await database;
+      return db.query(
+        'payments',
+        where: 'studentId = ?',
+        whereArgs: [studentId],
+        orderBy: 'date DESC',
+      );
+    } catch (e, s) {
+      developer.log('Öğrenciye göre ödemeler alınırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> insertPayment(Map<String, dynamic> payment) async {
+    try {
+      final db = await database;
+      await db.insert('payments', payment);
+    } catch (e, s) {
+      developer.log('Ödeme eklenirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> updatePayment(Map<String, dynamic> payment) async {
+    try {
+      final db = await database;
+      await db.update(
+        'payments',
+        payment,
+        where: 'id = ?',
+        whereArgs: [payment['id']],
+      );
+    } catch (e, s) {
+      developer.log('Ödeme güncellenirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> deletePayment(String id) async {
+    try {
+      final db = await database;
+      await db.delete('payments', where: 'id = ?', whereArgs: [id]);
+    } catch (e, s) {
+      developer.log('Ödeme silinirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  /// Ödeme İşlemi Operasyonları
+  Future<List<Map<String, dynamic>>> getPaymentTransactionsByPaymentId(
+    String paymentId,
+  ) async {
+    try {
+      final db = await database;
+      return db.query(
+        'payment_transactions',
+        where: 'paymentId = ?',
+        whereArgs: [paymentId],
+        orderBy: 'date DESC',
+      );
+    } catch (e, s) {
+      developer.log('Ödeme işlemlerini alırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getPaymentTransactionById(String id) async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'payment_transactions',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return results.firstOrNull;
+    } catch (e, s) {
+      developer.log('ID ile ödeme işlemi alınırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> insertPaymentTransaction(
+    Map<String, dynamic> transaction,
+  ) async {
+    try {
+      final db = await database;
+      await db.insert('payment_transactions', transaction);
+    } catch (e, s) {
+      developer.log('Ödeme işlemi eklenirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> updatePaymentTransaction(
+    Map<String, dynamic> transaction,
+  ) async {
+    try {
+      final db = await database;
+      await db.update(
+        'payment_transactions',
+        transaction,
+        where: 'id = ?',
+        whereArgs: [transaction['id']],
+      );
+    } catch (e, s) {
+      developer.log('Ödeme işlemi güncellenirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> deletePaymentTransaction(String id) async {
+    try {
+      final db = await database;
+      await db.delete('payment_transactions', where: 'id = ?', whereArgs: [id]);
+    } catch (e, s) {
+      developer.log('Ödeme işlemi silinirken hata', error: e, stackTrace: s);
       rethrow;
     }
   }
