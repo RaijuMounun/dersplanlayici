@@ -17,9 +17,15 @@ import 'package:ders_planlayici/features/students/presentation/providers/student
 
 class AddEditLessonPage extends StatefulWidget {
 
-  const AddEditLessonPage({super.key, this.lessonId, this.studentId});
+  const AddEditLessonPage({
+    super.key, 
+    this.lessonId, 
+    this.studentId,
+    this.initialDate,
+  });
   final String? lessonId;
   final String? studentId;
+  final DateTime? initialDate;
 
   @override
   State<AddEditLessonPage> createState() => _AddEditLessonPageState();
@@ -49,6 +55,11 @@ class _AddEditLessonPageState extends State<AddEditLessonPage> {
   void initState() {
     super.initState();
     _isEditMode = widget.lessonId != null;
+
+    // Başlangıç tarihini ayarla
+    if (widget.initialDate != null) {
+      _lessonDate = widget.initialDate!;
+    }
 
     // URL'den gelen studentId varsa, seç
     if (widget.studentId != null) {

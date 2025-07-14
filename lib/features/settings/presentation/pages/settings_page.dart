@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ders_planlayici/features/settings/presentation/pages/database_management_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/pages/notification_settings_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/pages/lesson_settings_page.dart';
+import 'package:ders_planlayici/features/settings/presentation/pages/feedback_page.dart';
 import 'package:ders_planlayici/core/widgets/app_card.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
@@ -34,7 +37,11 @@ class SettingsPage extends StatelessWidget {
             subtitle: const Text('Ders başlangıcı için hatırlatmalar'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Bildirim ayarları
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const NotificationSettingsPage(),
+                ),
+              );
             },
           ),
         ],
@@ -45,21 +52,15 @@ class SettingsPage extends StatelessWidget {
         children: [
           ListTile(
             leading: const Icon(Icons.timer, color: AppColors.primary),
-            title: const Text('Varsayılan Ders Süresi'),
-            subtitle: const Text('90 dakika'),
+            title: const Text('Ders Ayarları'),
+            subtitle: const Text('Süre, ücret ve varsayılan ayarlar'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Ders süresi ayarları
-            },
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.attach_money, color: AppColors.primary),
-            title: const Text('Ders Ücretleri'),
-            subtitle: const Text('Ders başına ücret ayarları'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // Ücret ayarları
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const LessonSettingsPage(),
+                ),
+              );
             },
           ),
         ],
@@ -104,7 +105,9 @@ class SettingsPage extends StatelessWidget {
             subtitle: const Text('Geri bildirim gönder'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Geri bildirim formu
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const FeedbackPage()),
+              );
             },
           ),
         ],

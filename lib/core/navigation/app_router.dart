@@ -70,7 +70,21 @@ class AppRouter {
             name: 'newLesson',
             builder: (context, state) {
               final studentId = state.uri.queryParameters['studentId'];
-              return AddEditLessonPage(studentId: studentId);
+              final initialDateStr = state.uri.queryParameters['initialDate'];
+              DateTime? initialDate;
+              
+              if (initialDateStr != null) {
+                try {
+                  initialDate = DateTime.parse(initialDateStr);
+                } on Exception {
+                  // Parse hatası durumunda null bırak
+                }
+              }
+              
+              return AddEditLessonPage(
+                studentId: studentId,
+                initialDate: initialDate,
+              );
             },
           ),
 

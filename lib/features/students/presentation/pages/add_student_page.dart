@@ -367,7 +367,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
     validator: (value) {
       if (value != null && value.isNotEmpty) {
         // 5xx xxx xx xx formatı kontrolü
-        final phoneRegex = RegExp(r'^5\d{2} \d{3} \d{2} \d{2}\$');
+        final phoneRegex = RegExp(r'^5\d{2} \d{3} \d{2} \d{2}$');
         if (!phoneRegex.hasMatch(value)) {
           return 'Telefon numarası 5XX XXX XX XX formatında olmalı';
         }

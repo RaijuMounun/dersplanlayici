@@ -28,6 +28,10 @@ class AppSettingsModel { // Ek ayarlar
     this.defaultSubject,
     this.confirmBeforeDelete = true,
     this.showLessonColors = true,
+    this.lessonRemindersEnabled = true,
+    this.reminderMinutes = 15,
+    this.paymentRemindersEnabled = true,
+    this.birthdayRemindersEnabled = true,
     this.additionalSettings,
   });
 
@@ -42,6 +46,10 @@ class AppSettingsModel { // Ek ayarlar
       defaultSubject: null,
       confirmBeforeDelete: true,
       showLessonColors: true,
+      lessonRemindersEnabled: true,
+      reminderMinutes: 15,
+      paymentRemindersEnabled: true,
+      birthdayRemindersEnabled: true,
     );
 
   /// Map objesinden AppSettingsModel nesnesine dönüştürür.
@@ -62,6 +70,10 @@ class AppSettingsModel { // Ek ayarlar
       defaultSubject: map['defaultSubject'] as String?,
       confirmBeforeDelete: map['confirmBeforeDelete'] as bool? ?? true,
       showLessonColors: map['showLessonColors'] as bool? ?? true,
+      lessonRemindersEnabled: map['lessonRemindersEnabled'] as bool? ?? true,
+      reminderMinutes: map['reminderMinutes'] as int? ?? 15,
+      paymentRemindersEnabled: map['paymentRemindersEnabled'] as bool? ?? true,
+      birthdayRemindersEnabled: map['birthdayRemindersEnabled'] as bool? ?? true,
       additionalSettings: map['additionalSettings'] as Map<String, dynamic>?,
     );
   final ThemeMode themeMode;
@@ -73,6 +85,10 @@ class AppSettingsModel { // Ek ayarlar
   final String? defaultSubject; // Varsayılan ders konusu
   final bool confirmBeforeDelete; // Silmeden önce onay iste
   final bool showLessonColors; // Dersleri renklendir
+  final bool lessonRemindersEnabled; // Ders hatırlatmaları aktif
+  final int reminderMinutes; // Hatırlatma dakikası
+  final bool paymentRemindersEnabled; // Ödeme hatırlatmaları aktif
+  final bool birthdayRemindersEnabled; // Doğum günü hatırlatmaları aktif
   final Map<String, dynamic>? additionalSettings;
 
   /// AppSettingsModel nesnesini Map objesine dönüştürür.
@@ -89,6 +105,10 @@ class AppSettingsModel { // Ek ayarlar
       'defaultSubject': defaultSubject,
       'confirmBeforeDelete': confirmBeforeDelete,
       'showLessonColors': showLessonColors,
+      'lessonRemindersEnabled': lessonRemindersEnabled,
+      'reminderMinutes': reminderMinutes,
+      'paymentRemindersEnabled': paymentRemindersEnabled,
+      'birthdayRemindersEnabled': birthdayRemindersEnabled,
       'additionalSettings': additionalSettings,
     };
 
@@ -103,6 +123,10 @@ class AppSettingsModel { // Ek ayarlar
     String? defaultSubject,
     bool? confirmBeforeDelete,
     bool? showLessonColors,
+    bool? lessonRemindersEnabled,
+    int? reminderMinutes,
+    bool? paymentRemindersEnabled,
+    bool? birthdayRemindersEnabled,
     Map<String, dynamic>? additionalSettings,
   }) => AppSettingsModel(
       themeMode: themeMode ?? this.themeMode,
@@ -116,6 +140,10 @@ class AppSettingsModel { // Ek ayarlar
       defaultSubject: defaultSubject ?? this.defaultSubject,
       confirmBeforeDelete: confirmBeforeDelete ?? this.confirmBeforeDelete,
       showLessonColors: showLessonColors ?? this.showLessonColors,
+      lessonRemindersEnabled: lessonRemindersEnabled ?? this.lessonRemindersEnabled,
+      reminderMinutes: reminderMinutes ?? this.reminderMinutes,
+      paymentRemindersEnabled: paymentRemindersEnabled ?? this.paymentRemindersEnabled,
+      birthdayRemindersEnabled: birthdayRemindersEnabled ?? this.birthdayRemindersEnabled,
       additionalSettings: additionalSettings ?? this.additionalSettings,
     );
 

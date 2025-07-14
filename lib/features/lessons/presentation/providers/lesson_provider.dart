@@ -42,8 +42,6 @@ class LessonProvider extends ChangeNotifier {
   /// Seçili tarihi ayarlar ve o tarihteki dersleri yükler.
   void setSelectedDate(DateTime date) {
     _selectedDate = date;
-    final dateStr = DateFormat('yyyy-MM-dd').format(date);
-    loadLessonsByDate(dateStr);
     notifyListeners();
   }
 

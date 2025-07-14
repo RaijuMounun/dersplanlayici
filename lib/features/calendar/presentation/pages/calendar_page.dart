@@ -231,8 +231,9 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             child: ElevatedButton.icon(
               onPressed: () async {
-                // Ders ekleme sayfasına yönlendir
-                await context.push('/new-lesson');
+                // Ders ekleme sayfasına yönlendir - seçilen tarihi parametre olarak geç
+                final selectedDateStr = _selectedDate.toIso8601String();
+                await context.push('/new-lesson?initialDate=$selectedDateStr');
 
                 if (mounted) {
                   final lessonProvider = Provider.of<LessonProvider>(

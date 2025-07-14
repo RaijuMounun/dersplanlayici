@@ -10,7 +10,6 @@ enum LessonStatus {
 
 /// Ders bilgilerini temsil eden model sınıfı.
 class Lesson {
-
   Lesson({
     String? id,
     required this.studentId,
@@ -28,22 +27,22 @@ class Lesson {
 
   /// Map objesinden Lesson nesnesine dönüştürür.
   factory Lesson.fromMap(Map<String, dynamic> map) => Lesson(
-      id: map['id'] as String,
-      studentId: map['studentId'] as String,
-      studentName: map['studentName'] as String,
-      subject: map['subject'] as String,
-      topic: map['topic'] as String?,
-      date: map['date'] as String,
-      startTime: map['startTime'] as String,
-      endTime: map['endTime'] as String,
-      status: LessonStatus.values.firstWhere(
-        (e) => e.toString() == 'LessonStatus.${map['status']}',
-        orElse: () => LessonStatus.scheduled,
-      ),
-      notes: map['notes'] as String?,
-      recurringPatternId: map['recurringPatternId'] as String?,
-      fee: (map['fee'] as num?)?.toDouble() ?? 0,
-    );
+    id: map['id'] as String,
+    studentId: map['studentId'] as String,
+    studentName: map['studentName'] as String,
+    subject: map['subject'] as String,
+    topic: map['topic'] as String?,
+    date: map['date'] as String,
+    startTime: map['startTime'] as String,
+    endTime: map['endTime'] as String,
+    status: LessonStatus.values.firstWhere(
+      (e) => e.toString() == 'LessonStatus.${map['status']}',
+      orElse: () => LessonStatus.scheduled,
+    ),
+    notes: map['notes'] as String?,
+    recurringPatternId: map['recurringPatternId'] as String?,
+    fee: (map['fee'] as num?)?.toDouble() ?? 0.0,
+  );
   final String id;
   final String studentId;
   final String studentName;
@@ -59,19 +58,19 @@ class Lesson {
 
   /// Lesson nesnesini Map objesine dönüştürür.
   Map<String, dynamic> toMap() => {
-      'id': id,
-      'studentId': studentId,
-      'studentName': studentName,
-      'subject': subject,
-      'topic': topic,
-      'date': date,
-      'startTime': startTime,
-      'endTime': endTime,
-      'status': status.toString().split('.').last,
-      'notes': notes,
-      'recurringPatternId': recurringPatternId,
-      'fee': fee,
-    };
+    'id': id,
+    'studentId': studentId,
+    'studentName': studentName,
+    'subject': subject,
+    'topic': topic,
+    'date': date,
+    'startTime': startTime,
+    'endTime': endTime,
+    'status': status.toString().split('.').last,
+    'notes': notes,
+    'recurringPatternId': recurringPatternId,
+    'fee': fee,
+  };
 
   /// Güncellenmiş bir ders nesnesi oluşturur.
   Lesson copyWith({
@@ -88,20 +87,20 @@ class Lesson {
     String? recurringPatternId,
     double? fee,
   }) => Lesson(
-      id: id ?? this.id,
-      studentId: studentId ?? this.studentId,
-      studentName: studentName ?? this.studentName,
-      subject: subject ?? this.subject,
-      topic: topic ?? this.topic,
-      date: date ?? this.date,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      status: status ?? this.status,
-      notes: notes ?? this.notes,
-      recurringPatternId: recurringPatternId ?? this.recurringPatternId,
-      fee: fee ?? this.fee,
-    );
+    id: id ?? this.id,
+    studentId: studentId ?? this.studentId,
+    studentName: studentName ?? this.studentName,
+    subject: subject ?? this.subject,
+    topic: topic ?? this.topic,
+    date: date ?? this.date,
+    startTime: startTime ?? this.startTime,
+    endTime: endTime ?? this.endTime,
+    status: status ?? this.status,
+    notes: notes ?? this.notes,
+    recurringPatternId: recurringPatternId ?? this.recurringPatternId,
+    fee: fee ?? this.fee,
+  );
 
   @override
-  String toString() => 'Lesson(id: $id, studentName: $studentName, subject: $subject, date: $date, startTime: $startTime)';
+  String toString() => 'Lesson(id: $id, studentId: $studentId, studentName: $studentName, subject: $subject, topic: $topic, date: $date, startTime: $startTime, endTime: $endTime, status: $status, notes: $notes, recurringPatternId: $recurringPatternId, fee: $fee)';
 }

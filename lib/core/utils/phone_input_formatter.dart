@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Türk GSM numarası için 5xx xxx xx xx formatında maskeleme yapan formatter.
@@ -12,22 +13,13 @@ class PhoneInputFormatter extends TextInputFormatter {
 
     String formatted = '';
     for (int i = 0; i < digits.length; i++) {
-      if (i == 0) {
-        formatted += digits[i];
-      } else if (i == 1) {
-        formatted += digits[i];
-      } else if (i == 2) {
-        formatted += '${digits[i]} ';
-      } else if (i == 5) {
-        formatted += '${digits[i]} ';
-      } else if (i == 7) {
-        formatted += '${digits[i]} ';
-      } else {
-        formatted += digits[i];
+      if (i == 3 || i == 6 || i == 8) {
+        formatted += ' ';
       }
+      formatted += digits[i];
     }
     formatted = formatted.trimRight();
-
+    debugPrint('formatted: $formatted');
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),

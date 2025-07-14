@@ -2,13 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:ders_planlayici/features/settings/domain/models/app_settings_model.dart';
 import 'package:ders_planlayici/features/settings/data/repositories/app_settings_repository.dart';
 import 'package:ders_planlayici/core/error/app_exception.dart';
+import 'package:ders_planlayici/core/error/error_logger.dart';
 
 /// Uygulama ayarlarını yöneten provider sınıfı.
 class AppSettingsProvider extends ChangeNotifier {
-
-  AppSettingsProvider(this._settingsRepository) {
-    _loadSettings();
-  }
+  AppSettingsProvider(this._settingsRepository);
   final AppSettingsRepository _settingsRepository;
 
   AppSettingsModel _settings = AppSettingsModel.defaultSettings();
@@ -27,20 +25,58 @@ class AppSettingsProvider extends ChangeNotifier {
   /// Silmeden önce onay isteyip istememeyi belirleyen ayarı döndürür.
   bool get confirmBeforeDelete => _settings.confirmBeforeDelete;
 
+  /// Ders hatırlatmalarının aktif olup olmadığını döndürür.
+  bool get lessonRemindersEnabled => _settings.lessonRemindersEnabled;
+
+  /// Hatırlatma dakikasını döndürür.
+  int get reminderMinutes => _settings.reminderMinutes;
+
+  /// Ödeme hatırlatmalarının aktif olup olmadığını döndürür.
+  bool get paymentRemindersEnabled => _settings.paymentRemindersEnabled;
+
+  /// Doğum günü hatırlatmalarının aktif olup olmadığını döndürür.
+  bool get birthdayRemindersEnabled => _settings.birthdayRemindersEnabled;
+
+  /// Provider'ı başlatır ve ayarları yükler.
+  Future<void> initialize() async {
+    await _loadSettings();
+  }
+
   /// Uygulama ayarlarını yükler.
   Future<void> _loadSettings() async {
     _setLoading(true);
     _error = null;
 
     try {
+      await ErrorLogger().info(
+        'Ayarlar yükleniyor...',
+        tag: 'AppSettingsProvider',
+      );
       _settings = await _settingsRepository.getSettings();
+      await ErrorLogger().info(
+        'Ayarlar başarıyla yüklendi',
+        tag: 'AppSettingsProvider',
+      );
       notifyListeners();
     } on AppException catch (e) {
+      await ErrorLogger().error(
+        'Ayarlar yüklenirken beklenen bir hata oluştu (AppException)',
+        tag: 'AppSettingsProvider',
+        error: e,
+      );
       _error = e;
       notifyListeners();
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
+      await ErrorLogger().error(
+        'Ayarlar yüklenirken beklenmedik bir hata oluştu (Exception)',
+        tag: 'AppSettingsProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _error = DatabaseException(
         message: 'Ayarlar yüklenirken bir hata oluştu: ${e.toString()}',
+        code: 'load_settings_failed',
+        details: e.toString(),
       );
       notifyListeners();
     } finally {
@@ -201,6 +237,144 @@ class AppSettingsProvider extends ChangeNotifier {
       _error = DatabaseException(
         message:
             'Varsayılan ders ücreti güncellenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Ders hatırlatmalarını aktif/pasif yapar.
+  Future<void> updateLessonRemindersEnabled(bool enabled) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _settingsRepository.updateLessonRemindersEnabled(enabled);
+      _settings = _settings.copyWith(lessonRemindersEnabled: enabled);
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } on Exception catch (e) {
+      _error = DatabaseException(
+        message:
+            'Ders hatırlatmaları ayarı güncellenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Hatırlatma dakikasını günceller.
+  Future<void> updateReminderMinutes(int minutes) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _settingsRepository.updateReminderMinutes(minutes);
+      _settings = _settings.copyWith(reminderMinutes: minutes);
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } on Exception catch (e) {
+      _error = DatabaseException(
+        message:
+            'Hatırlatma dakikası güncellenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Ödeme hatırlatmalarını aktif/pasif yapar.
+  Future<void> updatePaymentRemindersEnabled(bool enabled) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _settingsRepository.updatePaymentRemindersEnabled(enabled);
+      _settings = _settings.copyWith(paymentRemindersEnabled: enabled);
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } on Exception catch (e) {
+      _error = DatabaseException(
+        message:
+            'Ödeme hatırlatmaları ayarı güncellenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Doğum günü hatırlatmalarını aktif/pasif yapar.
+  Future<void> updateBirthdayRemindersEnabled(bool enabled) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _settingsRepository.updateBirthdayRemindersEnabled(enabled);
+      _settings = _settings.copyWith(birthdayRemindersEnabled: enabled);
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } on Exception catch (e) {
+      _error = DatabaseException(
+        message:
+            'Doğum günü hatırlatmaları ayarı güncellenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Para birimi ayarını günceller.
+  Future<void> updateCurrency(String currency) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _settingsRepository.updateCurrency(currency);
+      _settings = _settings.copyWith(currency: currency);
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } on Exception catch (e) {
+      _error = DatabaseException(
+        message:
+            'Para birimi ayarı güncellenirken bir hata oluştu: ${e.toString()}',
+      );
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Varsayılan ders konusu ayarını günceller.
+  Future<void> updateDefaultSubject(String? defaultSubject) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _settingsRepository.updateDefaultSubject(defaultSubject);
+      _settings = _settings.copyWith(defaultSubject: defaultSubject);
+      notifyListeners();
+    } on AppException catch (e) {
+      _error = e;
+      notifyListeners();
+    } on Exception catch (e) {
+      _error = DatabaseException(
+        message:
+            'Varsayılan ders konusu ayarı güncellenirken bir hata oluştu: ${e.toString()}',
       );
       notifyListeners();
     } finally {

@@ -47,7 +47,7 @@ class DatabaseHelper {
       // Veritabanını oluştur veya aç
       return await openDatabase(
         path,
-        version: 4,
+        version: 6,
         onCreate: _createDb,
         onUpgrade: _onUpgradeDb,
         onOpen: (db) {
@@ -103,6 +103,10 @@ class DatabaseHelper {
             defaultSubject TEXT,
             confirmBeforeDelete INTEGER NOT NULL DEFAULT 1,
             showLessonColors INTEGER NOT NULL DEFAULT 1,
+            lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+            reminderMinutes INTEGER NOT NULL DEFAULT 15,
+            paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+            birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1,
             additionalSettings TEXT,
             createdAt TEXT NOT NULL,
             updatedAt TEXT NOT NULL
@@ -198,6 +202,126 @@ class DatabaseHelper {
           )
         ''');
         developer.log('Ödeme işlemleri tablosu oluşturuldu');
+      }
+
+      if (oldVersion < 5) {
+        // Versiyon 4'ten 5'e geçiş - Notification alanlarını ekle
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1',
+          );
+          developer.log('lessonRemindersEnabled kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('lessonRemindersEnabled kolonu zaten var: $e');
+        }
+
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN reminderMinutes INTEGER NOT NULL DEFAULT 15',
+          );
+          developer.log('reminderMinutes kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('reminderMinutes kolonu zaten var: $e');
+        }
+
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1',
+          );
+          developer.log('paymentRemindersEnabled kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('paymentRemindersEnabled kolonu zaten var: $e');
+        }
+
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1',
+          );
+          developer.log('birthdayRemindersEnabled kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('birthdayRemindersEnabled kolonu zaten var: $e');
+        }
+      }
+
+      if (oldVersion < 6) {
+        // Versiyon 5'ten 6'ya geçiş - Eksik tabloları oluştur
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS app_settings(
+              id TEXT PRIMARY KEY,
+              themeMode TEXT NOT NULL,
+              lessonNotificationTime TEXT NOT NULL,
+              showWeekends INTEGER NOT NULL DEFAULT 1,
+              defaultLessonDuration INTEGER NOT NULL DEFAULT 90,
+              defaultLessonFee REAL NOT NULL DEFAULT 0,
+              currency TEXT,
+              defaultSubject TEXT,
+              confirmBeforeDelete INTEGER NOT NULL DEFAULT 1,
+              showLessonColors INTEGER NOT NULL DEFAULT 1,
+              lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+              reminderMinutes INTEGER NOT NULL DEFAULT 15,
+              paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+              birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+              additionalSettings TEXT,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('app_settings tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('app_settings tablosu zaten var: $e');
+        }
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS calendar_events(
+              id TEXT PRIMARY KEY,
+              title TEXT NOT NULL,
+              date TEXT NOT NULL,
+              startTime TEXT NOT NULL,
+              endTime TEXT NOT NULL,
+              type TEXT NOT NULL,
+              color TEXT,
+              isAllDay INTEGER NOT NULL DEFAULT 0,
+              metadata TEXT,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('calendar_events tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('calendar_events tablosu zaten var: $e');
+        }
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS database_backups(
+              id TEXT PRIMARY KEY,
+              path TEXT NOT NULL,
+              fileName TEXT NOT NULL,
+              fileSize INTEGER NOT NULL,
+              createdAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('database_backups tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('database_backups tablosu zaten var: $e');
+        }
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS holidays(
+              date TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              isNationalHoliday INTEGER NOT NULL DEFAULT 0,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('holidays tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('holidays tablosu zaten var: $e');
+        }
       }
 
       developer.log('Veritabanı başarıyla güncellendi.');
@@ -327,6 +451,72 @@ class DatabaseHelper {
         )
       ''');
       developer.log('Ücret tablosu oluşturuldu');
+
+      // Ayarlar tablosu
+      await db.execute('''
+        CREATE TABLE app_settings(
+          id TEXT PRIMARY KEY,
+          themeMode TEXT NOT NULL,
+          lessonNotificationTime TEXT NOT NULL,
+          showWeekends INTEGER NOT NULL DEFAULT 1,
+          defaultLessonDuration INTEGER NOT NULL DEFAULT 90,
+          defaultLessonFee REAL NOT NULL DEFAULT 0,
+          currency TEXT,
+          defaultSubject TEXT,
+          confirmBeforeDelete INTEGER NOT NULL DEFAULT 1,
+          showLessonColors INTEGER NOT NULL DEFAULT 1,
+          lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+          reminderMinutes INTEGER NOT NULL DEFAULT 15,
+          paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+          birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+          additionalSettings TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Ayarlar tablosu oluşturuldu');
+
+      // Takvim etkinlikleri tablosu
+      await db.execute('''
+        CREATE TABLE calendar_events(
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          date TEXT NOT NULL,
+          startTime TEXT NOT NULL,
+          endTime TEXT NOT NULL,
+          type TEXT NOT NULL,
+          color TEXT,
+          isAllDay INTEGER NOT NULL DEFAULT 0,
+          metadata TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Takvim etkinlikleri tablosu oluşturuldu');
+
+      // Veritabanı yedekleri tablosu
+      await db.execute('''
+        CREATE TABLE database_backups(
+          id TEXT PRIMARY KEY,
+          path TEXT NOT NULL,
+          fileName TEXT NOT NULL,
+          fileSize INTEGER NOT NULL,
+          createdAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Veritabanı yedekleri tablosu oluşturuldu');
+
+      // Holidays tablosu (tatiller)
+      await db.execute('''
+        CREATE TABLE holidays(
+          date TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          isNationalHoliday INTEGER NOT NULL DEFAULT 0,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Tatiller tablosu oluşturuldu');
     } catch (e) {
       developer.log('Tablo oluşturma hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
@@ -667,13 +857,22 @@ class DatabaseHelper {
       final db = await database;
 
       // Tüm tabloları sil
-      await db.execute('DROP TABLE IF EXISTS fees');
+      await db.execute('DROP TABLE IF EXISTS payment_transactions');
+      await db.execute('DROP TABLE IF EXISTS payments');
+      await db.execute('DROP TABLE IF EXISTS holidays');
+      await db.execute('DROP TABLE IF EXISTS database_backups');
+      await db.execute('DROP TABLE IF EXISTS app_settings');
+      await db.execute('DROP TABLE IF EXISTS calendar_events');
       await db.execute('DROP TABLE IF EXISTS lessons');
       await db.execute('DROP TABLE IF EXISTS recurring_patterns');
       await db.execute('DROP TABLE IF EXISTS students');
 
-      // Tabloları yeniden oluştur
-      await _createDb(db, 1);
+      // Veritabanını kapat ve yeniden aç
+      await db.close();
+      _database = null;
+      
+      // Yeni veritabanı oluştur
+      await database;
       developer.log('Veritabanı başarıyla sıfırlandı');
     },
     errorMessage: 'Veritabanı sıfırlanamadı',
@@ -1146,6 +1345,9 @@ class DatabaseHelper {
         'showWeekends',
         'confirmBeforeDelete',
         'showLessonColors',
+        'lessonRemindersEnabled',
+        'paymentRemindersEnabled',
+        'birthdayRemindersEnabled',
       ];
       for (final field in boolFields) {
         if (settings[field] is bool) {
@@ -1213,6 +1415,9 @@ class DatabaseHelper {
           'showWeekends',
           'confirmBeforeDelete',
           'showLessonColors',
+          'lessonRemindersEnabled',
+          'paymentRemindersEnabled',
+          'birthdayRemindersEnabled',
         ];
         for (final field in boolFields) {
           processedSettings[field] = processedSettings[field] == 1;
@@ -1235,6 +1440,10 @@ class DatabaseHelper {
           'defaultSubject': null,
           'confirmBeforeDelete': true,
           'showLessonColors': true,
+          'lessonRemindersEnabled': true,
+          'reminderMinutes': 15,
+          'paymentRemindersEnabled': true,
+          'birthdayRemindersEnabled': true,
           'additionalSettings': null,
         };
       }
