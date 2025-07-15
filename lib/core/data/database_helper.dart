@@ -7,6 +7,7 @@ import 'package:ders_planlayici/core/error/app_exception.dart'
     show DatabaseException;
 import 'package:ders_planlayici/core/error/error_handler.dart';
 import 'dart:convert';
+import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 
 class DatabaseHelper {
   factory DatabaseHelper() => _instance;
@@ -47,11 +48,15 @@ class DatabaseHelper {
       // Veritabanını oluştur veya aç
       return await openDatabase(
         path,
-        version: 4,
+        version: 7,
         onCreate: _createDb,
         onUpgrade: _onUpgradeDb,
-        onOpen: (db) {
-          developer.log('Veritabanı açıldı: ${db.path}');
+        onOpen: (db) async {
+          developer.log(
+            'Veritabanı açıldı: ${db.path}. Tabloların varlığı kontrol ediliyor...',
+          );
+          // Her açılışta tabloların ve başlangıç verilerinin varlığını garantile
+          await _createDb(db, 7);
         },
       );
     } catch (e, stackTrace) {
@@ -103,6 +108,10 @@ class DatabaseHelper {
             defaultSubject TEXT,
             confirmBeforeDelete INTEGER NOT NULL DEFAULT 1,
             showLessonColors INTEGER NOT NULL DEFAULT 1,
+            lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+            reminderMinutes INTEGER NOT NULL DEFAULT 15,
+            paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+            birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1,
             additionalSettings TEXT,
             createdAt TEXT NOT NULL,
             updatedAt TEXT NOT NULL
@@ -156,8 +165,8 @@ class DatabaseHelper {
             method TEXT,
             notes TEXT,
             lessonIds TEXT,
-            createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL,
+            createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
           )
         ''');
@@ -200,6 +209,161 @@ class DatabaseHelper {
         developer.log('Ödeme işlemleri tablosu oluşturuldu');
       }
 
+      if (oldVersion < 5) {
+        // Versiyon 4'ten 5'e geçiş - Notification alanlarını ekle
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1',
+          );
+          developer.log('lessonRemindersEnabled kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('lessonRemindersEnabled kolonu zaten var: $e');
+        }
+
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN reminderMinutes INTEGER NOT NULL DEFAULT 15',
+          );
+          developer.log('reminderMinutes kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('reminderMinutes kolonu zaten var: $e');
+        }
+
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1',
+          );
+          developer.log('paymentRemindersEnabled kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('paymentRemindersEnabled kolonu zaten var: $e');
+        }
+
+        try {
+          await db.execute(
+            'ALTER TABLE app_settings ADD COLUMN birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1',
+          );
+          developer.log('birthdayRemindersEnabled kolonu eklendi');
+        } on Exception catch (e) {
+          developer.log('birthdayRemindersEnabled kolonu zaten var: $e');
+        }
+      }
+
+      if (oldVersion < 6) {
+        // Versiyon 5'ten 6'ya geçiş - Eksik tabloları oluştur
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS app_settings(
+              id TEXT PRIMARY KEY,
+              themeMode TEXT NOT NULL,
+              lessonNotificationTime TEXT NOT NULL,
+              showWeekends INTEGER NOT NULL DEFAULT 1,
+              defaultLessonDuration INTEGER NOT NULL DEFAULT 90,
+              defaultLessonFee REAL NOT NULL DEFAULT 0,
+              currency TEXT,
+              defaultSubject TEXT,
+              confirmBeforeDelete INTEGER NOT NULL DEFAULT 1,
+              showLessonColors INTEGER NOT NULL DEFAULT 1,
+              lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+              reminderMinutes INTEGER NOT NULL DEFAULT 15,
+              paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+              birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+              additionalSettings TEXT,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('app_settings tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('app_settings tablosu zaten var: $e');
+        }
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS calendar_events(
+              id TEXT PRIMARY KEY,
+              title TEXT NOT NULL,
+              date TEXT NOT NULL,
+              startTime TEXT NOT NULL,
+              endTime TEXT NOT NULL,
+              type TEXT NOT NULL,
+              color TEXT,
+              isAllDay INTEGER NOT NULL DEFAULT 0,
+              metadata TEXT,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('calendar_events tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('calendar_events tablosu zaten var: $e');
+        }
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS database_backups(
+              id TEXT PRIMARY KEY,
+              path TEXT NOT NULL,
+              fileName TEXT NOT NULL,
+              fileSize INTEGER NOT NULL,
+              createdAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('database_backups tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('database_backups tablosu zaten var: $e');
+        }
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS holidays(
+              date TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              isNationalHoliday INTEGER NOT NULL DEFAULT 0,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL
+            )
+          ''');
+          developer.log('holidays tablosu oluşturuldu (versiyon 6)');
+        } on Exception catch (e) {
+          developer.log('holidays tablosu zaten var: $e');
+        }
+      }
+
+      if (oldVersion < 7) {
+        // Versiyon 6'dan 7'ye geçiş - payments tablosuna default timestamp ekle
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS payments_new(
+              id TEXT PRIMARY KEY,
+              studentId TEXT NOT NULL,
+              studentName TEXT NOT NULL,
+              description TEXT NOT NULL,
+              amount REAL NOT NULL,
+              paidAmount REAL DEFAULT 0,
+              date TEXT NOT NULL,
+              dueDate TEXT,
+              status TEXT NOT NULL,
+              method TEXT,
+              notes TEXT,
+              lessonIds TEXT,
+              createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
+            )
+          ''');
+          await db.execute(
+            'INSERT INTO payments_new(id, studentId, studentName, description, amount, paidAmount, date, dueDate, status, method, notes, lessonIds) SELECT id, studentId, studentName, description, amount, paidAmount, date, dueDate, status, method, notes, lessonIds FROM payments',
+          );
+          await db.execute('DROP TABLE payments');
+          await db.execute('ALTER TABLE payments_new RENAME TO payments');
+          developer.log(
+            'payments tablosu timestamp varsayılanları ile güncellendi.',
+          );
+        } on Exception catch (e) {
+          developer.log('payments tablosu güncellenirken hata oluştu: $e');
+        }
+      }
+
       developer.log('Veritabanı başarıyla güncellendi.');
     } catch (e) {
       developer.log('Veritabanı güncelleme hatası: $e');
@@ -214,7 +378,7 @@ class DatabaseHelper {
 
       // Öğrenci tablosu
       await db.execute('''
-        CREATE TABLE students(
+        CREATE TABLE IF NOT EXISTS students(
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           grade TEXT NOT NULL,
@@ -231,7 +395,7 @@ class DatabaseHelper {
 
       // Tekrarlanan ders desenleri tablosu
       await db.execute('''
-        CREATE TABLE recurring_patterns(
+        CREATE TABLE IF NOT EXISTS recurring_patterns(
           id TEXT PRIMARY KEY,
           type TEXT NOT NULL,
           interval INTEGER NOT NULL,
@@ -247,7 +411,7 @@ class DatabaseHelper {
 
       // Ders tablosu
       await db.execute('''
-        CREATE TABLE lessons(
+        CREATE TABLE IF NOT EXISTS lessons(
           id TEXT PRIMARY KEY,
           studentId TEXT NOT NULL,
           studentName TEXT NOT NULL,
@@ -270,7 +434,7 @@ class DatabaseHelper {
 
       // Ödemeler tablosu
       await db.execute('''
-        CREATE TABLE payments(
+        CREATE TABLE IF NOT EXISTS payments(
           id TEXT PRIMARY KEY,
           studentId TEXT NOT NULL,
           studentName TEXT NOT NULL,
@@ -283,8 +447,8 @@ class DatabaseHelper {
           method TEXT,
           notes TEXT,
           lessonIds TEXT,
-          createdAt TEXT NOT NULL,
-          updatedAt TEXT NOT NULL,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
         )
       ''');
@@ -292,7 +456,7 @@ class DatabaseHelper {
 
       // Ödeme işlemleri tablosu
       await db.execute('''
-        CREATE TABLE payment_transactions(
+        CREATE TABLE IF NOT EXISTS payment_transactions(
           id TEXT PRIMARY KEY,
           paymentId TEXT NOT NULL,
           amount REAL NOT NULL,
@@ -309,7 +473,7 @@ class DatabaseHelper {
 
       // Ücret tablosu
       await db.execute('''
-        CREATE TABLE fees(
+        CREATE TABLE IF NOT EXISTS fees(
           id TEXT PRIMARY KEY,
           studentId TEXT NOT NULL,
           studentName TEXT NOT NULL,
@@ -327,9 +491,117 @@ class DatabaseHelper {
         )
       ''');
       developer.log('Ücret tablosu oluşturuldu');
+
+      // Ayarlar tablosu
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS app_settings(
+          id TEXT PRIMARY KEY,
+          themeMode TEXT NOT NULL,
+          lessonNotificationTime TEXT NOT NULL,
+          showWeekends INTEGER NOT NULL DEFAULT 1,
+          defaultLessonDuration INTEGER NOT NULL DEFAULT 60,
+          defaultLessonFee REAL NOT NULL DEFAULT 0,
+          currency TEXT,
+          defaultSubject TEXT,
+          confirmBeforeDelete INTEGER NOT NULL DEFAULT 1,
+          showLessonColors INTEGER NOT NULL DEFAULT 1,
+          lessonRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+          reminderMinutes INTEGER NOT NULL DEFAULT 15,
+          paymentRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+          birthdayRemindersEnabled INTEGER NOT NULL DEFAULT 1,
+          additionalSettings TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Ayarlar tablosu oluşturuldu');
+
+      // Takvim etkinlikleri tablosu
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS calendar_events(
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          date TEXT NOT NULL,
+          startTime TEXT NOT NULL,
+          endTime TEXT NOT NULL,
+          type TEXT NOT NULL,
+          color TEXT,
+          isAllDay INTEGER NOT NULL DEFAULT 0,
+          metadata TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Takvim etkinlikleri tablosu oluşturuldu');
+
+      // Veritabanı yedekleri tablosu
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS database_backups(
+          id TEXT PRIMARY KEY,
+          path TEXT NOT NULL,
+          fileName TEXT NOT NULL,
+          fileSize INTEGER NOT NULL,
+          createdAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Veritabanı yedekleri tablosu oluşturuldu');
+
+      // Holidays tablosu (tatiller)
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS holidays(
+          date TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          isNationalHoliday INTEGER NOT NULL DEFAULT 0,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      developer.log('Tatiller tablosu oluşturuldu');
+
+      // Veritabanı oluşturulduktan sonra başlangıç verilerini ekle
+      await _seedDatabase(db);
     } catch (e) {
       developer.log('Tablo oluşturma hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  // Veritabanına başlangıç verilerini ekler
+  Future<void> _seedDatabase(Database db) async {
+    try {
+      // Ayarların zaten var olup olmadığını kontrol et
+      final existingSettings = await db.query('app_settings', limit: 1);
+      if (existingSettings.isEmpty) {
+        developer.log('Veritabanına başlangıç verileri ekleniyor...');
+
+        // Varsayılan ayarları ekle
+        final now = DateTime.now().toIso8601String();
+        await db.insert('app_settings', {
+          'id': '1',
+          'themeMode': 'system',
+          'lessonNotificationTime': '15',
+          'showWeekends': 1,
+          'defaultLessonDuration': 60,
+          'defaultLessonFee': 100.0,
+          'currency': 'TRY',
+          'defaultSubject': 'Özel Ders',
+          'confirmBeforeDelete': 1,
+          'showLessonColors': 1,
+          'lessonRemindersEnabled': 1,
+          'reminderMinutes': 15,
+          'paymentRemindersEnabled': 1,
+          'birthdayRemindersEnabled': 1,
+          'additionalSettings': '{}',
+          'createdAt': now,
+          'updatedAt': now,
+        });
+
+        developer.log('Başlangıç verileri başarıyla eklendi.');
+      }
+    } catch (e) {
+      developer.log('Başlangıç verileri eklenirken hata: $e');
+      // Hata oluşursa yeniden fırlat, böylece daha üst katmanlarda yakalanabilir
       rethrow;
     }
   }
@@ -364,26 +636,15 @@ class DatabaseHelper {
   Future<int> insertStudent(Map<String, dynamic> student) async {
     try {
       final db = await database;
-      developer.log('Öğrenci ekleniyor: ${student['name']}');
-
-      // Tarih alanlarını ekle
       final now = DateTime.now().toIso8601String();
       student['createdAt'] = now;
       student['updatedAt'] = now;
-
-      developer.log('Öğrenci verisi: $student');
-
-      final result = await db.insert('students', student);
-      developer.log('Öğrenci eklendi, ID: ${student['id']}, Sonuç: $result');
-
-      // Veritabanı durumunu kontrol et
-      final dbInfo = await getDatabaseInfo();
-      developer.log('Güncel veritabanı durumu: $dbInfo');
-
-      return result;
+      return await db.insert('students', student);
     } catch (e) {
-      developer.log('Öğrenci ekleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log(
+        'Öğrenci ekleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -391,11 +652,7 @@ class DatabaseHelper {
   Future<int> updateStudent(Map<String, dynamic> student) async {
     try {
       final db = await database;
-      developer.log('Öğrenci güncelleniyor, ID: ${student['id']}');
-
-      // Güncelleme tarihini ekle
       student['updatedAt'] = DateTime.now().toIso8601String();
-
       return await db.update(
         'students',
         student,
@@ -403,8 +660,10 @@ class DatabaseHelper {
         whereArgs: [student['id']],
       );
     } catch (e) {
-      developer.log('Öğrenci güncelleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log(
+        'Öğrenci güncelleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -412,11 +671,9 @@ class DatabaseHelper {
   Future<int> deleteStudent(String id) async {
     try {
       final db = await database;
-      developer.log('Öğrenci siliniyor, ID: $id');
       return await db.delete('students', where: 'id = ?', whereArgs: [id]);
     } catch (e) {
-      developer.log('Öğrenci silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci silme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -424,19 +681,12 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getStudents() async {
     try {
       final db = await database;
-      developer.log('Tüm öğrenciler alınıyor');
-      final result = await db.query('students');
-      developer.log('${result.length} öğrenci bulundu');
-
-      // Detaylı bilgi
-      if (result.isNotEmpty) {
-        developer.log('İlk öğrenci: ${result.first}');
-      }
-
-      return result;
+      return await db.query('students');
     } catch (e) {
-      developer.log('Öğrenci listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log(
+        'Öğrenci listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -447,15 +697,13 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> searchStudents(String searchTerm) async {
     try {
       if (searchTerm.trim().isEmpty) {
-        return getStudents();
+        return Future.value([]);
       }
 
       final db = await database;
-      developer.log('Öğrenciler aranıyor, Arama terimi: $searchTerm');
-
       final query = '%${searchTerm.toLowerCase()}%';
 
-      final result = await db.rawQuery(
+      return await db.rawQuery(
         '''
         SELECT * FROM students 
         WHERE lower(name) LIKE ? 
@@ -468,14 +716,8 @@ class DatabaseHelper {
       ''',
         [query, query, query, query, query],
       );
-
-      developer.log(
-        '${result.length} öğrenci bulundu, Arama terimi: $searchTerm',
-      );
-      return result;
     } catch (e) {
-      developer.log('Öğrenci arama hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci arama hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -483,21 +725,14 @@ class DatabaseHelper {
   Future<Map<String, dynamic>?> getStudent(String id) async {
     try {
       final db = await database;
-      developer.log('Öğrenci alınıyor, ID: $id');
       final List<Map<String, dynamic>> result = await db.query(
         'students',
         where: 'id = ?',
         whereArgs: [id],
       );
-      if (result.isNotEmpty) {
-        developer.log('Öğrenci bulundu: ${result.first['name']}');
-      } else {
-        developer.log('Öğrenci bulunamadı, ID: $id');
-      }
       return result.isNotEmpty ? result.first : null;
     } catch (e) {
-      developer.log('Öğrenci alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Öğrenci alma hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -506,41 +741,12 @@ class DatabaseHelper {
   Future<int> insertLesson(Map<String, dynamic> lesson) async {
     try {
       final db = await database;
-      developer.log(
-        'Ders ekleniyor: ${lesson['subject']} - ${lesson['studentName']}',
-      );
-
-      // Gerekli alanları kontrol et
-      developer.log('🔍 [DatabaseHelper] Ders verisi detayları:');
-      developer.log('  - ID: ${lesson['id']}');
-      developer.log('  - StudentID: ${lesson['studentId']}');
-      developer.log('  - StudentName: ${lesson['studentName']}');
-      developer.log('  - Subject: ${lesson['subject']}');
-      developer.log('  - Date: ${lesson['date']}');
-      developer.log('  - StartTime: ${lesson['startTime']}');
-      developer.log('  - EndTime: ${lesson['endTime']}');
-      developer.log('  - Status: ${lesson['status']}');
-
-      // Tarih alanlarını ekle
       final now = DateTime.now().toIso8601String();
       lesson['createdAt'] = now;
       lesson['updatedAt'] = now;
-
-      developer.log('Ders verisi: $lesson');
-
-      final result = await db.insert('lessons', lesson);
-      developer.log('Ders eklendi, ID: ${lesson['id']}, Sonuç: $result');
-
-      // Veritabanı durumunu kontrol et
-      final dbInfo = await getDatabaseInfo();
-      developer.log('Güncel veritabanı durumu: $dbInfo');
-
-      return result;
+      return await db.insert('lessons', lesson);
     } catch (e) {
-      developer.log('❌ [DatabaseHelper] Ders ekleme hatası: $e');
-      developer.log(
-        '❌ [DatabaseHelper] Hata stack trace: ${StackTrace.current}',
-      );
+      developer.log('Ders ekleme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -548,11 +754,7 @@ class DatabaseHelper {
   Future<int> updateLesson(Map<String, dynamic> lesson) async {
     try {
       final db = await database;
-      developer.log('Ders güncelleniyor, ID: ${lesson['id']}');
-
-      // Güncelleme tarihini ekle
       lesson['updatedAt'] = DateTime.now().toIso8601String();
-
       return await db.update(
         'lessons',
         lesson,
@@ -560,8 +762,10 @@ class DatabaseHelper {
         whereArgs: [lesson['id']],
       );
     } catch (e) {
-      developer.log('Ders güncelleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log(
+        'Ders güncelleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -569,11 +773,9 @@ class DatabaseHelper {
   Future<int> deleteLesson(String id) async {
     try {
       final db = await database;
-      developer.log('Ders siliniyor, ID: $id');
       return await db.delete('lessons', where: 'id = ?', whereArgs: [id]);
     } catch (e) {
-      developer.log('Ders silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Ders silme hatası: $e', stackTrace: StackTrace.current);
       rethrow;
     }
   }
@@ -581,19 +783,12 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getLessons() async {
     try {
       final db = await database;
-      developer.log('Tüm dersler alınıyor');
-      final result = await db.query('lessons', orderBy: 'date, startTime');
-      developer.log('${result.length} ders bulundu');
-
-      // Detaylı bilgi
-      if (result.isNotEmpty) {
-        developer.log('İlk ders: ${result.first}');
-      }
-
-      return result;
+      return await db.query('lessons', orderBy: 'date, startTime');
     } catch (e) {
-      developer.log('Ders listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log(
+        'Ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -601,18 +796,17 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getLessonsByDate(String dateString) async {
     try {
       final db = await database;
-      developer.log('Tarihe göre dersler alınıyor: $dateString');
-      final result = await db.query(
+      return await db.query(
         'lessons',
         where: 'date = ?',
         whereArgs: [dateString],
         orderBy: 'startTime',
       );
-      developer.log('${result.length} ders bulundu, tarih: $dateString');
-      return result;
     } catch (e) {
-      developer.log('Tarihe göre ders listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log(
+        'Tarihe göre ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -622,40 +816,96 @@ class DatabaseHelper {
   ) async {
     try {
       final db = await database;
-      developer.log('Öğrenciye göre dersler alınıyor, Öğrenci ID: $studentId');
-      final result = await db.query(
+      return await db.query(
         'lessons',
         where: 'studentId = ?',
         whereArgs: [studentId],
         orderBy: 'date DESC, startTime',
       );
-      developer.log('${result.length} ders bulundu, Öğrenci ID: $studentId');
-      return result;
     } catch (e) {
-      developer.log('Öğrenciye göre ders listesi alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log(
+        'Öğrenciye göre ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
+  }
+
+  Future<List<Map<String, dynamic>>> getLessonsByDateRange(
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final db = await database;
+      return await db.query(
+        'lessons',
+        where: 'date BETWEEN ? AND ?',
+        whereArgs: [startDate, endDate],
+        orderBy: 'date ASC, startTime ASC',
+      );
+    } catch (e) {
+      developer.log(
+        'Tarih aralığına göre ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
+      rethrow;
+    }
+  }
+
+  Future<bool> checkLessonConflict({
+    required String date,
+    required String startTime,
+    required String endTime,
+    String? lessonId,
+  }) async {
+    final db = await database;
+    var where =
+        'date = ? AND ((startTime < ? AND endTime > ?) OR '
+        '(startTime >= ? AND startTime < ?))';
+    final whereArgs = [date, endTime, startTime, startTime, endTime];
+
+    if (lessonId != null) {
+      where += ' AND id != ?';
+      whereArgs.add(lessonId);
+    }
+
+    final result = await db.query(
+      'lessons',
+      where: where,
+      whereArgs: whereArgs,
+      limit: 1,
+    );
+    return result.isNotEmpty;
   }
 
   Future<Map<String, dynamic>?> getLesson(String id) async {
     try {
       final db = await database;
-      developer.log('Ders alınıyor, ID: $id');
       final List<Map<String, dynamic>> result = await db.query(
         'lessons',
         where: 'id = ?',
         whereArgs: [id],
       );
-      if (result.isNotEmpty) {
-        developer.log('Ders bulundu, ID: $id');
-      } else {
-        developer.log('Ders bulunamadı, ID: $id');
-      }
       return result.isNotEmpty ? result.first : null;
     } catch (e) {
-      developer.log('Ders alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
+      developer.log('Ders alma hatası: $e', stackTrace: StackTrace.current);
+      rethrow;
+    }
+  }
+
+  Future<void> batchInsertLessons(List<Lesson> lessons) async {
+    try {
+      final db = await database;
+      final batch = db.batch();
+      for (var lesson in lessons) {
+        batch.insert('lessons', lesson.toMap());
+      }
+      await batch.commit(noResult: true);
+    } catch (e) {
+      developer.log(
+        'Toplu ders ekleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -665,20 +915,43 @@ class DatabaseHelper {
     () async {
       developer.log('Veritabanı sıfırlanıyor...');
       final db = await database;
+      final path = db.path;
 
-      // Tüm tabloları sil
-      await db.execute('DROP TABLE IF EXISTS fees');
-      await db.execute('DROP TABLE IF EXISTS lessons');
-      await db.execute('DROP TABLE IF EXISTS recurring_patterns');
-      await db.execute('DROP TABLE IF EXISTS students');
+      // Veritabanını kapat
+      await db.close();
+      _database = null;
 
-      // Tabloları yeniden oluştur
-      await _createDb(db, 1);
+      // Veritabanı dosyasını sil
+      try {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+          developer.log('Veritabanı dosyası silindi: $path');
+        }
+      } catch (e) {
+        developer.log('Veritabanı dosyası silinirken hata: $e');
+        rethrow;
+      }
+
+      // Yeni veritabanı ve tabloları oluştur
+      await database; // Bu, _initDatabase -> _createDb -> _seedDatabase zincirini tetikleyecektir
       developer.log('Veritabanı başarıyla sıfırlandı');
     },
     errorMessage: 'Veritabanı sıfırlanamadı',
     shouldRethrow: true,
   );
+
+  // ignore: unused_element
+  Future<void> _dropAllTables(Database db) async {
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_metadata'",
+    );
+    for (final table in tables) {
+      final tableName = table['name'] as String;
+      await db.execute('DROP TABLE IF EXISTS $tableName');
+      developer.log('$tableName tablosu silindi.');
+    }
+  }
 
   // Veritabanını yedekler
   Future<String> backupDatabase() async => ErrorHandler.handleError<String>(
@@ -769,108 +1042,70 @@ class DatabaseHelper {
     }
   }
 
-  Future<int> deleteRecurringPattern(String id) async {
-    try {
-      final db = await database;
-      developer.log('Tekrarlanan ders deseni siliniyor, ID: $id');
-      return await db.delete(
-        'recurring_patterns',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-    } catch (e) {
-      developer.log('Tekrarlanan ders deseni silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
-  }
-
   Future<Map<String, dynamic>?> getRecurringPattern(String id) async {
     try {
       final db = await database;
-      developer.log('Tekrarlanan ders deseni alınıyor, ID: $id');
       final List<Map<String, dynamic>> result = await db.query(
         'recurring_patterns',
         where: 'id = ?',
         whereArgs: [id],
       );
-      return result.isNotEmpty ? result.first : null;
+      return result.firstOrNull;
     } catch (e) {
       developer.log('Tekrarlanan ders deseni alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
       rethrow;
     }
   }
 
-  // Ücret işlemleri
-  Future<int> insertFee(Map<String, dynamic> fee) async {
-    try {
-      final db = await database;
-      developer.log('Ücret ekleniyor: ${fee['id']}');
-
-      // Tarih alanlarını ekle
-      final now = DateTime.now().toIso8601String();
-      fee['createdAt'] = now;
-      fee['updatedAt'] = now;
-
-      final result = await db.insert('fees', fee);
-      developer.log('Ücret eklendi, ID: ${fee['id']}');
-      return result;
-    } catch (e) {
-      developer.log('Ücret ekleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+  Future<void> deleteRecurringPattern(String id) async {
+    final db = await database;
+    await db.delete('recurring_patterns', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> updateFee(Map<String, dynamic> fee) async {
-    try {
-      final db = await database;
-      developer.log('Ücret güncelleniyor, ID: ${fee['id']}');
-
-      // Güncelleme tarihini ekle
-      fee['updatedAt'] = DateTime.now().toIso8601String();
-
-      return await db.update(
-        'fees',
-        fee,
-        where: 'id = ?',
-        whereArgs: [fee['id']],
-      );
-    } catch (e) {
-      developer.log('Ücret güncelleme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+  Future<int> deleteLessonsByRecurringPatternId(String patternId) async {
+    final db = await database;
+    final count = await db.delete(
+      'lessons',
+      where: 'recurringPatternId = ?',
+      whereArgs: [patternId],
+    );
+    return count;
   }
 
-  Future<int> deleteFee(String id) async {
-    try {
-      final db = await database;
-      developer.log('Ücret siliniyor, ID: $id');
-      return await db.delete('fees', where: 'id = ?', whereArgs: [id]);
-    } catch (e) {
-      developer.log('Ücret silme hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+  /// Ücret Operasyonları
+
+  Future<List<Map<String, dynamic>>> getFees({
+    String? where,
+    List<Object?>? whereArgs,
+  }) async {
+    final db = await database;
+    return db.query(
+      'fees',
+      where: where,
+      whereArgs: whereArgs,
+      orderBy: 'date DESC',
+    );
   }
 
   Future<Map<String, dynamic>?> getFee(String id) async {
-    try {
-      final db = await database;
-      developer.log('Ücret alınıyor, ID: $id');
-      final List<Map<String, dynamic>> result = await db.query(
-        'fees',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-      return result.isNotEmpty ? result.first : null;
-    } catch (e) {
-      developer.log('Ücret alma hatası: $e');
-      developer.log('Hata stack trace: ${StackTrace.current}');
-      rethrow;
-    }
+    final db = await database;
+    final results = await db.query('fees', where: 'id = ?', whereArgs: [id]);
+    return results.firstOrNull;
+  }
+
+  Future<void> insertFee(Map<String, dynamic> fee) async {
+    final db = await database;
+    await db.insert('fees', fee);
+  }
+
+  Future<void> updateFee(Map<String, dynamic> fee) async {
+    final db = await database;
+    await db.update('fees', fee, where: 'id = ?', whereArgs: [fee['id']]);
+  }
+
+  Future<void> deleteFee(String id) async {
+    final db = await database;
+    await db.delete('fees', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, dynamic>>> getFeesByStudent(String studentId) async {
@@ -1128,59 +1363,15 @@ class DatabaseHelper {
   }
 
   // Ayarlar işlemleri
-  Future<int> insertOrUpdateAppSettings(Map<String, dynamic> settings) async {
+  Future<void> insertOrUpdateAppSettings(Map<String, dynamic> settings) async {
     try {
       final db = await database;
       developer.log('Ayarlar güncelleniyor');
-
-      // JSON verilerini string'e dönüştür
-      if (settings['additionalSettings'] != null &&
-          settings['additionalSettings'] is Map) {
-        settings['additionalSettings'] = jsonEncode(
-          settings['additionalSettings'],
-        );
-      }
-
-      // Boolean değerleri 0/1'e dönüştür
-      final boolFields = [
-        'showWeekends',
-        'confirmBeforeDelete',
-        'showLessonColors',
-      ];
-      for (final field in boolFields) {
-        if (settings[field] is bool) {
-          settings[field] = settings[field] ? 1 : 0;
-        }
-      }
-
-      // Tarih alanlarını ekle
-      final now = DateTime.now().toIso8601String();
-      settings['updatedAt'] = now;
-
-      // Önce ayarların var olup olmadığını kontrol et
-      final List<Map<String, dynamic>> existingSettings = await db.query(
+      await db.insert(
         'app_settings',
+        settings,
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
-
-      if (existingSettings.isEmpty) {
-        // Yeni ayarlar oluştur
-        settings['id'] = 'app_settings';
-        settings['createdAt'] = now;
-
-        final result = await db.insert('app_settings', settings);
-        developer.log('Yeni ayarlar oluşturuldu, Sonuç: $result');
-        return result;
-      } else {
-        // Mevcut ayarları güncelle
-        final result = await db.update(
-          'app_settings',
-          settings,
-          where: 'id = ?',
-          whereArgs: ['app_settings'],
-        );
-        developer.log('Ayarlar güncellendi, Sonuç: $result');
-        return result;
-      }
     } catch (e) {
       developer.log('Ayarlar güncelleme hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
@@ -1213,30 +1404,22 @@ class DatabaseHelper {
           'showWeekends',
           'confirmBeforeDelete',
           'showLessonColors',
+          'lessonRemindersEnabled',
+          'paymentRemindersEnabled',
+          'birthdayRemindersEnabled',
         ];
         for (final field in boolFields) {
-          processedSettings[field] = processedSettings[field] == 1;
+          if (processedSettings.containsKey(field) &&
+              processedSettings[field] != null) {
+            processedSettings[field] = processedSettings[field] == 1;
+          }
         }
 
         developer.log('Ayarlar bulundu');
         return processedSettings;
       } else {
         developer.log('Ayarlar bulunamadı, varsayılan ayarlar döndürülecek');
-
-        // Varsayılan ayarları döndür
-        return {
-          'id': 'app_settings',
-          'themeMode': 'system',
-          'lessonNotificationTime': 'fifteenMinutes',
-          'showWeekends': true,
-          'defaultLessonDuration': 90,
-          'defaultLessonFee': 0.0,
-          'currency': 'TL',
-          'defaultSubject': null,
-          'confirmBeforeDelete': true,
-          'showLessonColors': true,
-          'additionalSettings': null,
-        };
+        return null;
       }
     } catch (e) {
       developer.log('Ayarlar alma hatası: $e');
@@ -1246,19 +1429,11 @@ class DatabaseHelper {
   }
 
   // Veritabanı yedekleri işlemleri
-  Future<int> insertDatabaseBackup(Map<String, dynamic> backup) async {
+  Future<void> insertDatabaseBackup(Map<String, dynamic> backup) async {
     try {
       final db = await database;
       developer.log('Veritabanı yedeği kaydediliyor: ${backup['fileName']}');
-
-      // Otomatik id oluştur
-      backup['id'] = 'backup_${DateTime.now().millisecondsSinceEpoch}';
-
-      final result = await db.insert('database_backups', backup);
-      developer.log(
-        'Veritabanı yedeği kaydedildi, ID: ${backup['id']}, Sonuç: $result',
-      );
-      return result;
+      await db.insert('database_backups', backup);
     } catch (e) {
       developer.log('Veritabanı yedeği kaydetme hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
@@ -1266,15 +1441,11 @@ class DatabaseHelper {
     }
   }
 
-  Future<int> deleteDatabaseBackup(String id) async {
+  Future<void> deleteDatabaseBackup(String id) async {
     try {
       final db = await database;
       developer.log('Veritabanı yedeği siliniyor, ID: $id');
-      return await db.delete(
-        'database_backups',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await db.delete('database_backups', where: 'id = ?', whereArgs: [id]);
     } catch (e) {
       developer.log('Veritabanı yedeği silme hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
@@ -1405,6 +1576,168 @@ class DatabaseHelper {
     } catch (e) {
       developer.log('Tatil günleri haritası alma hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  /// Ödeme Operasyonları
+  Future<List<Map<String, dynamic>>> getPayments() async {
+    try {
+      final db = await database;
+      return db.query('payments', orderBy: 'date DESC');
+    } catch (e, s) {
+      developer.log('Ödemeler alınırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getPaymentById(String id) async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'payments',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return results.firstOrNull;
+    } catch (e, s) {
+      developer.log('ID ile ödeme alınırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPaymentsByStudent(
+    String studentId,
+  ) async {
+    try {
+      final db = await database;
+      return db.query(
+        'payments',
+        where: 'studentId = ?',
+        whereArgs: [studentId],
+        orderBy: 'date DESC',
+      );
+    } catch (e, s) {
+      developer.log(
+        'Öğrenciye göre ödemeler alınırken hata',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> insertPayment(Map<String, dynamic> payment) async {
+    try {
+      final db = await database;
+      await db.insert('payments', payment);
+    } catch (e, s) {
+      developer.log('Ödeme eklenirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> updatePayment(Map<String, dynamic> payment) async {
+    try {
+      final db = await database;
+      await db.update(
+        'payments',
+        payment,
+        where: 'id = ?',
+        whereArgs: [payment['id']],
+      );
+    } catch (e, s) {
+      developer.log('Ödeme güncellenirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> deletePayment(String id) async {
+    try {
+      final db = await database;
+      await db.delete('payments', where: 'id = ?', whereArgs: [id]);
+    } catch (e, s) {
+      developer.log('Ödeme silinirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  /// Ödeme İşlemi Operasyonları
+  Future<List<Map<String, dynamic>>> getPaymentTransactionsByPaymentId(
+    String paymentId,
+  ) async {
+    try {
+      final db = await database;
+      return db.query(
+        'payment_transactions',
+        where: 'paymentId = ?',
+        whereArgs: [paymentId],
+        orderBy: 'date DESC',
+      );
+    } catch (e, s) {
+      developer.log('Ödeme işlemlerini alırken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getPaymentTransactionById(String id) async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'payment_transactions',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return results.firstOrNull;
+    } catch (e, s) {
+      developer.log(
+        'ID ile ödeme işlemi alınırken hata',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> insertPaymentTransaction(
+    Map<String, dynamic> transaction,
+  ) async {
+    try {
+      final db = await database;
+      await db.insert('payment_transactions', transaction);
+    } catch (e, s) {
+      developer.log('Ödeme işlemi eklenirken hata', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> updatePaymentTransaction(
+    Map<String, dynamic> transaction,
+  ) async {
+    try {
+      final db = await database;
+      await db.update(
+        'payment_transactions',
+        transaction,
+        where: 'id = ?',
+        whereArgs: [transaction['id']],
+      );
+    } catch (e, s) {
+      developer.log(
+        'Ödeme işlemi güncellenirken hata',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> deletePaymentTransaction(String id) async {
+    try {
+      final db = await database;
+      await db.delete('payment_transactions', where: 'id = ?', whereArgs: [id]);
+    } catch (e, s) {
+      developer.log('Ödeme işlemi silinirken hata', error: e, stackTrace: s);
       rethrow;
     }
   }

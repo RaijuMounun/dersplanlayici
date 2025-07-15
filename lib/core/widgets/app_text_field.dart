@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';
 
 /// Uygulamada kullanılan standart metin giriş alanı widget'ı.
-class AppTextField extends StatelessWidget {
-
+class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
     this.label,
@@ -44,6 +42,7 @@ class AppTextField extends StatelessWidget {
     this.showCursor = true,
     this.required = false,
   });
+
   final String? label;
   final String? hint;
   final String? initialValue;
@@ -81,9 +80,37 @@ class AppTextField extends StatelessWidget {
   final bool required;
 
   @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  late FocusNode _internalFocusNode;
+  bool _isInternalFocusNode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.focusNode == null) {
+      _internalFocusNode = FocusNode();
+      _isInternalFocusNode = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_isInternalFocusNode) {
+      _internalFocusNode.dispose();
+    }
+    super.dispose();
+  }
+
+  FocusNode get _effectiveFocusNode => widget.focusNode ?? _internalFocusNode;
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final defaultContentPadding =
-        contentPadding ??
+        widget.contentPadding ??
         const EdgeInsets.symmetric(
           horizontal: AppDimensions.spacing16,
           vertical: AppDimensions.spacing12,
@@ -92,73 +119,69 @@ class AppTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (label != null) ...[
+        if (widget.label != null) ...[
           Row(
             children: [
               Text(
-                label!,
-                style: labelStyle ?? Theme.of(context).textTheme.titleSmall,
+                widget.label!,
+                style: widget.labelStyle ?? theme.textTheme.titleSmall,
               ),
-              if (required)
-                const Text(' *', style: TextStyle(color: AppColors.error)),
+              if (widget.required)
+                Text(' *', style: TextStyle(color: theme.colorScheme.error)),
             ],
           ),
           const SizedBox(height: 8),
         ],
         TextFormField(
-          controller: controller,
-          initialValue: initialValue,
-          focusNode: focusNode,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          obscureText: obscureText,
-          readOnly: readOnly,
-          enabled: enabled,
-          autofocus: autofocus,
-          maxLines: maxLines,
-          minLines: minLines,
-          maxLength: maxLength,
-          inputFormatters: inputFormatters,
-          onChanged: onChanged,
-          onFieldSubmitted: onSubmitted,
-          onTap: onTap,
-          validator: validator,
-          textAlign: textAlign,
-          showCursor: showCursor,
-          style: style,
+          controller: widget.controller,
+          initialValue: widget.initialValue,
+          focusNode: _effectiveFocusNode,
+          keyboardType: widget.keyboardType,
+          textInputAction: widget.textInputAction,
+          obscureText: widget.obscureText,
+          readOnly: widget.readOnly,
+          enabled: widget.enabled,
+          autofocus: widget.autofocus,
+          maxLines: widget.maxLines,
+          minLines: widget.minLines,
+          maxLength: widget.maxLength,
+          inputFormatters: widget.inputFormatters,
+          onChanged: widget.onChanged,
+          onFieldSubmitted: (value) {
+            // Klavye olaylarını temizle
+            _effectiveFocusNode.unfocus();
+            widget.onSubmitted?.call(value);
+          },
+          onTap: () {
+            // Tap olayında focus'u düzgün yönet
+            if (!_effectiveFocusNode.hasFocus) {
+              _effectiveFocusNode.requestFocus();
+            }
+            widget.onTap?.call();
+          },
+          validator: widget.validator,
+          textAlign: widget.textAlign,
+          showCursor: widget.showCursor,
+          style: widget.style ?? theme.textTheme.bodyMedium,
           decoration: InputDecoration(
-            hintText: hint,
-            helperText: helperText,
-            errorText: errorText,
-            filled: filled,
-            fillColor: fillColor ?? AppColors.surface,
+            hintText: widget.hint,
+            helperText: widget.helperText,
+            errorText: widget.errorText,
+            filled: widget.filled,
+            fillColor: widget.fillColor,
             contentPadding: defaultContentPadding,
-            prefix: prefix,
-            suffix: suffix,
-            prefixIcon: prefixIcon,
-            suffixIcon: suffixIcon,
-            hintStyle: hintStyle,
-            errorStyle: errorStyle,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.error),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              borderSide: const BorderSide(color: AppColors.error, width: 2),
-            ),
+            prefix: widget.prefix,
+            suffix: widget.suffix,
+            prefixIcon: widget.prefixIcon,
+            suffixIcon: widget.suffixIcon,
+            hintStyle: widget.hintStyle,
+            errorStyle: widget.errorStyle,
+            // Tema renklerini kullan - sabit renkler yerine
+            border: null,
+            enabledBorder: null,
+            focusedBorder: null,
+            errorBorder: null,
+            focusedErrorBorder: null,
           ),
         ),
       ],

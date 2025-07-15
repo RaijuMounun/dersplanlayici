@@ -14,6 +14,10 @@
 
 # Provider
 -keep class com.example.provider.** { *; }
+-keep class com.raijumounun.dersplanlayici.** { *; }
+
+# GoRouter
+-keep class com.raijumounun.dersplanlayici.MainActivity { *; }
 
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}

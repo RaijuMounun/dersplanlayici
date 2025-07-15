@@ -1,207 +1,79 @@
 import 'package:flutter/foundation.dart';
 import '../../domain/models/fee_model.dart';
-import '../../../../services/database/database_service.dart';
-import '../../../../core/error/app_exception.dart';
+import '../../data/repositories/fee_repository.dart';
 
 /// Ücret verilerini yöneten Provider sınıfı.
 class FeeProvider extends ChangeNotifier {
 
-  FeeProvider(this._databaseService);
-  final DatabaseService _databaseService;
+  FeeProvider(this._repository) {
+    loadFees();
+  }
+  final FeeRepository _repository;
 
   List<FeeModel> _fees = [];
   bool _isLoading = false;
-  AppException? _error;
+  String? _error;
+  String? _currentStudentId; // Mevcut öğrenci filtresini takip eder
 
-  /// Ücret listesini döndürür.
   List<FeeModel> get fees => _fees;
-
-  /// Yükleme durumunu döndürür.
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
-  /// Hata durumunu döndürür.
-  AppException? get error => _error;
+  Future<T> _executeAction<T>(Future<T> Function() action) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      return await action();
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   /// Tüm ücretleri veritabanından yükler.
   Future<void> loadFees() async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      final feesData = await _databaseService.query(
-        table: 'fees',
-        orderBy: 'date DESC',
-      );
-      _fees = feesData.map(FeeModel.fromMap).toList();
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ücretler yüklenirken bir hata oluştu:  [33m${e.toString()} [0m',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
+    await _executeAction(() async {
+      _currentStudentId = null;
+      _fees = await _repository.getAllFees();
+    });
   }
 
   /// Belirli bir öğrenciye ait ücretleri yükler.
   Future<void> loadFeesByStudent(String studentId) async {
-    _setLoading(true);
-    _error = null;
+    await _executeAction(() async {
+      _currentStudentId = studentId;
+      _fees = await _repository.getFeesByStudent(studentId);
+    });
+  }
 
-    try {
-      final feesData = await _databaseService.query(
-        table: 'fees',
-        where: 'studentId = ?',
-        whereArgs: [studentId],
-        orderBy: 'date DESC',
-      );
-      _fees = feesData.map(FeeModel.fromMap).toList();
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Öğrenci ücretleri yüklenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
+  Future<void> _reloadData() async {
+    if (_currentStudentId != null) {
+      await loadFeesByStudent(_currentStudentId!);
+    } else {
+      await loadFees();
     }
   }
 
-  /// Ödeme durumuna göre ücretleri filtreler.
-  Future<void> loadFeesByStatus(PaymentStatus status) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      final feesData = await _databaseService.query(
-        table: 'fees',
-        where: 'status = ?',
-        whereArgs: [status.toString().split('.').last],
-        orderBy: 'date DESC',
-      );
-      _fees = feesData.map(FeeModel.fromMap).toList();
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Ödeme durumuna göre ücretler yüklenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Ücret ekler.
+  /// Ücret ekler ve listeyi yeniler.
   Future<void> addFee(FeeModel fee) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      await _databaseService.insert(table: 'fees', data: fee.toMap());
-      await loadFees();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ücret eklenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
+    await _executeAction(() => _repository.addFee(fee));
+    await _reloadData();
   }
 
-  /// Ücret günceller.
+  /// Ücret günceller ve listeyi yeniler.
   Future<void> updateFee(FeeModel fee) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      await _databaseService.update(
-        table: 'fees',
-        data: fee.toMap(),
-        where: 'id = ?',
-        whereArgs: [fee.id],
-      );
-      await loadFees();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ücret güncellenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
+    await _executeAction(() => _repository.updateFee(fee));
+    await _reloadData();
   }
 
-  /// Ücret siler.
+  /// Ücret siler ve listeyi yeniler.
   Future<void> deleteFee(String id) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      await _databaseService.delete(
-        table: 'fees',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-      await loadFees();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ücret silinirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// ID'ye göre ücret arar.
-  FeeModel? getFeeById(String id) {
-    try {
-      return _fees.firstWhere((fee) => fee.id == id);
-    } on Exception {
-      return null;
-    }
-  }
-
-  /// Öğrenci ID'sine göre ödenmemiş ücretlerin toplamını hesaplar.
-  double getUnpaidTotalForStudent(String studentId) {
-    final unpaidFees = _fees.where(
-      (fee) => fee.studentId == studentId && fee.status == PaymentStatus.unpaid,
-    );
-
-    return unpaidFees.fold(0, (total, fee) => total + fee.amount);
-  }
-
-  /// Ödeme durumuna göre ücretleri filtreler.
-  List<FeeModel> filterByStatus(PaymentStatus status) => _fees.where((fee) => fee.status == status).toList();
-
-  /// Belirli bir aya ait ücretleri döndürür.
-  List<FeeModel> getFeesByMonth(String month) => _fees.where((fee) => fee.month == month).toList();
-
-  /// Yükleme durumunu günceller.
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
+    await _executeAction(() => _repository.deleteFee(id));
+    await _reloadData();
   }
 }

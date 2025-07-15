@@ -1,159 +1,122 @@
+import 'package:ders_planlayici/core/data/database_helper.dart';
+import 'package:ders_planlayici/core/navigation/app_router.dart';
+import 'package:ders_planlayici/core/theme/app_theme.dart';
+import 'package:ders_planlayici/features/fees/data/repositories/fee_repository.dart';
+import 'package:ders_planlayici/features/fees/data/repositories/payment_repository.dart';
+import 'package:ders_planlayici/features/fees/data/repositories/payment_transaction_repository.dart';
+import 'package:ders_planlayici/features/fees/presentation/providers/fee_provider.dart';
+import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
+import 'package:ders_planlayici/features/fees/presentation/providers/payment_transaction_provider.dart';
+import 'package:ders_planlayici/features/fees/presentation/providers/fee_management_provider.dart';
+import 'package:ders_planlayici/features/lessons/data/repositories/lesson_repository.dart';
+import 'package:ders_planlayici/features/lessons/data/repositories/recurring_pattern_repository.dart';
+import 'package:ders_planlayici/features/lessons/domain/services/recurring_lesson_service.dart';
+import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_provider.dart';
+import 'package:ders_planlayici/features/settings/data/repositories/app_settings_repository.dart';
+import 'package:ders_planlayici/features/settings/presentation/providers/app_settings_provider.dart';
+import 'package:ders_planlayici/features/settings/presentation/providers/theme_provider.dart';
+import 'package:ders_planlayici/features/students/data/repositories/student_repository.dart';
+import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../core/theme/app_theme.dart';
-import '../features/students/presentation/providers/student_provider.dart';
-import '../features/lessons/presentation/providers/lesson_provider.dart';
-import '../features/fees/presentation/providers/fee_provider.dart';
-import '../features/fees/presentation/providers/payment_provider.dart';
-import '../features/fees/data/repositories/payment_repository.dart';
-import '../features/settings/presentation/providers/theme_provider.dart';
-import '../features/settings/presentation/providers/app_settings_provider.dart';
-import '../features/settings/data/repositories/app_settings_repository.dart';
-import '../services/database/database_service.dart';
-import '../services/preferences/preference_service.dart';
-import '../core/data/database_helper.dart';
-import '../core/data/cache_manager.dart';
-import '../core/error/error_logger.dart';
 import '../core/constants/app_constants.dart';
-import '../core/navigation/app_router.dart';
 
-class DersPlanlamaApp extends StatefulWidget {
+class DersPlanlamaApp extends StatelessWidget {
   const DersPlanlamaApp({super.key});
 
   @override
-  State<DersPlanlamaApp> createState() => _DersPlanlamaAppState();
-}
-
-class _DersPlanlamaAppState extends State<DersPlanlamaApp> {
-  final PreferenceService _preferenceService = PreferenceService();
-  final CacheManager _cacheManager = CacheManager();
-  final ErrorLogger _errorLogger = ErrorLogger();
-  late final DatabaseHelper _databaseHelper;
-  late final DatabaseService _databaseService;
-
-  bool _isInitialized = false;
-  Object? _initializationError;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeServices();
-  }
-
-  Future<void> _initializeServices() async {
-    try {
-      // Servisleri başlat
-      await _preferenceService.init();
-      await _errorLogger.info('PreferenceService initialized', tag: 'App');
-
-      // Database servislerini oluştur
-      _databaseHelper = DatabaseHelper();
-      _databaseService = DatabaseService(_databaseHelper);
-      await _databaseService.initDatabase();
-      await _errorLogger.info('DatabaseService initialized', tag: 'App');
-
-      setState(() {
-        _isInitialized = true;
-      });
-    } on Exception catch (e, stackTrace) {
-      await _errorLogger.error(
-        'Failed to initialize services',
-        tag: 'App',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      setState(() {
-        _initializationError = e;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    // Servisleri kapat
-    _errorLogger.info('Disposing services', tag: 'App');
-    _errorLogger.dispose();
-    _cacheManager.dispose();
-    _preferenceService.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Başlatma ekranı
-    if (!_isInitialized) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: Scaffold(
-          body: Center(
-            child: _initializationError != null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Uygulama başlatılamadı',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _initializationError.toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ],
-                  )
-                : const CircularProgressIndicator(),
-          ),
-        ),
-      );
-    }
+    final dbHelper = DatabaseHelper();
 
-    // Settings repository oluştur
-    final appSettingsRepository = AppSettingsRepository(
-      databaseHelper: _databaseHelper,
+    // Repositories & Services
+    final appSettingsRepository = AppSettingsRepository(dbHelper);
+    final studentRepository = StudentRepository(dbHelper);
+    final recurringLessonService = RecurringLessonService();
+    final recurringPatternRepository = RecurringPatternRepository(dbHelper);
+    final lessonRepository = LessonRepository(
+      dbHelper,
+      recurringLessonService,
+      recurringPatternRepository,
     );
-
-    // Payment repository oluştur
-    final paymentRepository = PaymentRepository(_databaseService);
+    final feeRepository = FeeRepository(dbHelper);
+    final paymentRepository = PaymentRepository(dbHelper);
+    final paymentTransactionRepository = PaymentTransactionRepository(dbHelper);
 
     return MultiProvider(
       providers: [
-        // Servis providers
-        Provider<DatabaseService>.value(value: _databaseService),
-        Provider<PreferenceService>.value(value: _preferenceService),
-        Provider<CacheManager>.value(value: _cacheManager),
-        Provider<ErrorLogger>.value(value: _errorLogger),
-
-        // Theme provider
-        ChangeNotifierProvider(create: (context) => ThemeProvider()),
-
-        // Settings provider
         ChangeNotifierProvider(
           create: (context) => AppSettingsProvider(appSettingsRepository),
         ),
-
-        // Feature providers
         ChangeNotifierProvider(
-          create: (context) => StudentProvider(_databaseService),
+          create: (context) =>
+              ThemeProvider(appSettingsRepository)..loadTheme(),
         ),
         ChangeNotifierProvider(
-          create: (context) => LessonProvider(_databaseService),
+          create: (context) =>
+              StudentProvider(studentRepository)..loadStudents(),
+        ),
+        ChangeNotifierProxyProvider2<
+          AppSettingsProvider,
+          StudentProvider,
+          LessonProvider
+        >(
+          create: (context) => LessonProvider(
+            lessonRepository,
+            context.read<AppSettingsProvider>(),
+            context.read<StudentProvider>(),
+          ),
+          update: (context, appSettingsProvider, studentProvider, previous) {
+            previous?.updateDependencies(appSettingsProvider, studentProvider);
+            return previous ??
+                LessonProvider(
+                  lessonRepository,
+                  appSettingsProvider,
+                  studentProvider,
+                );
+          },
         ),
         ChangeNotifierProvider(
-          create: (context) => FeeProvider(_databaseService),
+          create: (context) => FeeProvider(feeRepository)..loadFees(),
         ),
         ChangeNotifierProvider(
-          create: (context) => PaymentProvider(paymentRepository),
+          create: (context) =>
+              PaymentProvider(paymentRepository)..loadPayments(),
+        ),
+        ChangeNotifierProxyProvider3<
+          StudentProvider,
+          PaymentProvider,
+          LessonProvider,
+          FeeManagementProvider
+        >(
+          create: (context) => FeeManagementProvider(
+            context.read<StudentProvider>(),
+            context.read<PaymentProvider>(),
+            context.read<LessonProvider>(),
+          ),
+          update:
+              (
+                context,
+                studentProvider,
+                paymentProvider,
+                lessonProvider,
+                feeManagementProvider,
+              ) {
+                feeManagementProvider?.updateDependencies(
+                  studentProvider,
+                  paymentProvider,
+                  lessonProvider,
+                );
+                return feeManagementProvider ??
+                    FeeManagementProvider(
+                      studentProvider,
+                      paymentProvider,
+                      lessonProvider,
+                    );
+              },
+        ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              PaymentTransactionProvider(paymentTransactionRepository),
         ),
       ],
       child: Consumer<ThemeProvider>(

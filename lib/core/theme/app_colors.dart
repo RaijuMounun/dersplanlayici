@@ -80,4 +80,40 @@ class AppColors {
   // Form renkleri
   static Color get inputBackground => const Color(0xFFF5F5F5);
   static Color get formBorder => const Color(0xFFE0E0E0);
+  
+  // Tema-aware renkler
+  static Color getInputBackground(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? const Color(0xFF2A2A2A) 
+        : const Color(0xFFF5F5F5);
+  }
+  
+  static Color getFormBorder(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? const Color(0xFF616161) 
+        : const Color(0xFFE0E0E0);
+  }
+  
+  static Color getTextPrimary(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? const Color(0xFFFFFFFF) 
+        : const Color(0xFF212121);
+  }
+  
+  static Color getTextSecondary(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? const Color(0xFFB0B0B0) 
+        : const Color(0xFF757575);
+  }
+  
+  static Color getTextHint(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? const Color(0xFF808080) 
+        : const Color(0xFF9E9E9E);
+  }
 }

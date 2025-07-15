@@ -1,216 +1,130 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:ders_planlayici/features/settings/domain/models/app_settings_model.dart';
 import 'package:ders_planlayici/features/settings/data/repositories/app_settings_repository.dart';
-import 'package:ders_planlayici/core/error/app_exception.dart';
 
 /// Uygulama ayarlarını yöneten provider sınıfı.
 class AppSettingsProvider extends ChangeNotifier {
 
-  AppSettingsProvider(this._settingsRepository) {
-    _loadSettings();
+  AppSettingsProvider(this._repository) {
+    loadSettings();
   }
-  final AppSettingsRepository _settingsRepository;
+  final AppSettingsRepository _repository;
 
   AppSettingsModel _settings = AppSettingsModel.defaultSettings();
   bool _isLoading = false;
-  AppException? _error;
+  String? _error;
 
-  /// Mevcut ayarları döndürür.
   AppSettingsModel get settings => _settings;
-
-  /// Yükleme durumunu döndürür.
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
-  /// Hata durumunu döndürür.
-  AppException? get error => _error;
-
-  /// Silmeden önce onay isteyip istememeyi belirleyen ayarı döndürür.
-  bool get confirmBeforeDelete => _settings.confirmBeforeDelete;
-
-  /// Uygulama ayarlarını yükler.
-  Future<void> _loadSettings() async {
-    _setLoading(true);
+  Future<void> _executeAction(Future<void> Function() action) async {
+    _isLoading = true;
     _error = null;
-
+      notifyListeners();
     try {
-      _settings = await _settingsRepository.getSettings();
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
+      await action();
     } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Ayarlar yüklenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
+      _error = e.toString();
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  /// Tema modunu günceller.
-  Future<void> updateThemeMode(ThemeMode themeMode) async {
-    _setLoading(true);
-    _error = null;
+  Future<void> loadSettings() async {
+    await _executeAction(() async {
+      _settings = await _repository.getSettings();
+    });
+  }
 
-    try {
-      await _settingsRepository.updateThemeMode(themeMode);
-      _settings = _settings.copyWith(themeMode: themeMode);
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message: 'Tema modu güncellenirken bir hata oluştu: ${e.toString()}',
+  /// Belirli bir ayarı güncelleyen ve state'i yenileyen genel bir metot.
+  Future<void> _updateSetting<T>(
+    Future<void> Function(T) updateRepo,
+    T value,
+    AppSettingsModel Function(T) copyWith,
+  ) async {
+    await _executeAction(() async {
+      await updateRepo(value);
+      _settings = copyWith(value);
+    });
+  }
+
+  Future<void> updateThemeMode(ThemeMode themeMode) => _updateSetting(
+    _repository.updateThemeMode,
+    themeMode,
+    (v) => _settings.copyWith(themeMode: v),
+  );
+
+  Future<void> updateNotificationTime(NotificationTime time) => _updateSetting(
+    _repository.updateNotificationTime,
+    time,
+    (v) => _settings.copyWith(lessonNotificationTime: v),
+  );
+
+  Future<void> updateConfirmBeforeDelete(bool confirm) => _updateSetting(
+    _repository.updateConfirmBeforeDelete,
+    confirm,
+    (v) => _settings.copyWith(confirmBeforeDelete: v),
+  );
+
+  Future<void> updateShowWeekends(bool show) => _updateSetting(
+    _repository.updateShowWeekends,
+    show,
+    (v) => _settings.copyWith(showWeekends: v),
+  );
+
+  Future<void> updateShowLessonColors(bool show) => _updateSetting(
+    _repository.updateShowLessonColors,
+    show,
+    (v) => _settings.copyWith(showLessonColors: v),
+  );
+
+  Future<void> updateDefaultLessonDuration(int duration) => _updateSetting(
+    _repository.updateDefaultLessonDuration,
+    duration,
+    (v) => _settings.copyWith(defaultLessonDuration: v),
+  );
+
+  Future<void> updateDefaultLessonFee(double fee) => _updateSetting(
+    _repository.updateDefaultLessonFee,
+    fee,
+    (v) => _settings.copyWith(defaultLessonFee: v),
+  );
+
+  Future<void> updateCurrency(String currency) => _updateSetting(
+        _repository.updateCurrency,
+        currency,
+        (v) => _settings.copyWith(currency: v),
       );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
 
-  /// Bildirim zamanını günceller.
-  Future<void> updateNotificationTime(NotificationTime time) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      await _settingsRepository.updateNotificationTime(time);
-      _settings = _settings.copyWith(lessonNotificationTime: time);
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Bildirim zamanı güncellenirken bir hata oluştu: ${e.toString()}',
+  Future<void> updateDefaultSubject(String? subject) => _updateSetting(
+        _repository.updateDefaultSubject,
+        subject,
+        (v) => _settings.copyWith(defaultSubject: v),
       );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
 
-  /// Silmeden önce onay isteme ayarını günceller.
-  Future<void> updateConfirmBeforeDelete(bool confirm) async {
-    _setLoading(true);
-    _error = null;
+  Future<void> updateLessonRemindersEnabled(bool enabled) => _updateSetting(
+    _repository.updateLessonRemindersEnabled,
+    enabled,
+    (v) => _settings.copyWith(lessonRemindersEnabled: v),
+  );
 
-    try {
-      await _settingsRepository.updateConfirmBeforeDelete(confirm);
-      _settings = _settings.copyWith(confirmBeforeDelete: confirm);
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Silme onayı ayarı güncellenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
+  Future<void> updateReminderMinutes(int minutes) => _updateSetting(
+    _repository.updateReminderMinutes,
+    minutes,
+    (v) => _settings.copyWith(reminderMinutes: v),
+  );
 
-  /// Hafta sonu gösterme ayarını günceller.
-  Future<void> updateShowWeekends(bool show) async {
-    _setLoading(true);
-    _error = null;
+  Future<void> updatePaymentRemindersEnabled(bool enabled) => _updateSetting(
+    _repository.updatePaymentRemindersEnabled,
+    enabled,
+    (v) => _settings.copyWith(paymentRemindersEnabled: v),
+  );
 
-    try {
-      await _settingsRepository.updateShowWeekends(show);
-      _settings = _settings.copyWith(showWeekends: show);
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Hafta sonu gösterme ayarı güncellenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Ders renklerini gösterme ayarını günceller.
-  Future<void> updateShowLessonColors(bool show) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      await _settingsRepository.updateShowLessonColors(show);
-      _settings = _settings.copyWith(showLessonColors: show);
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Ders renklerini gösterme ayarı güncellenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Varsayılan ders süresini günceller.
-  Future<void> updateDefaultLessonDuration(int duration) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      await _settingsRepository.updateDefaultLessonDuration(duration);
-      _settings = _settings.copyWith(defaultLessonDuration: duration);
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Varsayılan ders süresi güncellenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Varsayılan ders ücretini günceller.
-  Future<void> updateDefaultLessonFee(double fee) async {
-    _setLoading(true);
-    _error = null;
-
-    try {
-      await _settingsRepository.updateDefaultLessonFee(fee);
-      _settings = _settings.copyWith(defaultLessonFee: fee);
-      notifyListeners();
-    } on AppException catch (e) {
-      _error = e;
-      notifyListeners();
-    } on Exception catch (e) {
-      _error = DatabaseException(
-        message:
-            'Varsayılan ders ücreti güncellenirken bir hata oluştu: ${e.toString()}',
-      );
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Yükleme durumunu günceller.
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
-  }
+  Future<void> updateBirthdayRemindersEnabled(bool enabled) => _updateSetting(
+    _repository.updateBirthdayRemindersEnabled,
+    enabled,
+    (v) => _settings.copyWith(birthdayRemindersEnabled: v),
+  );
 }

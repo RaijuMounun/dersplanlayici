@@ -106,7 +106,7 @@ class FeeCalculationService {
   /// [allLessons] Tüm dersler
   /// [allPayments] Tüm ödemeler
   static List<Map<String, dynamic>> generatePaymentSuggestions({
-    required List<Student> students,
+    required List<StudentModel> students,
     required List<Lesson> allLessons,
     required List<PaymentModel> allPayments,
   }) {
