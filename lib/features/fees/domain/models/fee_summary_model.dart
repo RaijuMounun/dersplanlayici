@@ -1,5 +1,6 @@
 /// Öğrenci veya dönem bazlı ücret özetini temsil eden model sınıfı.
-class FeeSummary { // Son güncelleme tarihi
+class FeeSummary {
+  // Son güncelleme tarihi
 
   FeeSummary({
     required this.id,
@@ -13,18 +14,31 @@ class FeeSummary { // Son güncelleme tarihi
     required this.lastUpdated,
   });
 
+  /// Boş bir FeeSummary nesnesi oluşturur.
+  factory FeeSummary.empty() => FeeSummary(
+    id: '',
+    name: '',
+    totalAmount: 0,
+    paidAmount: 0,
+    totalLessons: 0,
+    completedLessons: 0,
+    pendingPayments: 0,
+    overduePayments: 0,
+    lastUpdated: DateTime.now(),
+  );
+
   /// Map objesinden FeeSummary nesnesine dönüştürür.
   factory FeeSummary.fromMap(Map<String, dynamic> map) => FeeSummary(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      totalAmount: (map['totalAmount'] as num).toDouble(),
-      paidAmount: (map['paidAmount'] as num).toDouble(),
-      totalLessons: map['totalLessons'] as int,
-      completedLessons: map['completedLessons'] as int,
-      pendingPayments: map['pendingPayments'] as int,
-      overduePayments: map['overduePayments'] as int,
-      lastUpdated: DateTime.parse(map['lastUpdated'] as String),
-    );
+    id: map['id'] as String,
+    name: map['name'] as String,
+    totalAmount: (map['totalAmount'] as num).toDouble(),
+    paidAmount: (map['paidAmount'] as num).toDouble(),
+    totalLessons: map['totalLessons'] as int,
+    completedLessons: map['completedLessons'] as int,
+    pendingPayments: map['pendingPayments'] as int,
+    overduePayments: map['overduePayments'] as int,
+    lastUpdated: DateTime.parse(map['lastUpdated'] as String),
+  );
   final String id; // Öğrenci ID'si veya dönem ID'si olabilir
   final String name; // Öğrenci adı veya dönem adı olabilir
   final double totalAmount; // Toplam ücret
@@ -48,16 +62,16 @@ class FeeSummary { // Son güncelleme tarihi
 
   /// FeeSummary nesnesini Map objesine dönüştürür.
   Map<String, dynamic> toMap() => {
-      'id': id,
-      'name': name,
-      'totalAmount': totalAmount,
-      'paidAmount': paidAmount,
-      'totalLessons': totalLessons,
-      'completedLessons': completedLessons,
-      'pendingPayments': pendingPayments,
-      'overduePayments': overduePayments,
-      'lastUpdated': lastUpdated.toIso8601String(),
-    };
+    'id': id,
+    'name': name,
+    'totalAmount': totalAmount,
+    'paidAmount': paidAmount,
+    'totalLessons': totalLessons,
+    'completedLessons': completedLessons,
+    'pendingPayments': pendingPayments,
+    'overduePayments': overduePayments,
+    'lastUpdated': lastUpdated.toIso8601String(),
+  };
 
   /// Güncellenmiş bir ücret özeti nesnesi oluşturur.
   FeeSummary copyWith({
@@ -71,17 +85,18 @@ class FeeSummary { // Son güncelleme tarihi
     int? overduePayments,
     DateTime? lastUpdated,
   }) => FeeSummary(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      totalAmount: totalAmount ?? this.totalAmount,
-      paidAmount: paidAmount ?? this.paidAmount,
-      totalLessons: totalLessons ?? this.totalLessons,
-      completedLessons: completedLessons ?? this.completedLessons,
-      pendingPayments: pendingPayments ?? this.pendingPayments,
-      overduePayments: overduePayments ?? this.overduePayments,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
-    );
+    id: id ?? this.id,
+    name: name ?? this.name,
+    totalAmount: totalAmount ?? this.totalAmount,
+    paidAmount: paidAmount ?? this.paidAmount,
+    totalLessons: totalLessons ?? this.totalLessons,
+    completedLessons: completedLessons ?? this.completedLessons,
+    pendingPayments: pendingPayments ?? this.pendingPayments,
+    overduePayments: overduePayments ?? this.overduePayments,
+    lastUpdated: lastUpdated ?? this.lastUpdated,
+  );
 
   @override
-  String toString() => 'FeeSummary(id: $id, name: $name, totalAmount: $totalAmount, paidAmount: $paidAmount, remaining: $remainingAmount)';
+  String toString() =>
+      'FeeSummary(id: $id, name: $name, totalAmount: $totalAmount, paidAmount: $paidAmount, remaining: $remainingAmount)';
 }

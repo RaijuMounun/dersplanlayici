@@ -1,9 +1,4 @@
-/// Uygulama tema modu
-enum ThemeMode {
-  system, // Sistem temasını kullan
-  light, // Açık tema
-  dark, // Koyu tema
-}
+import 'package:flutter/material.dart';
 
 /// Bildirim süresi
 enum NotificationTime {
@@ -54,10 +49,7 @@ class AppSettingsModel { // Ek ayarlar
 
   /// Map objesinden AppSettingsModel nesnesine dönüştürür.
   factory AppSettingsModel.fromMap(Map<String, dynamic> map) => AppSettingsModel(
-      themeMode: ThemeMode.values.firstWhere(
-        (e) => e.toString() == 'ThemeMode.${map['themeMode']}',
-        orElse: () => ThemeMode.system,
-      ),
+      themeMode: (map['themeMode'] as String?)?.toThemeMode() ?? ThemeMode.system,
       lessonNotificationTime: NotificationTime.values.firstWhere(
         (e) =>
             e.toString() == 'NotificationTime.${map['lessonNotificationTime']}',
@@ -93,7 +85,7 @@ class AppSettingsModel { // Ek ayarlar
 
   /// AppSettingsModel nesnesini Map objesine dönüştürür.
   Map<String, dynamic> toMap() => {
-      'themeMode': themeMode.toString().split('.').last,
+      'themeMode': themeMode.name,
       'lessonNotificationTime': lessonNotificationTime
           .toString()
           .split('.')
@@ -149,4 +141,17 @@ class AppSettingsModel { // Ek ayarlar
 
   @override
   String toString() => 'AppSettingsModel(themeMode: $themeMode, lessonNotificationTime: $lessonNotificationTime)';
+}
+
+extension ThemeModeExtension on String {
+  ThemeMode toThemeMode() {
+    switch (this) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
 }

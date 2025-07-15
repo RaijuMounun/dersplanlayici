@@ -2,10 +2,10 @@ import 'package:ders_planlayici/core/data/database_helper.dart';
 import 'package:ders_planlayici/core/error/app_exception.dart' as app_exception;
 import 'package:ders_planlayici/core/error/error_logger.dart';
 import 'package:ders_planlayici/features/settings/domain/models/app_settings_model.dart';
+import 'package:flutter/material.dart';
 
 class AppSettingsRepository {
-  AppSettingsRepository({DatabaseHelper? databaseHelper})
-    : _databaseHelper = databaseHelper ?? DatabaseHelper();
+  AppSettingsRepository(this._databaseHelper);
   final DatabaseHelper _databaseHelper;
 
   /// Uygulama ayarlarını getirir
@@ -47,12 +47,11 @@ class AppSettingsRepository {
   }
 
   /// Uygulama ayarlarını kaydeder
-  Future<bool> saveSettings(AppSettingsModel settings) async {
+  Future<void> saveSettings(AppSettingsModel settings) async {
     try {
-      final result = await _databaseHelper.insertOrUpdateAppSettings(
+      await _databaseHelper.insertOrUpdateAppSettings(
         settings.toMap(),
       );
-      return result > 0;
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Ayarlar kaydedilemedi',
@@ -63,11 +62,11 @@ class AppSettingsRepository {
   }
 
   /// Tema ayarını günceller
-  Future<bool> updateThemeMode(ThemeMode themeMode) async {
+  Future<void> updateThemeMode(ThemeMode themeMode) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(themeMode: themeMode);
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Tema ayarı güncellenemedi',
@@ -78,13 +77,13 @@ class AppSettingsRepository {
   }
 
   /// Ders bildirim zamanı ayarını günceller
-  Future<bool> updateNotificationTime(NotificationTime notificationTime) async {
+  Future<void> updateNotificationTime(NotificationTime notificationTime) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         lessonNotificationTime: notificationTime,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Bildirim zamanı ayarı güncellenemedi',
@@ -95,13 +94,13 @@ class AppSettingsRepository {
   }
 
   /// Hafta sonu gösterme ayarını günceller
-  Future<bool> updateShowWeekends(bool showWeekends) async {
+  Future<void> updateShowWeekends(bool showWeekends) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         showWeekends: showWeekends,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Hafta sonu gösterme ayarı güncellenemedi',
@@ -112,13 +111,13 @@ class AppSettingsRepository {
   }
 
   /// Varsayılan ders süresi ayarını günceller
-  Future<bool> updateDefaultLessonDuration(int defaultLessonDuration) async {
+  Future<void> updateDefaultLessonDuration(int defaultLessonDuration) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         defaultLessonDuration: defaultLessonDuration,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Varsayılan ders süresi ayarı güncellenemedi',
@@ -129,13 +128,13 @@ class AppSettingsRepository {
   }
 
   /// Varsayılan ders ücreti ayarını günceller
-  Future<bool> updateDefaultLessonFee(double defaultLessonFee) async {
+  Future<void> updateDefaultLessonFee(double defaultLessonFee) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         defaultLessonFee: defaultLessonFee,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Varsayılan ders ücreti ayarı güncellenemedi',
@@ -146,11 +145,11 @@ class AppSettingsRepository {
   }
 
   /// Para birimi ayarını günceller
-  Future<bool> updateCurrency(String currency) async {
+  Future<void> updateCurrency(String currency) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(currency: currency);
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Para birimi ayarı güncellenemedi',
@@ -161,13 +160,13 @@ class AppSettingsRepository {
   }
 
   /// Varsayılan ders konusu ayarını günceller
-  Future<bool> updateDefaultSubject(String? defaultSubject) async {
+  Future<void> updateDefaultSubject(String? defaultSubject) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         defaultSubject: defaultSubject,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Varsayılan ders konusu ayarı güncellenemedi',
@@ -178,13 +177,13 @@ class AppSettingsRepository {
   }
 
   /// Silme onayı ayarını günceller
-  Future<bool> updateConfirmBeforeDelete(bool confirmBeforeDelete) async {
+  Future<void> updateConfirmBeforeDelete(bool confirmBeforeDelete) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         confirmBeforeDelete: confirmBeforeDelete,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Silme onayı ayarı güncellenemedi',
@@ -195,13 +194,13 @@ class AppSettingsRepository {
   }
 
   /// Ders renklerini gösterme ayarını günceller
-  Future<bool> updateShowLessonColors(bool showLessonColors) async {
+  Future<void> updateShowLessonColors(bool showLessonColors) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         showLessonColors: showLessonColors,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Ders renklerini gösterme ayarı güncellenemedi',
@@ -212,7 +211,7 @@ class AppSettingsRepository {
   }
 
   /// Ek ayarları günceller
-  Future<bool> updateAdditionalSettings(
+  Future<void> updateAdditionalSettings(
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
@@ -220,7 +219,7 @@ class AppSettingsRepository {
       final updatedSettings = currentSettings.copyWith(
         additionalSettings: additionalSettings,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Ek ayarlar güncellenemedi',
@@ -231,13 +230,13 @@ class AppSettingsRepository {
   }
 
   /// Ders hatırlatmalarını aktif/pasif yapar
-  Future<bool> updateLessonRemindersEnabled(bool enabled) async {
+  Future<void> updateLessonRemindersEnabled(bool enabled) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         lessonRemindersEnabled: enabled,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Ders hatırlatmaları ayarı güncellenemedi',
@@ -248,13 +247,13 @@ class AppSettingsRepository {
   }
 
   /// Hatırlatma dakikasını günceller
-  Future<bool> updateReminderMinutes(int minutes) async {
+  Future<void> updateReminderMinutes(int minutes) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         reminderMinutes: minutes,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Hatırlatma dakikası güncellenemedi',
@@ -265,13 +264,13 @@ class AppSettingsRepository {
   }
 
   /// Ödeme hatırlatmalarını aktif/pasif yapar
-  Future<bool> updatePaymentRemindersEnabled(bool enabled) async {
+  Future<void> updatePaymentRemindersEnabled(bool enabled) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         paymentRemindersEnabled: enabled,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Ödeme hatırlatmaları ayarı güncellenemedi',
@@ -282,13 +281,13 @@ class AppSettingsRepository {
   }
 
   /// Doğum günü hatırlatmalarını aktif/pasif yapar
-  Future<bool> updateBirthdayRemindersEnabled(bool enabled) async {
+  Future<void> updateBirthdayRemindersEnabled(bool enabled) async {
     try {
       final currentSettings = await getSettings();
       final updatedSettings = currentSettings.copyWith(
         birthdayRemindersEnabled: enabled,
       );
-      return await saveSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } catch (e) {
       throw app_exception.DatabaseException(
         message: 'Doğum günü hatırlatmaları ayarı güncellenemedi',

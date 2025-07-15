@@ -5,7 +5,6 @@ import 'package:ders_planlayici/core/widgets/app_card.dart';
 
 /// Öğrenci bilgilerini gösteren kart widget'ı.
 class StudentCard extends StatelessWidget {
-
   const StudentCard({
     super.key,
     required this.studentName,
@@ -51,7 +50,7 @@ class StudentCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: avatarBackgroundColor ?? AppColors.primary,
                   shape: BoxShape.circle,
-                  image: avatarUrl != null
+                  image: avatarUrl != null && avatarUrl!.isNotEmpty
                       ? DecorationImage(
                           image: NetworkImage(avatarUrl!),
                           fit: BoxFit.cover,
@@ -86,7 +85,7 @@ class StudentCard extends StatelessWidget {
                     if (studentGrade != null) ...[
                       const SizedBox(height: AppDimensions.spacing4),
                       Text(
-                        studentGrade!,
+                        studentGrade ?? '',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -145,7 +144,7 @@ class StudentCard extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppDimensions.spacing8),
-                  Text(phoneNumber!, style: theme.textTheme.bodyMedium),
+                  Text(phoneNumber ?? '', style: theme.textTheme.bodyMedium),
                   const SizedBox(width: AppDimensions.spacing16),
                 ],
                 if (email != null) ...[
@@ -157,7 +156,7 @@ class StudentCard extends StatelessWidget {
                   const SizedBox(width: AppDimensions.spacing8),
                   Expanded(
                     child: Text(
-                      email!,
+                      email ?? '',
                       style: theme.textTheme.bodyMedium,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -200,30 +199,30 @@ class StudentCard extends StatelessWidget {
     String text,
     Color color,
   ) => Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacing12,
-        vertical: AppDimensions.spacing4,
-      ),
-      decoration: BoxDecoration(
-        color: color.withAlpha(30),
-        borderRadius: BorderRadius.circular(AppDimensions.radius16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: AppDimensions.spacing4),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
-            ),
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppDimensions.spacing12,
+      vertical: AppDimensions.spacing4,
+    ),
+    decoration: BoxDecoration(
+      color: color.withAlpha(30),
+      borderRadius: BorderRadius.circular(AppDimensions.radius16),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: AppDimensions.spacing4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: color,
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 
   String _getInitials(String name) {
     final nameParts = name.split(' ');
