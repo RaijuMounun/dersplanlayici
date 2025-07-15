@@ -5,15 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
-import 'package:ders_planlayici/core/widgets/loading_indicator.dart';
 import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/domain/models/fee_summary_model.dart';
-import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/fee_management_provider.dart';
-import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
 import 'package:collection/collection.dart';
 import 'package:ders_planlayici/core/navigation/route_names.dart';
+import 'package:ders_planlayici/core/widgets/summary_card.dart';
 
 class FeeManagementPage extends StatefulWidget {
   const FeeManagementPage({super.key});
@@ -82,7 +80,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Yenile',
-            onPressed: () => provider.loadInitialData(),
+            onPressed: provider.loadInitialData,
           ),
         ],
         bottom: TabBar(
@@ -151,20 +149,20 @@ class _FeeManagementPageState extends State<FeeManagementPage>
           Row(
             children: [
               Expanded(
-                child: _buildSummaryCard(
-                  'Toplam Tutar',
-                  currencyFormatter.format(provider.totalAmount),
-                  Icons.attach_money,
-                  AppColors.primary,
+                child: SummaryCard(
+                  title: 'Toplam Tutar',
+                  value: currencyFormatter.format(provider.totalAmount),
+                  icon: Icons.attach_money,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: AppDimensions.spacing16),
               Expanded(
-                child: _buildSummaryCard(
-                  'Ödenen Tutar',
-                  currencyFormatter.format(provider.paidAmount),
-                  Icons.check_circle,
-                  AppColors.success,
+                child: SummaryCard(
+                  title: 'Ödenen Tutar',
+                  value: currencyFormatter.format(provider.paidAmount),
+                  icon: Icons.check_circle,
+                  color: AppColors.success,
                 ),
               ),
             ],
@@ -173,20 +171,20 @@ class _FeeManagementPageState extends State<FeeManagementPage>
           Row(
             children: [
               Expanded(
-                child: _buildSummaryCard(
-                  'Kalan Tutar',
-                  currencyFormatter.format(provider.remainingAmount),
-                  Icons.pending_actions,
-                  AppColors.warning,
+                child: SummaryCard(
+                  title: 'Kalan Tutar',
+                  value: currencyFormatter.format(provider.remainingAmount),
+                  icon: Icons.pending_actions,
+                  color: AppColors.warning,
                 ),
               ),
               const SizedBox(width: AppDimensions.spacing16),
               Expanded(
-                child: _buildSummaryCard(
-                  'Gecikmiş Ödemeler',
-                  provider.overdueCount.toString(),
-                  Icons.warning_amber,
-                  AppColors.error,
+                child: SummaryCard(
+                  title: 'Gecikmiş Ödemeler',
+                  value: provider.overdueCount.toString(),
+                  icon: Icons.warning_amber,
+                  color: AppColors.error,
                 ),
               ),
             ],
@@ -301,7 +299,8 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     ],
   );
 
-  // Yardımcı widget'lar
+  // Bu metot artık kullanılmıyor.
+  /*
   Widget _buildSummaryCard(
     String title,
     String value,
@@ -339,6 +338,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
       ),
     ),
   );
+  */
 
   Widget _buildProgressBar(String label, double percentage, Color color) =>
       Column(
@@ -386,7 +386,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
     );
   }
 
-  Widget _buildStudentSummaryCard(Student student, FeeSummary? summary) {
+  Widget _buildStudentSummaryCard(StudentModel student, FeeSummary? summary) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
       symbol: '₺',
@@ -429,7 +429,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(student.grade),
+                        Text(student.grade ?? ''),
                       ],
                     ),
                   ),
@@ -661,7 +661,7 @@ class _FeeManagementPageState extends State<FeeManagementPage>
   );
 
   // Yardımcı metodlar
-  List<Student> _getFilteredStudents(List<Student> students) {
+  List<StudentModel> _getFilteredStudents(List<StudentModel> students) {
     if (_searchQuery.isEmpty) {
       return students;
     }

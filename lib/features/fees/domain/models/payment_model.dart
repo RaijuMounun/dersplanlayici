@@ -18,6 +18,21 @@ enum PaymentMethod {
   other, // Diğer
 }
 
+extension PaymentMethodExtension on PaymentMethod {
+  String toDisplayString() {
+    switch (this) {
+      case PaymentMethod.cash:
+        return 'Nakit';
+      case PaymentMethod.creditCard:
+        return 'Kredi Kartı';
+      case PaymentMethod.bankTransfer:
+        return 'Banka Havalesi';
+      case PaymentMethod.other:
+        return 'Diğer';
+    }
+  }
+}
+
 /// Ödeme bilgilerini temsil eden model sınıfı.
 class PaymentModel {
   // İlişkili ders ID'leri

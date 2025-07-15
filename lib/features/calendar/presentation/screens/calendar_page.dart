@@ -184,11 +184,43 @@ class _CalendarPageState extends State<CalendarPage> {
               subject: lesson.subject,
               startTime: lesson.startTime,
               endTime: lesson.endTime,
+              status: lesson.status,
               onTap: () {
                 context.pushNamed(
                   RouteNames.lessonDetails,
                   pathParameters: {'id': lesson.id},
                 );
+              },
+              onEdit: () {
+                context.pushNamed(
+                  RouteNames.editLesson,
+                  pathParameters: {'id': lesson.id},
+                );
+              },
+              onDelete: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Dersi Sil'),
+                    content: const Text(
+                      'Bu dersi kalıcı olarak silmek istediğinizden emin misiniz?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Vazgeç'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Evet, Sil'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  await lessonProvider.deleteLesson(lesson.id);
+                }
               },
             ),
           );

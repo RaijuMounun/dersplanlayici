@@ -55,8 +55,25 @@ class DersPlanlamaApp extends StatelessWidget {
           create: (context) =>
               StudentProvider(studentRepository)..loadStudents(),
         ),
-        ChangeNotifierProvider(
-          create: (context) => LessonProvider(lessonRepository)..loadLessons(),
+        ChangeNotifierProxyProvider2<
+          AppSettingsProvider,
+          StudentProvider,
+          LessonProvider
+        >(
+          create: (context) => LessonProvider(
+            lessonRepository,
+            context.read<AppSettingsProvider>(),
+            context.read<StudentProvider>(),
+          ),
+          update: (context, appSettingsProvider, studentProvider, previous) {
+            previous?.updateDependencies(appSettingsProvider, studentProvider);
+            return previous ??
+                LessonProvider(
+                  lessonRepository,
+                  appSettingsProvider,
+                  studentProvider,
+                );
+          },
         ),
         ChangeNotifierProvider(
           create: (context) => FeeProvider(feeRepository)..loadFees(),
@@ -65,22 +82,37 @@ class DersPlanlamaApp extends StatelessWidget {
           create: (context) =>
               PaymentProvider(paymentRepository)..loadPayments(),
         ),
-        ChangeNotifierProxyProvider2<
+        ChangeNotifierProxyProvider3<
           StudentProvider,
           PaymentProvider,
+          LessonProvider,
           FeeManagementProvider
         >(
           create: (context) => FeeManagementProvider(
             context.read<StudentProvider>(),
             context.read<PaymentProvider>(),
+            context.read<LessonProvider>(),
           ),
           update:
               (
                 context,
                 studentProvider,
                 paymentProvider,
+                lessonProvider,
                 feeManagementProvider,
-              ) => FeeManagementProvider(studentProvider, paymentProvider),
+              ) {
+                feeManagementProvider?.updateDependencies(
+                  studentProvider,
+                  paymentProvider,
+                  lessonProvider,
+                );
+                return feeManagementProvider ??
+                    FeeManagementProvider(
+                      studentProvider,
+                      paymentProvider,
+                      lessonProvider,
+                    );
+              },
         ),
         ChangeNotifierProvider(
           create: (context) =>

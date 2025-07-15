@@ -9,9 +9,7 @@ import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/features/students/presentation/widgets/student_list_item.dart';
 import 'package:ders_planlayici/features/students/presentation/providers/student_provider.dart';
 import 'package:ders_planlayici/features/students/domain/models/student_model.dart';
-import 'package:ders_planlayici/features/settings/presentation/providers/app_settings_provider.dart';
 import 'package:ders_planlayici/core/error/error_handler.dart';
-import 'package:ders_planlayici/core/widgets/app_dialogs.dart';
 import 'package:ders_planlayici/core/navigation/route_names.dart';
 
 class StudentListPage extends StatefulWidget {
@@ -28,7 +26,7 @@ class _StudentListPageState extends State<StudentListPage> {
   String _searchQuery = '';
   String _selectedGrade = '';
   bool _isSearching = false;
-  List<Student> _searchResults = [];
+  List<StudentModel> _searchResults = [];
   Timer? _debounce;
 
   final List<String> _gradeOptions = [
@@ -140,7 +138,7 @@ class _StudentListPageState extends State<StudentListPage> {
     });
   }
 
-  void _selectAll(List<Student> students) {
+  void _selectAll(List<StudentModel> students) {
     setState(() {
       if (_selectedStudents.length == students.length) {
         // Tümü zaten seçiliyse, seçimleri temizle
@@ -155,7 +153,7 @@ class _StudentListPageState extends State<StudentListPage> {
     });
   }
 
-  List<Student> _getFilteredStudents(List<Student> students) {
+  List<StudentModel> _getFilteredStudents(List<StudentModel> students) {
     // Aktif bir arama varsa ve sonuçlar mevcutsa, arama sonuçlarını kullan
     if (_searchQuery.isNotEmpty && _searchResults.isNotEmpty) {
       // Eğer sınıf filtresi aktifse, arama sonuçlarını sınıfa göre filtrele
@@ -285,7 +283,7 @@ class _StudentListPageState extends State<StudentListPage> {
     },
   );
 
-  Widget _buildSelectionAppBar(List<Student> students) => Container(
+  Widget _buildSelectionAppBar(List<StudentModel> students) => Container(
     color: AppColors.surface,
     padding: const EdgeInsets.symmetric(
       horizontal: AppDimensions.spacing16,
@@ -328,7 +326,7 @@ class _StudentListPageState extends State<StudentListPage> {
     ),
   );
 
-  Widget _buildMobileList(List<Student> students) => Stack(
+  Widget _buildMobileList(List<StudentModel> students) => Stack(
     children: [
       ListView.builder(
         padding: const EdgeInsets.all(AppDimensions.spacing8),
@@ -358,7 +356,7 @@ class _StudentListPageState extends State<StudentListPage> {
     ],
   );
 
-  Widget _buildTabletList(List<Student> students) => Stack(
+  Widget _buildTabletList(List<StudentModel> students) => Stack(
     children: [
       ListView.builder(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -394,7 +392,7 @@ class _StudentListPageState extends State<StudentListPage> {
     ],
   );
 
-  Widget _buildDesktopList(List<Student> students) => Stack(
+  Widget _buildDesktopList(List<StudentModel> students) => Stack(
     children: [
       GridView.builder(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
@@ -431,7 +429,7 @@ class _StudentListPageState extends State<StudentListPage> {
     ],
   );
 
-  Widget _buildStudentItem(Student student) => StudentListItem(
+  Widget _buildStudentItem(StudentModel student) => StudentListItem(
     name: student.name,
     grade: student.grade,
     subjects: student.subjects,
@@ -528,98 +526,91 @@ class _StudentListPageState extends State<StudentListPage> {
     ),
   );
 
-  void _showDeleteConfirmation(Student student) async {
-    final appSettingsProvider = Provider.of<AppSettingsProvider>(
-      context,
-      listen: false,
+  Future<void> _showDeleteConfirmation(StudentModel student) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Öğrenciyi Sil'),
+        content: Text(
+          '\'${student.name}\' adlı öğrenciyi ve tüm ilgili verilerini (dersler, ödemeler vb.) kalıcı olarak silmek istediğinizden emin misiniz?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Evet, Sil'),
+          ),
+        ],
+      ),
     );
-    final studentProvider = context.read<StudentProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    bool confirmed = true;
 
-    if (appSettingsProvider.settings.confirmBeforeDelete) {
-      confirmed = await showConfirmationDialog(
-        context: context,
-        title: 'Öğrenciyi Sil',
-        content: const Text(
-          'Bu öğrenciyi ve ilgili tüm verilerini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
-        ),
-        confirmText: 'Sil',
-      );
-    }
-
-    if (!confirmed) return;
-
-    try {
-      await studentProvider.deleteStudent(student.id);
+    if (confirmed == true) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('${student.name} başarıyla silindi.'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-    } on Exception catch (e) {
-      if (!mounted) return;
-      AppErrorHandler.handleError(context, e);
+      try {
+        await context.read<StudentProvider>().deleteStudent(student.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Öğrenci başarıyla silindi'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } on Exception catch (e) {
+        if (mounted) {
+          ErrorHandler.showErrorSnackBar(context, message: 'Hata: $e');
+        }
+      }
     }
   }
 
-  void _showBulkDeleteConfirmation() async {
-    final appSettingsProvider = Provider.of<AppSettingsProvider>(
-      context,
-      listen: false,
-    );
-    final studentProvider = context.read<StudentProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    bool confirmed = true;
-
-    if (appSettingsProvider.settings.confirmBeforeDelete) {
-      confirmed = await showConfirmationDialog(
-        context: context,
-        title: '${_selectedStudents.length} Öğrenciyi Sil',
+  void _showBulkDeleteConfirmation() {
+    showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${_selectedStudents.length} Öğrenciyi Sil'),
         content: const Text(
-          'Seçili öğrencileri ve ilgili tüm verilerini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+          'Seçili öğrencileri ve tüm ilgili verilerini kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
         ),
-        confirmText: 'Sil',
-      );
-    }
-
-    if (!confirmed) return;
-
-    try {
-      int successCount = 0;
-      int errorCount = 0;
-
-      for (var id in _selectedStudents) {
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Evet, Tümünü Sil'),
+          ),
+        ],
+      ),
+    ).then((confirmed) async {
+      if (confirmed == true) {
+        if (!mounted) return;
         try {
-          await studentProvider.deleteStudent(id);
-          successCount++;
-        } on Exception {
-          errorCount++;
+          final studentProvider = context.read<StudentProvider>();
+          for (var studentId in _selectedStudents) {
+            await studentProvider.deleteStudent(studentId);
+          }
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${_selectedStudents.length} öğrenci silindi'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            _toggleSelectionMode(); // İşlem sonrası seçim modunu kapat
+          }
+        } on Exception catch (e) {
+          if (mounted) {
+            ErrorHandler.showErrorSnackBar(context, message: 'Hata: $e');
+          }
         }
       }
-
-      if (!mounted) return;
-      setState(() {
-        _isSelectionMode = false;
-        _selectedStudents.clear();
-      });
-
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            '$successCount öğrenci başarıyla silindi. $errorCount öğrenci silinemedi.',
-          ),
-          backgroundColor: errorCount > 0
-              ? AppColors.warning
-              : AppColors.success,
-        ),
-      );
-    } on Exception catch (e) {
-      if (!mounted) return;
-      AppErrorHandler.handleError(context, e);
-    }
+    });
   }
 }

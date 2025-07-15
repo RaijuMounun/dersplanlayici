@@ -238,10 +238,11 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Veritabanı Yönetimi')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
+    appBar: AppBar(title: const Text('Veritabanı Yönetimi')),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,10 +335,11 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadDatabaseInfo,
-        tooltip: 'Yenile',
-        child: const Icon(Icons.refresh),
-      ),
-    );
+          ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: _loadDatabaseInfo,
+      tooltip: 'Yenile',
+      child: const Icon(Icons.refresh),
+    ),
+  );
 }

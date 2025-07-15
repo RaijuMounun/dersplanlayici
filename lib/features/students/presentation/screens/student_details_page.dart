@@ -23,7 +23,7 @@ class StudentDetailsPage extends StatefulWidget {
 
 class _StudentDetailsPageState extends State<StudentDetailsPage> {
   bool _isLoading = true;
-  Student? _student;
+  StudentModel? _student;
   List<Lesson> _lessons = [];
   bool _lessonsLoading = false;
 
@@ -146,20 +146,26 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
                   _buildBottomBarButton(
                     icon: Icons.add,
                     label: 'Ders Ekle',
-                    onPressed: () =>
-                        context.pushNamed(RouteNames.addLesson, queryParameters: {'studentId': _student!.id}),
+                    onPressed: () => context.pushNamed(
+                      RouteNames.addLesson,
+                      queryParameters: {'studentId': _student!.id},
+                    ),
                   ),
                   _buildBottomBarButton(
                     icon: Icons.payments,
                     label: 'Ödeme Ekle',
-                    onPressed: () =>
-                        context.pushNamed(RouteNames.addPayment, queryParameters: {'studentId': _student!.id}),
+                    onPressed: () => context.pushNamed(
+                      RouteNames.addPayment,
+                      queryParameters: {'studentId': _student!.id},
+                    ),
                   ),
                   _buildBottomBarButton(
                     icon: Icons.history,
                     label: 'Ödeme Geçmişi',
-                    onPressed: () =>
-                        context.pushNamed(RouteNames.feeHistory, queryParameters: {'studentId': _student!.id}),
+                    onPressed: () => context.pushNamed(
+                      RouteNames.feeHistory,
+                      queryParameters: {'studentId': _student!.id},
+                    ),
                   ),
                 ],
               ),
@@ -325,7 +331,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _student!.grade,
+                  _student!.grade ?? '',
                   style: TextStyle(
                     fontSize: ResponsiveUtils.responsiveFontSize(context, 16),
                     color: AppColors.textSecondary,
@@ -464,7 +470,10 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Ders Ekle'),
               onPressed: () {
-                context.pushNamed(RouteNames.addLesson, queryParameters: {'studentId': _student!.id});
+                context.pushNamed(
+                  RouteNames.addLesson,
+                  queryParameters: {'studentId': _student!.id},
+                );
               },
             ),
         ],
@@ -557,8 +566,9 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   );
 
   // Telefon araması yap
-  void _callStudent() {
+  void _callStudent() async {
     if (_student?.phone == null || _student!.phone!.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Öğrencinin telefon numarası bulunmuyor.'),
@@ -572,8 +582,9 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     final url = 'tel:$phoneNumber';
 
     try {
-      launchUrl(Uri.parse(url));
+      await launchUrl(Uri.parse(url));
     } on Exception catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Arama yapılamadı: $e'),
@@ -584,8 +595,9 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   }
 
   // E-posta gönder
-  void _sendEmail() {
+  void _sendEmail() async {
     if (_student?.email == null || _student!.email!.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Öğrencinin e-posta adresi bulunmuyor.'),
@@ -599,8 +611,9 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
         'mailto:${_student!.email}?subject=Ders%20Hakkında&body=Merhaba%20${_student!.name},';
 
     try {
-      launchUrl(Uri.parse(url));
+      await launchUrl(Uri.parse(url));
     } on Exception catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('E-posta gönderimi başlatılamadı: $e'),
@@ -611,47 +624,53 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   }
 
   // Düzenleme sayfasına yönlendir
-  void _navigateToEdit(BuildContext context) {
-    if (mounted) {
-      context.pushNamed(RouteNames.editStudent, pathParameters: {'id': _student!.id}).then((_) {
-        if (mounted) {
-          _loadStudentDetails();
-        }
-      });
+  void _navigateToEdit(BuildContext context) async {
+    final result = await context.pushNamed(
+      RouteNames.editStudent,
+      pathParameters: {'id': _student!.id},
+    );
+    // Eğer düzenleme sayfasından bir güncelleme bilgisiyle dönüldüyse
+    if (result == true) {
+      await _loadStudentDetails();
     }
   }
 
   // Öğrenci silme onayı
-  void _confirmDeleteStudent(BuildContext context) {
-    showDialog(
+  void _confirmDeleteStudent(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Öğrenciyi Sil'),
         content: Text(
-          '${_student!.name} adlı öğrenciyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve öğrenciye ait tüm dersler de silinecektir.',
+          '\'${_student!.name}\' adlı öğrenciyi kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('İptal'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              _deleteStudent();
-            },
+            onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Sil'),
+            child: const Text('Evet, Sil'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      await _deleteStudent();
+    }
   }
 
   // Öğrenciyi sil
   Future<void> _deleteStudent() async {
+    if (_student == null) return;
+
     try {
-      await context.read<StudentProvider>().deleteStudent(_student!.id);
+      final studentProvider = context.read<StudentProvider>();
+      await studentProvider.deleteStudent(_student!.id);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -659,10 +678,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        // Ana sayfaya dön
-        if (mounted) {
-          context.goNamed(RouteNames.home);
-        }
+        context.goNamed(RouteNames.home);
       }
     } on Exception catch (e) {
       if (mounted) {
@@ -681,7 +697,10 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     onPressed: () {
       // Yeni ders ekle
       if (mounted) {
-        context.pushNamed(RouteNames.addLesson, queryParameters: {'studentId': _student!.id});
+        context.pushNamed(
+          RouteNames.addLesson,
+          queryParameters: {'studentId': _student!.id},
+        );
       }
     },
     tooltip: 'Ders Ekle',

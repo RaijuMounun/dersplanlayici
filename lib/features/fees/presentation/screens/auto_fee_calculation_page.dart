@@ -24,7 +24,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
   bool _isLoading = true;
   TabController? _tabController;
   List<Map<String, dynamic>> _paymentSuggestions = [];
-  List<Student> _students = [];
+  List<StudentModel> _students = [];
   String? _selectedStudentId;
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
@@ -99,7 +99,7 @@ class _AutoFeeCalculationPageState extends State<AutoFeeCalculationPage>
       ).then((data) {
         if (mounted && data != null) {
           setState(() {
-            _students = data['students'] as List<Student>;
+            _students = data['students'] as List<StudentModel>;
             _paymentSuggestions =
                 data['suggestions'] as List<Map<String, dynamic>>;
             _isLoading = false;

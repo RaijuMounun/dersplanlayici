@@ -30,52 +30,50 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<StudentProvider>(
-      builder: (context, studentProvider, child) {
-        if (studentProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget build(BuildContext context) => Consumer<StudentProvider>(
+    builder: (context, studentProvider, child) {
+      if (studentProvider.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        if (studentProvider.error != null &&
-            studentProvider.error.toString().isNotEmpty) {
-          return Center(child: Text('Hata: ${studentProvider.error}'));
-        }
+      if (studentProvider.error != null &&
+          studentProvider.error.toString().isNotEmpty) {
+        return Center(child: Text('Hata: ${studentProvider.error}'));
+      }
 
-        if (studentProvider.students.isEmpty) {
-          return _buildEmptyState();
-        }
+      if (studentProvider.students.isEmpty) {
+        return _buildEmptyState();
+      }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Öğrenciler'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  // Arama işlevi
-                },
-              ),
-            ],
-          ),
-          body: _buildStudentsList(),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () async {
-              final studentProvider = Provider.of<StudentProvider>(
-                context,
-                listen: false,
-              );
-              await context.pushNamed(RouteNames.addStudent);
-              if (!mounted) return;
-              await studentProvider.loadStudents();
-            },
-            backgroundColor: AppColors.primary,
-            child: const Icon(Icons.person_add, color: Colors.white),
-          ),
-        );
-      },
-    );
-  }
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Öğrenciler'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                // Arama işlevi
+              },
+            ),
+          ],
+        ),
+        body: _buildStudentsList(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            final studentProvider = Provider.of<StudentProvider>(
+              context,
+              listen: false,
+            );
+            await context.pushNamed(RouteNames.addStudent);
+            if (!mounted) return;
+            await studentProvider.loadStudents();
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.person_add, color: Colors.white),
+        ),
+      );
+    },
+  );
 
   Widget _buildStudentsList() => Consumer<StudentProvider>(
     builder: (context, studentProvider, child) {
@@ -100,7 +98,7 @@ class _StudentsPageState extends State<StudentsPage> {
                   await context.pushNamed(RouteNames.addStudent);
                   // Geri dönüldüğünde listeyi yenilemek için
                   if (context.mounted) {
-                    context.read<StudentProvider>().loadStudents();
+                    await context.read<StudentProvider>().loadStudents();
                   }
                 },
                 child: const Text('Öğrenci Ekle'),
@@ -120,14 +118,14 @@ class _StudentsPageState extends State<StudentsPage> {
   );
 
   // Liste görünümü (mobil)
-  Widget _buildListView(List<Student> students) => ListView.builder(
+  Widget _buildListView(List<StudentModel> students) => ListView.builder(
     padding: const EdgeInsets.all(AppDimensions.spacing16),
     itemCount: students.length,
     itemBuilder: (context, index) => _buildStudentCard(students[index]),
   );
 
   // Grid görünümü (tablet ve desktop)
-  Widget _buildGridView(List<Student> students, int crossAxisCount) =>
+  Widget _buildGridView(List<StudentModel> students, int crossAxisCount) =>
       GridView.builder(
         padding: const EdgeInsets.all(AppDimensions.spacing16),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -141,9 +139,9 @@ class _StudentsPageState extends State<StudentsPage> {
       );
 
   // Öğrenci kartı
-  Widget _buildStudentCard(Student student) => StudentCard(
+  Widget _buildStudentCard(StudentModel student) => StudentCard(
     studentName: student.name,
-    studentGrade: student.grade,
+    studentGrade: student.grade ?? '',
     phoneNumber: student.phone,
     email: student.email,
     onTap: () async {
@@ -223,7 +221,7 @@ class _StudentsPageState extends State<StudentsPage> {
     ),
   );
 
-  void _showDeleteConfirmation(BuildContext context, Student student) {
+  void _showDeleteConfirmation(BuildContext context, StudentModel student) {
     // Dialog boyutunu responsive yap
     final dialogWidth = ResponsiveUtils.deviceValue(
       context: context,

@@ -327,19 +327,19 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
     final endTimeParts = _lesson!.endTime.split(':');
 
     final startDateTime = DateTime(
-      int.parse(dateParts[0]),
-      int.parse(dateParts[1]),
-      int.parse(dateParts[2]),
-      int.parse(startTimeParts[0]),
-      int.parse(startTimeParts[1]),
+      int.tryParse(dateParts[0]) ?? DateTime.now().year,
+      int.tryParse(dateParts[1]) ?? DateTime.now().month,
+      int.tryParse(dateParts[2]) ?? DateTime.now().day,
+      int.tryParse(startTimeParts[0]) ?? 0,
+      int.tryParse(startTimeParts.length > 1 ? startTimeParts[1] : '0') ?? 0,
     );
 
     final endDateTime = DateTime(
-      int.parse(dateParts[0]),
-      int.parse(dateParts[1]),
-      int.parse(dateParts[2]),
-      int.parse(endTimeParts[0]),
-      int.parse(endTimeParts[1]),
+      int.tryParse(dateParts[0]) ?? DateTime.now().year,
+      int.tryParse(dateParts[1]) ?? DateTime.now().month,
+      int.tryParse(dateParts[2]) ?? DateTime.now().day,
+      int.tryParse(endTimeParts[0]) ?? 0,
+      int.tryParse(endTimeParts.length > 1 ? endTimeParts[1] : '0') ?? 0,
     );
 
     final durationMinutes = endDateTime.difference(startDateTime).inMinutes;
@@ -484,7 +484,7 @@ class _LessonDetailsPageState extends State<LessonDetailsPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        student.grade,
+                        student.grade ?? '',
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,

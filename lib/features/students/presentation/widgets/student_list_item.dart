@@ -7,7 +7,7 @@ class StudentListItem extends StatelessWidget {
   const StudentListItem({
     super.key,
     required this.name,
-    required this.grade,
+    this.grade,
     this.subjects,
     required this.onTap,
     this.onEditPressed,
@@ -15,7 +15,7 @@ class StudentListItem extends StatelessWidget {
     this.isSelected = false,
   });
   final String name;
-  final String grade;
+  final String? grade;
   final List<String>? subjects;
   final VoidCallback onTap;
   final VoidCallback? onEditPressed;
@@ -46,13 +46,13 @@ class StudentListItem extends StatelessWidget {
     );
 
   String _buildSubtitle() {
-    String subtitle = grade;
+    String subtitle = grade ?? '';
 
     if (subjects != null && subjects!.isNotEmpty) {
       final subjectsText = subjects!.length > 3
           ? '${subjects!.take(3).join(', ')}...'
           : subjects!.join(', ');
-      subtitle += '\n$subjectsText';
+      subtitle += subtitle.isNotEmpty ? '\n$subjectsText' : subjectsText;
     }
 
     return subtitle;

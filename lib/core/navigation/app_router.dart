@@ -18,9 +18,10 @@ import 'route_names.dart';
 class AppRouter {
   /// Router'ı oluşturur
   static final GoRouter router = GoRouter(
-    initialLocation: '/students',
+    initialLocation: '/calendar',
     debugLogDiagnostics: true,
     routes: [
+      GoRoute(path: '/', redirect: (_, __) => '/calendar'),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             HomePage(navigationShell: navigationShell),
@@ -46,7 +47,11 @@ class AppRouter {
                   GoRoute(
                     path: 'add',
                     name: RouteNames.addLesson,
-                    builder: (context, state) => const AddEditLessonPage(),
+                    builder: (context, state) {
+                      final initialDate =
+                          state.uri.queryParameters['initialDate'];
+                      return AddEditLessonPage(initialDate: initialDate);
+                    },
                   ),
                   GoRoute(
                     path: ':id/details',
@@ -108,6 +113,13 @@ class AppRouter {
                     path: 'add',
                     name: RouteNames.addPayment,
                     builder: (context, state) => const AddPaymentPage(),
+                  ),
+                  GoRoute(
+                    path: 'edit/:paymentId',
+                    name: RouteNames.editPayment,
+                    builder: (context, state) => AddPaymentPage(
+                      paymentId: state.pathParameters['paymentId'],
+                    ),
                   ),
                   GoRoute(
                     path: 'transactions/:paymentId',

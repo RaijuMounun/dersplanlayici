@@ -106,9 +106,10 @@ class _PaymentListPageState extends State<PaymentListPage> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add_payment_fab_extended',
         onPressed: () async {
+          final paymentProvider = context.read<PaymentProvider>();
           await context.pushNamed(RouteNames.addPayment);
           if (mounted) {
-            context.read<PaymentProvider>().loadPayments();
+            await paymentProvider.loadPayments();
           }
         },
         icon: const Icon(Icons.add),
@@ -177,10 +178,18 @@ class _PaymentListPageState extends State<PaymentListPage> {
     controller: _searchController,
     decoration: InputDecoration(
       hintText: 'Ödeme ara...',
-      prefixIcon: const Icon(Icons.search),
+      prefixIcon: Icon(
+        Icons.search,
+        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+      ),
       suffixIcon: _searchQuery.isNotEmpty
           ? IconButton(
-              icon: const Icon(Icons.clear),
+              icon: Icon(
+                Icons.clear,
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+              ),
               onPressed: () {
                 setState(() {
                   _searchController.clear();
@@ -223,14 +232,18 @@ class _PaymentListPageState extends State<PaymentListPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Filtreler',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppDimensions.spacing16),
-          const Text(
+          Text(
             'Ödeme Durumu',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppDimensions.spacing8),
           _buildFilterOption('', 'Tümü'),
@@ -239,9 +252,11 @@ class _PaymentListPageState extends State<PaymentListPage> {
           _buildFilterOption('partiallyPaid', 'Kısmi Ödenmiş'),
           _buildFilterOption('overdue', 'Gecikmiş'),
           const SizedBox(height: AppDimensions.spacing24),
-          const Text(
+          Text(
             'Öğrenci İstatistikleri',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppDimensions.spacing8),
           _buildStatCard(),
@@ -252,6 +267,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
   Widget _buildFilterChip(String status, String label) {
     final isSelected = _statusFilter == status;
+    final theme = Theme.of(context);
 
     return FilterChip(
       label: Text(label),
@@ -261,11 +277,13 @@ class _PaymentListPageState extends State<PaymentListPage> {
           _statusFilter = selected ? status : '';
         });
       },
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.colorScheme.surface,
       selectedColor: AppColors.primary.withAlpha(50),
       checkmarkColor: AppColors.primary,
       labelStyle: TextStyle(
-        color: isSelected ? AppColors.primary : AppColors.textPrimary,
+        color: isSelected
+            ? AppColors.primary
+            : theme.textTheme.bodyMedium?.color,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
     );
@@ -273,6 +291,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
 
   Widget _buildFilterOption(String status, String label) {
     final isSelected = _statusFilter == status;
+    final theme = Theme.of(context);
 
     return InkWell(
       onTap: () {
@@ -292,14 +311,18 @@ class _PaymentListPageState extends State<PaymentListPage> {
               isSelected
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              color: isSelected
+                  ? AppColors.primary
+                  : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               size: 20,
             ),
             const SizedBox(width: AppDimensions.spacing8),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                color: isSelected
+                    ? AppColors.primary
+                    : theme.textTheme.bodyMedium?.color,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -314,23 +337,34 @@ class _PaymentListPageState extends State<PaymentListPage> {
       context,
       listen: false,
     );
+    final theme = Theme.of(context);
 
     if (paymentProvider.summaries.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 100,
-        child: Center(child: Text('İstatistik bulunamadı')),
+        child: Center(
+          child: Text(
+            'İstatistik bulunamadı',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
       );
     }
 
-    return const Card(
+    return Card(
       child: Padding(
-        padding: EdgeInsets.all(AppDimensions.spacing16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Özet', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: AppDimensions.spacing8),
-            Text('Yakında gelecek...'),
+            Text(
+              'Özet',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.spacing8),
+            Text('Yakında gelecek...', style: theme.textTheme.bodyMedium),
           ],
         ),
       ),
@@ -401,7 +435,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
         onTap: () {
           context.pushNamed(
             RouteNames.editPayment,
-            pathParameters: {'id': payment.id},
+            pathParameters: {'paymentId': payment.id},
           );
         },
         borderRadius: BorderRadius.circular(AppDimensions.radius8),
@@ -418,15 +452,15 @@ class _PaymentListPageState extends State<PaymentListPage> {
                       children: [
                         Text(
                           payment.studentName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           payment.description,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -457,33 +491,47 @@ class _PaymentListPageState extends State<PaymentListPage> {
               const SizedBox(height: AppDimensions.spacing12),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_today,
                     size: 16,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: AppDimensions.spacing4),
                   Text(
                     formattedDate,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                    ),
                   ),
                   if (payment.dueDate != null) ...[
                     const SizedBox(width: AppDimensions.spacing8),
-                    const Icon(
+                    Icon(
                       Icons.event,
                       size: 16,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: AppDimensions.spacing4),
                     Text(
                       'Son Ödeme: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(payment.dueDate!))}',
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      ),
                     ),
                   ],
                   const Spacer(),
                   Text(
                     '${currencyFormatter.format(payment.paidAmount)} / ${currencyFormatter.format(payment.amount)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -491,8 +539,10 @@ class _PaymentListPageState extends State<PaymentListPage> {
                 const SizedBox(height: AppDimensions.spacing8),
                 Text(
                   payment.notes!,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                     fontSize: 14,
                   ),
                   maxLines: 2,
@@ -509,7 +559,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
                     onPressed: () {
                       context.pushNamed(
                         RouteNames.editPayment,
-                        pathParameters: {'id': payment.id},
+                        pathParameters: {'paymentId': payment.id},
                       );
                     },
                   ),
@@ -594,14 +644,20 @@ class _PaymentListPageState extends State<PaymentListPage> {
         Icon(
           Icons.payments_outlined,
           size: 64,
-          color: AppColors.textSecondary.withAlpha(128),
+          color: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
         ),
         const SizedBox(height: AppDimensions.spacing16),
         Text(
           _searchQuery.isNotEmpty || _statusFilter.isNotEmpty
               ? 'Arama kriterlerine uygun ödeme bulunamadı'
               : 'Henüz ödeme kaydı bulunmuyor',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+          ),
         ),
         const SizedBox(height: AppDimensions.spacing24),
         ElevatedButton.icon(
@@ -616,7 +672,7 @@ class _PaymentListPageState extends State<PaymentListPage> {
               await context.pushNamed(RouteNames.addPayment);
               // Ödeme ekleme sayfasından döndükten sonra ödemeleri yeniden yükle
               if (mounted) {
-                context.read<PaymentProvider>().loadPayments();
+                await context.read<PaymentProvider>().loadPayments();
               }
             }
           },

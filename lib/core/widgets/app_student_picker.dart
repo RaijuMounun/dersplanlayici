@@ -18,7 +18,7 @@ class AppStudentPicker extends StatefulWidget {
     this.onAddPressed,
   });
   final String? initialSelectedId;
-  final List<Student> students;
+  final List<StudentModel> students;
   final Function(String) onStudentSelected;
   final String? label;
   final String hint;
@@ -34,7 +34,7 @@ class AppStudentPicker extends StatefulWidget {
 class _AppStudentPickerState extends State<AppStudentPicker> {
   String? _selectedStudentId;
   final TextEditingController _searchController = TextEditingController();
-  List<Student> _filteredStudents = [];
+  List<StudentModel> _filteredStudents = [];
 
   @override
   void initState() {
@@ -82,7 +82,8 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
           .where(
             (student) =>
                 student.name.toLowerCase().contains(lowerCaseQuery) ||
-                student.grade.toLowerCase().contains(lowerCaseQuery),
+                (student.grade?.toLowerCase().contains(lowerCaseQuery) ??
+                    false),
           )
           .toList();
     });
@@ -94,7 +95,7 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
     final selectedStudent = _selectedStudentId != null
         ? widget.students.firstWhere(
             (student) => student.id == _selectedStudentId,
-            orElse: () => Student(id: '0', name: '', grade: ''),
+            orElse: StudentModel.empty,
           )
         : null;
 
@@ -258,8 +259,9 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
                               child: Text(
                                 'Öğrenci bulunamadı',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.7),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.7,
+                                  ),
                                 ),
                               ),
                             )
@@ -292,7 +294,7 @@ class _AppStudentPickerState extends State<AppStudentPicker> {
                                     style: theme.textTheme.bodyLarge,
                                   ),
                                   subtitle: Text(
-                                    student.grade,
+                                    student.grade ?? '',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: theme.colorScheme.onSurface
                                           .withValues(alpha: 0.7),

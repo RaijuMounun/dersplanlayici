@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ders_planlayici/core/theme/app_colors.dart';
 import 'package:ders_planlayici/core/theme/app_dimensions.dart';
-import 'package:ders_planlayici/core/widgets/loading_indicator.dart';
 import 'package:ders_planlayici/features/fees/domain/models/payment_model.dart';
 import 'package:ders_planlayici/features/fees/presentation/providers/payment_provider.dart';
 import 'package:ders_planlayici/core/navigation/route_names.dart';
@@ -18,118 +17,94 @@ class EditPaymentPage extends StatefulWidget {
 }
 
 class _EditPaymentPageState extends State<EditPaymentPage> {
-  bool _isLoading = true;
-  PaymentModel? _payment;
+  // Bu state'ler Provider'a taşındı.
+  // bool _isLoading = true;
+  // PaymentModel? _payment;
 
   @override
   void initState() {
     super.initState();
-    _loadPayment();
-  }
-
-  Future<void> _loadPayment() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final paymentProvider = Provider.of<PaymentProvider>(
-        context,
-        listen: false,
-      );
-      _payment = paymentProvider.getPaymentById(widget.id);
-
-      if (_payment == null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PaymentProvider>().initializeForm(widget.id).catchError((e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ödeme bulunamadı'),
+            SnackBar(
+              content: Text('Ödeme yüklenirken hata oluştu: $e'),
               backgroundColor: AppColors.error,
             ),
           );
           context.pop();
         }
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ödeme yüklenirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+      });
+    });
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(_isEditMode ? 'Ödemeyi Düzenle' : 'Yeni Ödeme'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.edit),
-          tooltip: 'Düzenle',
-          onPressed: () {
-            // Ödeme düzenleme sayfasına git
-            context.pushNamed(
-              RouteNames.addPayment,
-              queryParameters: {'id': widget.id},
-            );
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.payment),
-          tooltip: 'Ödeme İşlemleri',
-          onPressed: () {
-            // Ödeme işlemleri sayfasına git
-            context.pushNamed(
-              RouteNames.paymentTransactions,
-              pathParameters: {'id': widget.id},
-            );
-          },
+  Widget build(BuildContext context) {
+    final paymentProvider = context.watch<PaymentProvider>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(paymentProvider.isEditMode ? 'Ödemeyi Düzenle' : 'Yeni Ödeme'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: 'Düzenle',
+            onPressed: () {
+              // Ödeme düzenleme sayfasına git
+              context.pushNamed(
+                RouteNames.addPayment,
+                queryParameters: {'id': widget.id},
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.payment),
+            tooltip: 'Ödeme İşlemleri',
+            onPressed: () {
+              // Ödeme işlemleri sayfasına git
+              context.pushNamed(
+                RouteNames.paymentTransactions,
+                pathParameters: {'id': widget.id},
+              );
+            },
+          ),
+        ],
+      ),
+      body: paymentProvider.isInitializing
+          ? const Center(child: CircularProgressIndicator())
+          : paymentProvider.editingPayment == null
+              ? const Center(child: Text('Ödeme bulunamadı'))
+              : _buildPaymentDetails(paymentProvider.editingPayment!),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Yeni ödeme işlemi ekle
+          context.pushNamed(
+            RouteNames.addPaymentTransaction,
+            pathParameters: {'id': widget.id},
+          );
+        },
+        tooltip: 'Ödeme İşlemi Ekle',
+        child: const Icon(Icons.add),
+      ),
+      persistentFooterButtons: [
+        Center(
+          child: TextButton.icon(
+            onPressed: () {
+              context.pushNamed(
+                RouteNames.paymentTransactions,
+                pathParameters: {'id': widget.id},
+              );
+            },
+            icon: const Icon(Icons.history),
+            label: const Text('Tüm İşlem Geçmişini Görüntüle'),
+          ),
         ),
       ],
-    ),
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : _payment == null
-        ? const Center(child: Text('Ödeme bulunamadı'))
-        : _buildPaymentDetails(),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () {
-        // Yeni ödeme işlemi ekle
-        context.pushNamed(
-          RouteNames.addPaymentTransaction,
-          pathParameters: {'id': widget.id},
-        );
-      },
-      tooltip: 'Ödeme İşlemi Ekle',
-      child: const Icon(Icons.add),
-    ),
-    persistentFooterButtons: [
-      Center(
-        child: TextButton.icon(
-          onPressed: () {
-            context.pushNamed(
-              RouteNames.paymentTransactions,
-              pathParameters: {'id': widget.id},
-            );
-          },
-          icon: const Icon(Icons.history),
-          label: const Text('Tüm İşlem Geçmişini Görüntüle'),
-        ),
-      ),
-    ],
-  );
+    );
+  }
 
-  Widget _buildPaymentDetails() {
+  Widget _buildPaymentDetails(PaymentModel payment) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'tr_TR',
       symbol: '₺',
@@ -138,13 +113,13 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
 
     final formattedDate = DateFormat(
       'dd/MM/yyyy',
-    ).format(DateTime.parse(_payment!.date));
+    ).format(DateTime.parse(payment.date));
 
     String? formattedDueDate;
-    if (_payment!.dueDate != null) {
+    if (payment.dueDate != null) {
       formattedDueDate = DateFormat(
         'dd/MM/yyyy',
-      ).format(DateTime.parse(_payment!.dueDate!));
+      ).format(DateTime.parse(payment.dueDate!));
     }
 
     return SingleChildScrollView(
@@ -165,13 +140,13 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _payment!.studentName,
+                              payment.studentName,
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Text(_payment!.description),
+                            Text(payment.description),
                           ],
                         ),
                       ),
@@ -182,16 +157,16 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                         ),
                         decoration: BoxDecoration(
                           color: _getStatusColor(
-                            _payment!.status,
+                            payment.status,
                           ).withAlpha(40),
                           borderRadius: BorderRadius.circular(
                             AppDimensions.radius4,
                           ),
                         ),
                         child: Text(
-                          _getStatusText(_payment!.status),
+                          _getStatusText(payment.status),
                           style: TextStyle(
-                            color: _getStatusColor(_payment!.status),
+                            color: _getStatusColor(payment.status),
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -208,7 +183,7 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                         children: [
                           const Text('Toplam Tutar'),
                           Text(
-                            currencyFormatter.format(_payment!.amount),
+                            currencyFormatter.format(payment.amount),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -221,11 +196,11 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                         children: [
                           const Text('Ödenen Tutar'),
                           Text(
-                            currencyFormatter.format(_payment!.paidAmount),
+                            currencyFormatter.format(payment.paidAmount),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: _payment!.paidAmount >= _payment!.amount
+                              color: payment.paidAmount >= payment.amount
                                   ? AppColors.success
                                   : AppColors.warning,
                             ),
@@ -236,15 +211,15 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                   ),
                   const SizedBox(height: AppDimensions.spacing8),
                   LinearProgressIndicator(
-                    value: _payment!.amount > 0
-                        ? (_payment!.paidAmount / _payment!.amount).clamp(
+                    value: payment.amount > 0
+                        ? (payment.paidAmount / payment.amount).clamp(
                             0.0,
                             1.0,
                           )
                         : 0,
                     backgroundColor: AppColors.background,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      _payment!.paidAmount >= _payment!.amount
+                      payment.paidAmount >= payment.amount
                           ? AppColors.success
                           : AppColors.warning,
                     ),
@@ -269,22 +244,22 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                   _buildInfoRow('Ödeme Tarihi', formattedDate),
                   if (formattedDueDate != null)
                     _buildInfoRow('Son Ödeme Tarihi', formattedDueDate),
-                  if (_payment!.method != null)
+                  if (payment.method != null)
                     _buildInfoRow(
                       'Ödeme Yöntemi',
-                      _getPaymentMethodText(_payment!.method!),
+                      _getPaymentMethodText(payment.method!),
                     ),
                   _buildInfoRow(
                     'Kalan Tutar',
                     currencyFormatter.format(
-                      _payment!.amount - _payment!.paidAmount,
+                      payment.amount - payment.paidAmount,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          if (_payment!.notes != null && _payment!.notes!.isNotEmpty) ...[
+          if (payment.notes != null && payment.notes!.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.spacing16),
             Card(
               child: Padding(
@@ -300,7 +275,7 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                       ),
                     ),
                     const SizedBox(height: AppDimensions.spacing8),
-                    Text(_payment!.notes!),
+                    Text(payment.notes!),
                   ],
                 ),
               ),
@@ -350,74 +325,6 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
       ],
     ),
   );
-
-  void _confirmDelete() {
-    // Store context in a local variable to avoid using across async gaps
-    final dialogContext = context;
-    showDialog(
-      context: dialogContext,
-      builder: (context) => AlertDialog(
-        title: const Text('Ödemeyi Sil'),
-        content: const Text(
-          'Bu ödemeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deletePayment();
-            },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Sil'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _deletePayment() async {
-    try {
-      if (!mounted) return;
-      // Store context in a local variable
-      final localContext = context;
-      // Provider'ı önceden al
-      final provider = Provider.of<PaymentProvider>(
-        localContext,
-        listen: false,
-      );
-
-      await LoadingIndicator.wrapWithLoading(
-        context: localContext,
-        message: 'Ödeme siliniyor...',
-        future: Future(() async {
-          await provider.deletePayment(widget.id);
-        }),
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ödeme silindi'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        context.pop();
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ödeme silinirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
 
   Color _getStatusColor(PaymentStatus status) {
     switch (status) {

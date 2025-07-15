@@ -48,11 +48,15 @@ class DatabaseHelper {
       // Veritabanını oluştur veya aç
       return await openDatabase(
         path,
-        version: 6,
+        version: 7,
         onCreate: _createDb,
         onUpgrade: _onUpgradeDb,
-        onOpen: (db) {
-          developer.log('Veritabanı açıldı: ${db.path}');
+        onOpen: (db) async {
+          developer.log(
+            'Veritabanı açıldı: ${db.path}. Tabloların varlığı kontrol ediliyor...',
+          );
+          // Her açılışta tabloların ve başlangıç verilerinin varlığını garantile
+          await _createDb(db, 7);
         },
       );
     } catch (e, stackTrace) {
@@ -161,8 +165,8 @@ class DatabaseHelper {
             method TEXT,
             notes TEXT,
             lessonIds TEXT,
-            createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL,
+            createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
           )
         ''');
@@ -325,6 +329,41 @@ class DatabaseHelper {
         }
       }
 
+      if (oldVersion < 7) {
+        // Versiyon 6'dan 7'ye geçiş - payments tablosuna default timestamp ekle
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS payments_new(
+              id TEXT PRIMARY KEY,
+              studentId TEXT NOT NULL,
+              studentName TEXT NOT NULL,
+              description TEXT NOT NULL,
+              amount REAL NOT NULL,
+              paidAmount REAL DEFAULT 0,
+              date TEXT NOT NULL,
+              dueDate TEXT,
+              status TEXT NOT NULL,
+              method TEXT,
+              notes TEXT,
+              lessonIds TEXT,
+              createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
+            )
+          ''');
+          await db.execute(
+            'INSERT INTO payments_new(id, studentId, studentName, description, amount, paidAmount, date, dueDate, status, method, notes, lessonIds) SELECT id, studentId, studentName, description, amount, paidAmount, date, dueDate, status, method, notes, lessonIds FROM payments',
+          );
+          await db.execute('DROP TABLE payments');
+          await db.execute('ALTER TABLE payments_new RENAME TO payments');
+          developer.log(
+            'payments tablosu timestamp varsayılanları ile güncellendi.',
+          );
+        } on Exception catch (e) {
+          developer.log('payments tablosu güncellenirken hata oluştu: $e');
+        }
+      }
+
       developer.log('Veritabanı başarıyla güncellendi.');
     } catch (e) {
       developer.log('Veritabanı güncelleme hatası: $e');
@@ -339,7 +378,7 @@ class DatabaseHelper {
 
       // Öğrenci tablosu
       await db.execute('''
-        CREATE TABLE students(
+        CREATE TABLE IF NOT EXISTS students(
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           grade TEXT NOT NULL,
@@ -356,7 +395,7 @@ class DatabaseHelper {
 
       // Tekrarlanan ders desenleri tablosu
       await db.execute('''
-        CREATE TABLE recurring_patterns(
+        CREATE TABLE IF NOT EXISTS recurring_patterns(
           id TEXT PRIMARY KEY,
           type TEXT NOT NULL,
           interval INTEGER NOT NULL,
@@ -372,7 +411,7 @@ class DatabaseHelper {
 
       // Ders tablosu
       await db.execute('''
-        CREATE TABLE lessons(
+        CREATE TABLE IF NOT EXISTS lessons(
           id TEXT PRIMARY KEY,
           studentId TEXT NOT NULL,
           studentName TEXT NOT NULL,
@@ -395,7 +434,7 @@ class DatabaseHelper {
 
       // Ödemeler tablosu
       await db.execute('''
-        CREATE TABLE payments(
+        CREATE TABLE IF NOT EXISTS payments(
           id TEXT PRIMARY KEY,
           studentId TEXT NOT NULL,
           studentName TEXT NOT NULL,
@@ -408,8 +447,8 @@ class DatabaseHelper {
           method TEXT,
           notes TEXT,
           lessonIds TEXT,
-          createdAt TEXT NOT NULL,
-          updatedAt TEXT NOT NULL,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (studentId) REFERENCES students (id) ON DELETE CASCADE
         )
       ''');
@@ -417,7 +456,7 @@ class DatabaseHelper {
 
       // Ödeme işlemleri tablosu
       await db.execute('''
-        CREATE TABLE payment_transactions(
+        CREATE TABLE IF NOT EXISTS payment_transactions(
           id TEXT PRIMARY KEY,
           paymentId TEXT NOT NULL,
           amount REAL NOT NULL,
@@ -434,7 +473,7 @@ class DatabaseHelper {
 
       // Ücret tablosu
       await db.execute('''
-        CREATE TABLE fees(
+        CREATE TABLE IF NOT EXISTS fees(
           id TEXT PRIMARY KEY,
           studentId TEXT NOT NULL,
           studentName TEXT NOT NULL,
@@ -455,12 +494,12 @@ class DatabaseHelper {
 
       // Ayarlar tablosu
       await db.execute('''
-        CREATE TABLE app_settings(
+        CREATE TABLE IF NOT EXISTS app_settings(
           id TEXT PRIMARY KEY,
           themeMode TEXT NOT NULL,
           lessonNotificationTime TEXT NOT NULL,
           showWeekends INTEGER NOT NULL DEFAULT 1,
-          defaultLessonDuration INTEGER NOT NULL DEFAULT 90,
+          defaultLessonDuration INTEGER NOT NULL DEFAULT 60,
           defaultLessonFee REAL NOT NULL DEFAULT 0,
           currency TEXT,
           defaultSubject TEXT,
@@ -479,7 +518,7 @@ class DatabaseHelper {
 
       // Takvim etkinlikleri tablosu
       await db.execute('''
-        CREATE TABLE calendar_events(
+        CREATE TABLE IF NOT EXISTS calendar_events(
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
           date TEXT NOT NULL,
@@ -497,7 +536,7 @@ class DatabaseHelper {
 
       // Veritabanı yedekleri tablosu
       await db.execute('''
-        CREATE TABLE database_backups(
+        CREATE TABLE IF NOT EXISTS database_backups(
           id TEXT PRIMARY KEY,
           path TEXT NOT NULL,
           fileName TEXT NOT NULL,
@@ -509,7 +548,7 @@ class DatabaseHelper {
 
       // Holidays tablosu (tatiller)
       await db.execute('''
-        CREATE TABLE holidays(
+        CREATE TABLE IF NOT EXISTS holidays(
           date TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           isNationalHoliday INTEGER NOT NULL DEFAULT 0,
@@ -518,9 +557,51 @@ class DatabaseHelper {
         )
       ''');
       developer.log('Tatiller tablosu oluşturuldu');
+
+      // Veritabanı oluşturulduktan sonra başlangıç verilerini ekle
+      await _seedDatabase(db);
     } catch (e) {
       developer.log('Tablo oluşturma hatası: $e');
       developer.log('Hata stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
+  // Veritabanına başlangıç verilerini ekler
+  Future<void> _seedDatabase(Database db) async {
+    try {
+      // Ayarların zaten var olup olmadığını kontrol et
+      final existingSettings = await db.query('app_settings', limit: 1);
+      if (existingSettings.isEmpty) {
+        developer.log('Veritabanına başlangıç verileri ekleniyor...');
+
+        // Varsayılan ayarları ekle
+        final now = DateTime.now().toIso8601String();
+        await db.insert('app_settings', {
+          'id': '1',
+          'themeMode': 'system',
+          'lessonNotificationTime': '15',
+          'showWeekends': 1,
+          'defaultLessonDuration': 60,
+          'defaultLessonFee': 100.0,
+          'currency': 'TRY',
+          'defaultSubject': 'Özel Ders',
+          'confirmBeforeDelete': 1,
+          'showLessonColors': 1,
+          'lessonRemindersEnabled': 1,
+          'reminderMinutes': 15,
+          'paymentRemindersEnabled': 1,
+          'birthdayRemindersEnabled': 1,
+          'additionalSettings': '{}',
+          'createdAt': now,
+          'updatedAt': now,
+        });
+
+        developer.log('Başlangıç verileri başarıyla eklendi.');
+      }
+    } catch (e) {
+      developer.log('Başlangıç verileri eklenirken hata: $e');
+      // Hata oluşursa yeniden fırlat, böylece daha üst katmanlarda yakalanabilir
       rethrow;
     }
   }
@@ -560,7 +641,10 @@ class DatabaseHelper {
       student['updatedAt'] = now;
       return await db.insert('students', student);
     } catch (e) {
-      developer.log('Öğrenci ekleme hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Öğrenci ekleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -576,7 +660,10 @@ class DatabaseHelper {
         whereArgs: [student['id']],
       );
     } catch (e) {
-      developer.log('Öğrenci güncelleme hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Öğrenci güncelleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -596,7 +683,10 @@ class DatabaseHelper {
       final db = await database;
       return await db.query('students');
     } catch (e) {
-      developer.log('Öğrenci listesi alma hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Öğrenci listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -672,7 +762,10 @@ class DatabaseHelper {
         whereArgs: [lesson['id']],
       );
     } catch (e) {
-      developer.log('Ders güncelleme hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Ders güncelleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -692,7 +785,10 @@ class DatabaseHelper {
       final db = await database;
       return await db.query('lessons', orderBy: 'date, startTime');
     } catch (e) {
-      developer.log('Ders listesi alma hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -707,7 +803,10 @@ class DatabaseHelper {
         orderBy: 'startTime',
       );
     } catch (e) {
-      developer.log('Tarihe göre ders listesi alma hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Tarihe göre ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -724,7 +823,10 @@ class DatabaseHelper {
         orderBy: 'date DESC, startTime',
       );
     } catch (e) {
-      developer.log('Öğrenciye göre ders listesi alma hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Öğrenciye göre ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -742,7 +844,10 @@ class DatabaseHelper {
         orderBy: 'date ASC, startTime ASC',
       );
     } catch (e) {
-      developer.log('Tarih aralığına göre ders listesi alma hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Tarih aralığına göre ders listesi alma hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -797,7 +902,10 @@ class DatabaseHelper {
       }
       await batch.commit(noResult: true);
     } catch (e) {
-      developer.log('Toplu ders ekleme hatası: $e', stackTrace: StackTrace.current);
+      developer.log(
+        'Toplu ders ekleme hatası: $e',
+        stackTrace: StackTrace.current,
+      );
       rethrow;
     }
   }
@@ -807,29 +915,43 @@ class DatabaseHelper {
     () async {
       developer.log('Veritabanı sıfırlanıyor...');
       final db = await database;
+      final path = db.path;
 
-      // Tüm tabloları sil
-      await db.execute('DROP TABLE IF EXISTS payment_transactions');
-      await db.execute('DROP TABLE IF EXISTS payments');
-      await db.execute('DROP TABLE IF EXISTS holidays');
-      await db.execute('DROP TABLE IF EXISTS database_backups');
-      await db.execute('DROP TABLE IF EXISTS app_settings');
-      await db.execute('DROP TABLE IF EXISTS calendar_events');
-      await db.execute('DROP TABLE IF EXISTS lessons');
-      await db.execute('DROP TABLE IF EXISTS recurring_patterns');
-      await db.execute('DROP TABLE IF EXISTS students');
-
-      // Veritabanını kapat ve yeniden aç
+      // Veritabanını kapat
       await db.close();
       _database = null;
 
-      // Yeni veritabanı oluştur
-      await database;
+      // Veritabanı dosyasını sil
+      try {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+          developer.log('Veritabanı dosyası silindi: $path');
+        }
+      } catch (e) {
+        developer.log('Veritabanı dosyası silinirken hata: $e');
+        rethrow;
+      }
+
+      // Yeni veritabanı ve tabloları oluştur
+      await database; // Bu, _initDatabase -> _createDb -> _seedDatabase zincirini tetikleyecektir
       developer.log('Veritabanı başarıyla sıfırlandı');
     },
     errorMessage: 'Veritabanı sıfırlanamadı',
     shouldRethrow: true,
   );
+
+  // ignore: unused_element
+  Future<void> _dropAllTables(Database db) async {
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_metadata'",
+    );
+    for (final table in tables) {
+      final tableName = table['name'] as String;
+      await db.execute('DROP TABLE IF EXISTS $tableName');
+      developer.log('$tableName tablosu silindi.');
+    }
+  }
 
   // Veritabanını yedekler
   Future<String> backupDatabase() async => ErrorHandler.handleError<String>(
@@ -1496,7 +1618,11 @@ class DatabaseHelper {
         orderBy: 'date DESC',
       );
     } catch (e, s) {
-      developer.log('Öğrenciye göre ödemeler alınırken hata', error: e, stackTrace: s);
+      developer.log(
+        'Öğrenciye göre ödemeler alınırken hata',
+        error: e,
+        stackTrace: s,
+      );
       rethrow;
     }
   }
@@ -1564,7 +1690,11 @@ class DatabaseHelper {
       );
       return results.firstOrNull;
     } catch (e, s) {
-      developer.log('ID ile ödeme işlemi alınırken hata', error: e, stackTrace: s);
+      developer.log(
+        'ID ile ödeme işlemi alınırken hata',
+        error: e,
+        stackTrace: s,
+      );
       rethrow;
     }
   }
@@ -1593,7 +1723,11 @@ class DatabaseHelper {
         whereArgs: [transaction['id']],
       );
     } catch (e, s) {
-      developer.log('Ödeme işlemi güncellenirken hata', error: e, stackTrace: s);
+      developer.log(
+        'Ödeme işlemi güncellenirken hata',
+        error: e,
+        stackTrace: s,
+      );
       rethrow;
     }
   }

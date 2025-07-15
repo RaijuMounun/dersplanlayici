@@ -52,12 +52,24 @@ class LessonRepository {
   }
 
   Future<void> addLesson(Lesson lesson) async {
-    final newLesson = lesson.copyWith(id: _uuid.v4());
+    // Öğrenci adını veritabanından alıp lesson nesnesine ekle
+    final studentMap = await _databaseHelper.getStudent(lesson.studentId);
+    final studentName = studentMap?['name'] as String? ?? 'Bilinmeyen Öğrenci';
+
+    final newLesson = lesson.copyWith(
+      id: _uuid.v4(),
+      studentName: studentName,
+    );
     await _databaseHelper.insertLesson(newLesson.toMap());
   }
 
   Future<void> updateLesson(Lesson lesson) async {
-    await _databaseHelper.updateLesson(lesson.toMap());
+    // Öğrenci adını veritabanından alıp lesson nesnesine ekle
+    final studentMap = await _databaseHelper.getStudent(lesson.studentId);
+    final studentName = studentMap?['name'] as String? ?? 'Bilinmeyen Öğrenci';
+
+    final updatedLesson = lesson.copyWith(studentName: studentName);
+    await _databaseHelper.updateLesson(updatedLesson.toMap());
   }
 
   Future<void> deleteLesson(String id) async {

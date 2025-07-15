@@ -7,22 +7,22 @@ class StudentRepository {
   final DatabaseHelper _databaseHelper;
   final Uuid _uuid = const Uuid();
 
-  Future<List<Student>> getAllStudents() async {
+  Future<List<StudentModel>> getAllStudents() async {
     final studentMaps = await _databaseHelper.getStudents();
-    return studentMaps.map(Student.fromMap).toList();
+    return studentMaps.map(StudentModel.fromMap).toList();
   }
 
-  Future<Student?> getStudent(String id) async {
+  Future<StudentModel?> getStudent(String id) async {
     final studentMap = await _databaseHelper.getStudent(id);
-    return studentMap != null ? Student.fromMap(studentMap) : null;
+    return studentMap != null ? StudentModel.fromMap(studentMap) : null;
   }
 
-  Future<void> addStudent(Student student) async {
+  Future<void> addStudent(StudentModel student) async {
     final newStudent = student.copyWith(id: _uuid.v4());
     await _databaseHelper.insertStudent(newStudent.toMap());
   }
 
-  Future<void> updateStudent(Student student) async {
+  Future<void> updateStudent(StudentModel student) async {
     await _databaseHelper.updateStudent(student.toMap());
   }
 
@@ -30,8 +30,8 @@ class StudentRepository {
     await _databaseHelper.deleteStudent(id);
   }
 
-  Future<List<Student>> searchStudents(String query) async {
+  Future<List<StudentModel>> searchStudents(String query) async {
     final studentMaps = await _databaseHelper.searchStudents(query);
-    return studentMaps.map(Student.fromMap).toList();
+    return studentMaps.map(StudentModel.fromMap).toList();
   }
 }

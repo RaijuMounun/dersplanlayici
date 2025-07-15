@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 
 /// Ödeme işlemlerini yöneten Provider sınıfı.
 class PaymentProvider extends ChangeNotifier {
-
   PaymentProvider(this._repository) {
     loadPayments();
   }
@@ -18,10 +17,50 @@ class PaymentProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  // EditPaymentPage için state
+  PaymentModel? _editingPayment;
+  bool _isEditMode = false;
+  bool _isInitializing = false;
+
   List<PaymentModel> get payments => _payments;
   List<FeeSummary> get summaries => _summaries;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  // EditPaymentPage için getter'lar
+  PaymentModel? get editingPayment => _editingPayment;
+  bool get isEditMode => _isEditMode;
+  bool get isInitializing => _isInitializing;
+
+  Future<void> initializeForm(String paymentId) async {
+    _isInitializing = true;
+    _isEditMode = true; // Bu sayfa her zaman düzenleme modundadır
+    notifyListeners();
+
+    try {
+      // Önce provider'ın kendi listesinden bulmayı dene
+      _editingPayment = null;
+      for (final payment in _payments) {
+        if (payment.id == paymentId) {
+          _editingPayment = payment;
+          break;
+        }
+      }
+
+      // Eğer bulunamazsa, repodan tek başına çek
+      _editingPayment ??= await _repository.getPaymentById(paymentId);
+
+      if (_editingPayment == null) {
+        throw const AppException(message: 'Ödeme bulunamadı.');
+      }
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    } finally {
+      _isInitializing = false;
+      notifyListeners();
+    }
+  }
 
   Future<T> _executeAction<T>(Future<T> Function() action) async {
     _isLoading = true;
@@ -61,12 +100,15 @@ class PaymentProvider extends ChangeNotifier {
   }
 
   /// Tek bir öğrencinin ücret özetini yükler.
-  Future<FeeSummary?> loadStudentFeeSummary(String studentId) async => _executeAction(() => _repository.getStudentFeeSummary(studentId));
+  Future<FeeSummary?> loadStudentFeeSummary(String studentId) async =>
+      _executeAction(() => _repository.getStudentFeeSummary(studentId));
 
   /// Ödeme ekler.
   Future<void> addPayment(PaymentModel payment) async {
     if (payment.amount <= 0) {
-      throw const ValidationException(message: 'Ödeme miktarı sıfırdan büyük olmalıdır');
+      throw const ValidationException(
+        message: 'Ödeme miktarı sıfırdan büyük olmalıdır',
+      );
     }
     await _executeAction(() => _repository.addPayment(payment));
     await loadPayments();
@@ -75,7 +117,9 @@ class PaymentProvider extends ChangeNotifier {
   /// Ödeme günceller.
   Future<void> updatePayment(PaymentModel payment) async {
     if (payment.amount <= 0) {
-      throw const ValidationException(message: 'Ödeme miktarı sıfırdan büyük olmalıdır');
+      throw const ValidationException(
+        message: 'Ödeme miktarı sıfırdan büyük olmalıdır',
+      );
     }
     await _executeAction(() => _repository.updatePayment(payment));
     await loadPayments();

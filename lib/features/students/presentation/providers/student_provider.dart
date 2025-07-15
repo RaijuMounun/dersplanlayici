@@ -14,11 +14,11 @@ class StudentProvider extends ChangeNotifier {
   }
   final StudentRepository _repository;
 
-  List<Student> _students = [];
+  List<StudentModel> _students = [];
   bool _isLoading = false;
   String? _error;
 
-  List<Student> get students => _students;
+  List<StudentModel> get students => _students;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -56,13 +56,13 @@ class StudentProvider extends ChangeNotifier {
   }
 
   /// Yeni bir öğrenci ekler ve listeyi günceller.
-  Future<void> addStudent(Student student) async {
+  Future<void> addStudent(StudentModel student) async {
     await _executeAction(() => _repository.addStudent(student));
     await loadStudents(); // Listeyi yenile
   }
 
   /// Mevcut bir öğrenciyi günceller ve listeyi günceller.
-  Future<void> updateStudent(Student student) async {
+  Future<void> updateStudent(StudentModel student) async {
     await _executeAction(() => _repository.updateStudent(student));
     await loadStudents(); // Listeyi yenile
   }
@@ -74,11 +74,11 @@ class StudentProvider extends ChangeNotifier {
   }
 
   /// ID'ye göre önbellekteki öğrenciler arasından arama yapar.
-  Student? getStudentById(String id) => _students.firstWhereOrNull((student) => student.id == id);
+  StudentModel? getStudentById(String id) => _students.firstWhereOrNull((student) => student.id == id);
 
   /// Veritabanında arama yapar ve arama sonuçlarını döndürür.
   /// Bu metot, provider'ın ana listesini (`_students`) değiştirmez.
-  Future<List<Student>> searchStudents(String query) async {
+  Future<List<StudentModel>> searchStudents(String query) async {
     if (query.trim().isEmpty) {
       return _students;
     }

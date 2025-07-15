@@ -7,7 +7,6 @@ import 'package:ders_planlayici/features/lessons/presentation/providers/lesson_p
 import 'package:ders_planlayici/features/lessons/domain/models/lesson_model.dart';
 import 'package:ders_planlayici/core/utils/responsive_utils.dart';
 import 'package:ders_planlayici/core/widgets/responsive_layout.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ders_planlayici/core/navigation/route_names.dart';
 
@@ -236,15 +235,46 @@ class _LessonsPageState extends State<LessonsPage>
       ListView.builder(
         padding: const EdgeInsets.all(AppDimensions.spacing8),
         itemCount: lessons.length,
-        itemBuilder: (context, index) => GestureDetector(
-          onLongPress: () {
-            if (!_isSelectionMode) {
-              _toggleSelectionMode();
-              _toggleLessonSelection(lessons[index].id);
-            }
-          },
-          child: _buildLessonItem(lessons[index]),
-        ),
+        itemBuilder: (context, index) {
+          final lesson = lessons[index];
+          return GestureDetector(
+            onLongPress: () {
+              if (!_isSelectionMode) {
+                _toggleSelectionMode();
+                _toggleLessonSelection(lesson.id);
+              }
+            },
+            child: LessonListItem(
+              lessonTitle: lesson.subject,
+              studentName: lesson.studentName,
+              startTime: DateTime.tryParse(
+                '${lesson.date}T${lesson.startTime}',
+              ),
+              endTime: DateTime.tryParse('${lesson.date}T${lesson.endTime}'),
+              isCompleted: lesson.status == LessonStatus.completed,
+              fee: lesson.fee,
+              isRecurring: lesson.recurringPatternId != null,
+              isSelected: _selectedLessons.contains(lesson.id),
+              onTap: () {
+                if (_isSelectionMode) {
+                  _toggleLessonSelection(lesson.id);
+                } else {
+                  // Ders detaylarına git
+                  context.pushNamed(
+                    RouteNames.lessonDetails,
+                    pathParameters: {'id': lesson.id},
+                  );
+                }
+              },
+              onEditPressed: () => context.pushNamed(
+                RouteNames.editLesson,
+                pathParameters: {'id': lesson.id},
+              ),
+              onDeletePressed: () => _showDeleteConfirmation(lesson.id),
+              onMarkCompleted: () => _markLessonAsCompleted(context, lesson),
+            ),
+          );
+        },
       ),
       if (!_isSelectionMode)
         Positioned(
@@ -261,102 +291,46 @@ class _LessonsPageState extends State<LessonsPage>
   );
 
   // Tablet cihazlar için liste görünümü - daha büyük paddingler
-  Widget _buildTabletList(List<Lesson> lessons) => Stack(
-    children: [
-      ListView.builder(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        itemCount: lessons.length,
-        itemBuilder: (context, index) => GestureDetector(
-          onLongPress: () {
-            if (!_isSelectionMode) {
-              _toggleSelectionMode();
-              _toggleLessonSelection(lessons[index].id);
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppDimensions.spacing8,
-            ),
-            child: _buildLessonItem(lessons[index]),
-          ),
-        ),
-      ),
-      if (!_isSelectionMode)
-        Positioned(
-          bottom: AppDimensions.spacing24,
-          right: AppDimensions.spacing24,
-          child: FloatingActionButton.extended(
-            onPressed: () {
-              context.pushNamed(RouteNames.addLesson);
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Yeni Ders'),
-          ),
-        ),
-    ],
-  );
+  Widget _buildTabletList(List<Lesson> lessons) =>
+      _buildMobileList(lessons); // Şimdilik mobil ile aynı
 
   // Desktop cihazlar için liste görünümü - çift sütunlu
-  Widget _buildDesktopList(List<Lesson> lessons) => Stack(
-    children: [
-      GridView.builder(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 3.0,
-          crossAxisSpacing: AppDimensions.spacing16,
-          mainAxisSpacing: AppDimensions.spacing16,
+  Widget _buildDesktopList(List<Lesson> lessons) => ListView.builder(
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppDimensions.spacing32,
+      vertical: AppDimensions.spacing16,
+    ),
+    itemCount: lessons.length,
+    itemBuilder: (context, index) {
+      final lesson = lessons[index];
+      return LessonListItem(
+        lessonTitle: lesson.subject,
+        studentName: lesson.studentName,
+        startTime: DateTime.tryParse('${lesson.date}T${lesson.startTime}'),
+        endTime: DateTime.tryParse('${lesson.date}T${lesson.endTime}'),
+        isCompleted: lesson.status == LessonStatus.completed,
+        fee: lesson.fee,
+        isRecurring: lesson.recurringPatternId != null,
+        isSelected: _selectedLessons.contains(lesson.id),
+        onTap: () {
+          if (_isSelectionMode) {
+            _toggleLessonSelection(lesson.id);
+          } else {
+            // Ders detaylarına git
+            context.pushNamed(
+              RouteNames.lessonDetails,
+              pathParameters: {'id': lesson.id},
+            );
+          }
+        },
+        onEditPressed: () => context.pushNamed(
+          RouteNames.editLesson,
+          pathParameters: {'id': lesson.id},
         ),
-        itemCount: lessons.length,
-        itemBuilder: (context, index) => GestureDetector(
-          onLongPress: () {
-            if (!_isSelectionMode) {
-              _toggleSelectionMode();
-              _toggleLessonSelection(lessons[index].id);
-            }
-          },
-          child: _buildLessonItem(lessons[index]),
-        ),
-      ),
-      if (!_isSelectionMode)
-        Positioned(
-          bottom: AppDimensions.spacing24,
-          right: AppDimensions.spacing24,
-          child: FloatingActionButton.extended(
-            onPressed: () {
-              context.pushNamed(RouteNames.addLesson);
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Yeni Ders'),
-          ),
-        ),
-    ],
-  );
-
-  // Ders liste öğesi
-  Widget _buildLessonItem(Lesson lesson) => LessonListItem(
-    lesson: lesson,
-    student: student,
-    isRecurring: lesson.recurringPatternId != null,
-    isSelected: _isSelectionMode && _selectedLessons.contains(lesson.id),
-    onTap: _isSelectionMode
-        ? () => _toggleLessonSelection(lesson.id)
-        : () => context.pushNamed(
-            RouteNames.lessonDetails,
-            pathParameters: {'id': lesson.id},
-          ),
-    onEditPressed: () {
-      context.pushNamed(
-        RouteNames.editLesson,
-        pathParameters: {'id': lesson.id},
+        onDeletePressed: () => _showDeleteConfirmation(lesson.id),
+        onMarkCompleted: () => _markLessonAsCompleted(context, lesson),
       );
     },
-    onDeletePressed: () {
-      _showDeleteConfirmation(lesson);
-    },
-    onMarkCompleted: _isSelectionMode
-        ? null
-        : () => _markLessonAsCompleted(lesson),
   );
 
   Widget _buildEmptyState(LessonFilterType filterType) {
@@ -428,200 +402,201 @@ class _LessonsPageState extends State<LessonsPage>
     );
   }
 
+  // Dersleri filtrelemek için yardımcı metot
   List<Lesson> _getFilteredLessons(
-    LessonProvider provider,
+    LessonProvider lessonProvider,
     LessonFilterType filterType,
   ) {
-    final now = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final now = DateTime.now();
+    final allLessons = lessonProvider.allLessons;
 
-    List<Lesson> filteredLessons;
+    List<Lesson> filtered;
     switch (filterType) {
       case LessonFilterType.upcoming:
-        filteredLessons = provider.allLessons
+        filtered = allLessons
             .where(
               (lesson) =>
                   lesson.status != LessonStatus.completed &&
-                  (lesson.date.compareTo(now) > 0 ||
-                      (lesson.date == now &&
-                          lesson.startTime.compareTo(
-                                DateFormat('HH:mm').format(DateTime.now()),
-                              ) >
-                              0)),
+                  ((DateTime.tryParse('${lesson.date}T${lesson.startTime}') ??
+                              DateTime(1970))
+                          .compareTo(now) >
+                      0),
             )
             .toList();
         break;
       case LessonFilterType.completed:
-        filteredLessons = provider.allLessons
+        filtered = allLessons
             .where((lesson) => lesson.status == LessonStatus.completed)
             .toList();
         break;
       case LessonFilterType.all:
-        filteredLessons = provider.allLessons;
+        filtered = allLessons;
         break;
     }
-
-    return filteredLessons;
+    return filtered;
   }
 
-  // Tarih ve saat bilgilerini DateTime objesine çevirir
-  DateTime _parseDateTime(String date, String time) {
-    final dateComponents = date.split('-');
-    final timeComponents = time.split(':');
-
-    return DateTime(
-      int.parse(dateComponents[0]), // yıl
-      int.parse(dateComponents[1]), // ay
-      int.parse(dateComponents[2]), // gün
-      int.parse(timeComponents[0]), // saat
-      int.parse(timeComponents[1]), // dakika
-    );
+  Lesson? _getLessonById(String lessonId) {
+    for (final lesson in context.read<LessonProvider>().allLessons) {
+      if (lesson.id == lessonId) {
+        return lesson;
+      }
+    }
+    return null;
   }
 
-  // Ders silme onayı diyaloğunu göster
-  void _showDeleteConfirmation(Lesson lesson) {
-    showDialog(
+  // Helper function to show delete confirmation dialog
+  void _showDeleteConfirmation(String lessonId) async {
+    final lesson = _getLessonById(lessonId);
+    if (lesson == null) return;
+
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Dersi Sil'),
         content: Text(
-          '${lesson.subject} dersini silmek istediğinizden emin misiniz?',
+          '\'${lesson.subject}\' dersini silmek istediğinizden emin misiniz?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => navigator.pop(false),
             child: const Text('İptal'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _deleteLesson(lesson.id);
-            },
+            onPressed: () => navigator.pop(true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Sil'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      await _deleteLesson(lessonId, scaffoldMessenger);
+    }
   }
 
   // Dersi sil
-  Future<void> _deleteLesson(String lessonId) async {
+  Future<void> _deleteLesson(
+    String lessonId,
+    ScaffoldMessengerState scaffoldMessenger,
+  ) async {
+    final lessonProvider = context.read<LessonProvider>();
     try {
-      await context.read<LessonProvider>().deleteLesson(lessonId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ders başarıyla silindi'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+      await lessonProvider.deleteLesson(lessonId);
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Ders başarıyla silindi'),
+          backgroundColor: AppColors.success,
+        ),
+      );
     } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ders silinirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Ders silinirken hata oluştu: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
   // Dersi tamamlandı olarak işaretle
-  Future<void> _markLessonAsCompleted(Lesson lesson) async {
+  Future<void> _markLessonAsCompleted(
+    BuildContext context,
+    Lesson lesson,
+  ) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final lessonProvider = context.read<LessonProvider>();
     try {
       final updatedLesson = lesson.copyWith(status: LessonStatus.completed);
-      await context.read<LessonProvider>().updateLesson(updatedLesson);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ders tamamlandı olarak işaretlendi'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+      await lessonProvider.updateLesson(updatedLesson);
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Ders tamamlandı olarak işaretlendi.')),
+      );
     } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ders durumu güncellenirken hata oluştu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text('Hata: $e')));
     }
   }
 
   // Toplu silme onayı diyaloğunu göster
-  void _showBulkDeleteConfirmation() {
-    showDialog(
+  void _showBulkDeleteConfirmation() async {
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Seçili Dersleri Sil'),
+        title: Text('${_selectedLessons.length} Dersi Sil'),
         content: Text(
           '${_selectedLessons.length} adet dersi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => navigator.pop(false),
             child: const Text('İptal'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _deleteBulkLessons();
-            },
+            onPressed: () => navigator.pop(true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Sil'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      await _deleteBulkLessons(scaffoldMessenger);
+    }
   }
 
-  // Seçili dersleri toplu sil
-  Future<void> _deleteBulkLessons() async {
-    final selectedIds = List<String>.from(_selectedLessons);
-
-    setState(() {
-      _isSelectionMode = false;
-      _selectedLessons.clear();
-    });
-
+  Future<void> _deleteBulkLessons(
+    ScaffoldMessengerState scaffoldMessenger,
+  ) async {
     final lessonProvider = context.read<LessonProvider>();
-    int successCount = 0;
-    int errorCount = 0;
+    final lessonCount = _selectedLessons.length;
+    final lessonsToDelete = List<String>.from(_selectedLessons);
+    var successCount = 0;
 
-    for (final id in selectedIds) {
+    for (final id in lessonsToDelete) {
       try {
         await lessonProvider.deleteLesson(id);
         successCount++;
       } on Exception {
-        errorCount++;
+        // Hata durumunda sayacı artırma, isteğe bağlı loglama
       }
     }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    if (!mounted) return;
+
+    if (successCount > 0) {
+      scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text(
-            errorCount > 0
-                ? '$successCount ders silindi, $errorCount ders silinemedi'
-                : '$successCount ders başarıyla silindi',
-          ),
-          backgroundColor: errorCount > 0
-              ? AppColors.warning
-              : AppColors.success,
-          action: SnackBarAction(
-            label: 'Tamam',
-            textColor: Colors.white,
-            onPressed: () {},
-          ),
+          content: Text('$successCount ders başarıyla silindi.'),
+          backgroundColor: AppColors.success,
         ),
       );
     }
+
+    if (successCount < lessonCount) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('${lessonCount - successCount} ders silinemedi.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+
+    setState(() {
+      _selectedLessons.clear();
+      _isSelectionMode = false;
+    });
   }
 }
 

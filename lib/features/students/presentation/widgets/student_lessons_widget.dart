@@ -20,7 +20,7 @@ class StudentLessonsWidget extends StatefulWidget {
     required this.onRefresh,
     required this.onDeleteLesson,
   });
-  final Student student;
+  final StudentModel student;
   final List<Lesson> lessons;
   final bool isLoading;
   final VoidCallback onRefresh;
